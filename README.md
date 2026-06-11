@@ -55,6 +55,17 @@ base: "/clean30/"
 
 Deployment is handled by `.github/workflows/deploy.yml`. On pushes to `main`, GitHub Actions installs dependencies, runs `npm run build`, uploads the `dist/` folder, and deploys it with GitHub Pages.
 
+## Install on Android
+
+Clean30 includes basic PWA support. On Android:
+
+1. Open https://thiepn.github.io/clean30/ in Chrome.
+2. Open the browser menu.
+3. Tap **Add to Home screen** or **Install app**.
+4. Launch Clean30 from the home screen.
+
+The app shell is cached for offline use after the first successful visit. Cleaning data still stays local to the browser/app storage on that device.
+
 ## Privacy
 
 Clean30 has no backend, no authentication, and no cloud sync. All app data is stored locally in the browser using `localStorage`.

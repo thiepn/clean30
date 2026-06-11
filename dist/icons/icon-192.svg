@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Clean30 app icon</title>
+  <rect width="512" height="512" rx="96" fill="#eee6d9"/>
+  <rect x="84" y="92" width="344" height="328" rx="48" fill="#fffdf8" stroke="#cfc2ae" stroke-width="16"/>
+  <path d="M154 196h204M154 256h204M154 316h132" fill="none" stroke="#587461" stroke-width="30" stroke-linecap="round"/>
+  <circle cx="356" cy="316" r="28" fill="#587461"/>
+</svg>
