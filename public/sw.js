@@ -6,8 +6,12 @@ const APP_SHELL = [
   `${BASE_PATH}index.html`,
   `${BASE_PATH}manifest.webmanifest`,
   `${BASE_PATH}icons/icon.svg`,
-  `${BASE_PATH}icons/icon-192.svg`,
-  `${BASE_PATH}icons/icon-512.svg`
+  `${BASE_PATH}icons/favicon-32.png`,
+  `${BASE_PATH}icons/apple-touch-icon.png`,
+  `${BASE_PATH}icons/icon-192.png`,
+  `${BASE_PATH}icons/icon-512.png`,
+  `${BASE_PATH}icons/maskable-192.png`,
+  `${BASE_PATH}icons/maskable-512.png`
 ];
 
 self.addEventListener("install", (event) => {
