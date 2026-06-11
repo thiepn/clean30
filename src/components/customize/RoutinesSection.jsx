@@ -157,7 +157,7 @@ export default function RoutinesSection({
                 >
                   <strong>{routine.title}</strong>
                   <span>
-                    {routine.estimatedTime || "No estimate"} · {getRoutineTotalTasks(routine)} tasks
+                    {routine.estimatedTime || "No estimate"} / {getRoutineTotalTasks(routine)} tasks
                   </span>
                 </button>
                 <div className="row-actions">
