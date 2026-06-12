@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const zoneDescriptions = {
   trash: "Trash control keeps smell, visual clutter, and pests from becoming the main problem.",
@@ -171,12 +171,13 @@ function findRelatedTasks(routines, keywords) {
       });
     });
   });
-  return matches.slice(0, 6);
+  return matches;
 }
 
 export default function Systems({ template }) {
   const { systems, zones } = template;
   const [selectedZoneId, setSelectedZoneId] = useState(zones[0]?.id || "");
+  const [showAllRelatedTasks, setShowAllRelatedTasks] = useState(false);
   const selectedZone = zones.find((zone) => zone.id === selectedZoneId) || zones[0] || null;
   const zoneFocus = useMemo(() => {
     if (!selectedZone) return null;
@@ -189,6 +190,15 @@ export default function Systems({ template }) {
       relatedTasks
     };
   }, [selectedZone, systems, template.routines]);
+  const visibleRelatedTasks = zoneFocus?.relatedTasks
+    ? showAllRelatedTasks
+      ? zoneFocus.relatedTasks
+      : zoneFocus.relatedTasks.slice(0, 3)
+    : [];
+
+  useEffect(() => {
+    setShowAllRelatedTasks(false);
+  }, [selectedZoneId]);
 
   return (
     <div className="screen-stack">
@@ -203,6 +213,7 @@ export default function Systems({ template }) {
               }
               key={zone.id}
               type="button"
+              aria-pressed={selectedZone?.id === zone.id}
               onClick={() => setSelectedZoneId(zone.id)}
             >
               {zone.name}
@@ -211,10 +222,11 @@ export default function Systems({ template }) {
         </div>
         {selectedZone && zoneFocus ? (
           <div className="zone-focus-panel">
-            <div className="section-heading">
+            <div className="section-heading zone-focus-heading">
               <div>
                 <p className="eyebrow">Zone focus</p>
                 <h3>{selectedZone.name}</h3>
+                <p>{zoneFocus.description}</p>
               </div>
               <span className="pill">
                 {zoneFocus.relatedTasks.length
@@ -222,21 +234,20 @@ export default function Systems({ template }) {
                   : "General zone"}
               </span>
             </div>
-            <p>{zoneFocus.description}</p>
-            <div className="zone-guidance-grid">
-              <div className="metric-card">
+            <div className="zone-guidance-rows">
+              <div>
                 <span>Frequency</span>
                 <strong>{zoneFocus.guidance.frequency}</strong>
               </div>
-              <div className="metric-card">
+              <div>
                 <span>Watch for</span>
                 <strong>{zoneFocus.guidance.watch}</strong>
               </div>
-              <div className="metric-card">
-                <span>Useful supplies</span>
+              <div>
+                <span>Supplies</span>
                 <strong>{zoneFocus.guidance.supplies}</strong>
               </div>
-              <div className="metric-card">
+              <div>
                 <span>Good enough</span>
                 <strong>{zoneFocus.guidance.goodEnough}</strong>
               </div>
@@ -246,7 +257,7 @@ export default function Systems({ template }) {
               <div>
                 <h3>Related systems</h3>
                 {zoneFocus.relatedSystems.length ? (
-                  <ul className="system-list compact">
+                  <ul className="reference-chip-list">
                     {zoneFocus.relatedSystems.map((section) => (
                       <li key={section.id}>{section.title}</li>
                     ))}
@@ -256,17 +267,31 @@ export default function Systems({ template }) {
                 )}
               </div>
               <div>
-                <h3>Related routine tasks</h3>
+                <div className="related-task-heading">
+                  <h3>Related routine tasks</h3>
+                  {zoneFocus.relatedTasks.length ? (
+                    <span>{zoneFocus.relatedTasks.length} total</span>
+                  ) : null}
+                </div>
                 {zoneFocus.relatedTasks.length ? (
                   <>
-                    <p className="muted">Reference only. Start sessions from the Start tab.</p>
-                    <ul className="system-list compact">
-                      {zoneFocus.relatedTasks.map((task) => (
+                    <p className="muted">Reference only. These tasks show where the zone appears in routines.</p>
+                    <ul className="system-list compact related-task-list">
+                      {visibleRelatedTasks.map((task) => (
                         <li key={`${task.routineId}-${task.phaseTitle}-${task.taskTitle}`}>
                           <strong>{task.routineTitle}:</strong> {task.taskTitle}
                         </li>
                       ))}
                     </ul>
+                    {zoneFocus.relatedTasks.length > 3 ? (
+                      <button
+                        className="button small ghost related-toggle"
+                        type="button"
+                        onClick={() => setShowAllRelatedTasks((current) => !current)}
+                      >
+                        {showAllRelatedTasks ? "Show less" : "Show all"}
+                      </button>
+                    ) : null}
                   </>
                 ) : (
                   <p className="muted">
@@ -297,24 +322,52 @@ export default function Systems({ template }) {
         </p>
       </section>
 
+      {systems.apartmentLaws?.length ? (
+        <details className="panel system-info-detail apartment-laws-detail">
+          <summary className="system-info-summary compact">
+            <span>
+              <span className="eyebrow">Principles</span>
+              <strong>Apartment Laws</strong>
+              <small>{systems.apartmentLaws.length} principles</small>
+            </span>
+          </summary>
+          <ul className="system-list compact law-list">
+            {systems.apartmentLaws.map((law) => (
+              <li key={law}>{law}</li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
       <div className="system-grid">
-        {systems.systemSections.map((section, index) => (
-          <details className="panel system-info-detail" key={section.id} open={index === 0}>
-            <summary className="system-info-summary">
+        {systems.systemSections.map((section) => (
+          <details className="panel system-info-detail" key={section.id}>
+            <summary className="system-info-summary compact">
               <span>
                 <span className="eyebrow">System</span>
                 <strong>{section.title}</strong>
+                <small>
+                  {(section.items?.length || 0) + (section.secondaryItems?.length || 0)} notes
+                </small>
               </span>
             </summary>
-            <p className="muted">{section.problem}</p>
-            <ul className="system-list">
-              {section.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            {section.problem ? (
+              <div className="system-content-block">
+                <p className="eyebrow">Problem chain</p>
+                <p className="muted">{section.problem}</p>
+              </div>
+            ) : null}
+            <div className="system-content-block">
+              <p className="eyebrow">Rules</p>
+              <ul className="system-list">
+                {section.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
             {section.secondaryItems?.length ? (
-              <div className="secondary-system">
-                <h3>{section.secondaryTitle}</h3>
+              <div className="secondary-system system-content-block">
+                <p className="eyebrow">{section.secondaryTitle || "Practical tip"}</p>
                 <ul className="system-list">
                   {section.secondaryItems.map((item) => (
                     <li key={item}>{item}</li>
