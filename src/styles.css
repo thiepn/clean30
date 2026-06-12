@@ -1755,6 +1755,193 @@ details[open] > .phase-summary .phase-chevron::before {
   margin-top: 0.15rem;
 }
 
+.simple-customize {
+  gap: 14px;
+}
+
+.simple-intro-panel .section-heading,
+.simple-system-card .section-heading,
+.simple-actions-panel .section-heading {
+  margin-bottom: 0;
+}
+
+.compact-heading {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.simple-template-row {
+  margin-top: 0.85rem;
+}
+
+.simple-system-note {
+  margin-top: 0.75rem;
+}
+
+.compact-notice {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+}
+
+.simple-detail,
+.simple-danger-detail {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+.simple-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+}
+
+.simple-summary::-webkit-details-marker {
+  display: none;
+}
+
+.simple-summary > span:first-child {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.simple-summary strong,
+.simple-summary small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.simple-summary strong {
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.simple-summary small {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.simple-summary .button {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+.simple-detail[open] .simple-summary,
+.simple-danger-detail[open] .simple-summary {
+  border-bottom: 1px solid rgba(207, 194, 174, 0.65);
+}
+
+.simple-detail > .customize-card,
+.simple-detail > .compact-form-card,
+.simple-detail > .callout,
+.simple-detail > .simple-rule-list,
+.simple-detail > .simple-rule-editor,
+.simple-danger-detail > p,
+.simple-danger-detail > .settings-actions {
+  margin: 1rem;
+}
+
+.compact-form-card {
+  box-shadow: none;
+}
+
+.simple-rule-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.simple-rule-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-strong);
+  padding: 0.5rem 0.65rem;
+}
+
+.simple-rule-row span:first-child {
+  color: var(--text);
+  font-weight: 680;
+  overflow-wrap: anywhere;
+}
+
+.simple-rule-editor {
+  display: grid;
+  gap: 0.75rem;
+  border-top: 1px solid rgba(207, 194, 174, 0.65);
+  padding-top: 1rem;
+}
+
+.simple-rule-tabs {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding-bottom: 0.1rem;
+}
+
+.simple-rule-tabs .tab {
+  flex: 0 0 auto;
+  min-width: max-content;
+}
+
+.compact-rule-card {
+  padding: 0.85rem;
+}
+
+.simple-actions-panel {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.simple-nested-detail {
+  border-top: 1px solid rgba(207, 194, 174, 0.65);
+  padding-top: 0.75rem;
+}
+
+.simple-nested-detail summary {
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-weight: 730;
+}
+
+.simple-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+}
+
+.simple-gallery-card {
+  padding: 0.85rem;
+}
+
+.simple-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0;
+}
+
+.simple-meta-row span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 680;
+}
+
 .customize-tabs {
   margin-top: 1rem;
   overflow-x: auto;
@@ -3026,6 +3213,66 @@ details[open] > .phase-summary .phase-chevron::before {
   .customize-mode-tabs .tab {
     min-height: 42px;
     padding: 0.5rem 0.55rem;
+  }
+
+  .simple-customize {
+    gap: 10px;
+  }
+
+  .simple-intro-panel p:not(.eyebrow) {
+    font-size: 0.9rem;
+  }
+
+  .simple-summary {
+    gap: 0.65rem;
+    padding: 0.75rem;
+  }
+
+  .simple-summary small {
+    font-size: 0.78rem;
+  }
+
+  .simple-detail > .customize-card,
+  .simple-detail > .compact-form-card,
+  .simple-detail > .callout,
+  .simple-detail > .simple-rule-list,
+  .simple-detail > .simple-rule-editor,
+  .simple-danger-detail > p,
+  .simple-danger-detail > .settings-actions {
+    margin: 0.75rem;
+  }
+
+  .compact-notice {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0.75rem;
+  }
+
+  .simple-rule-row {
+    min-height: 38px;
+    padding: 0.42rem 0.55rem;
+  }
+
+  .simple-rule-row span:first-child {
+    font-size: 0.9rem;
+  }
+
+  .simple-gallery-grid {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .simple-gallery-card {
+    gap: 0.7rem;
+    padding: 0.75rem;
+  }
+
+  .simple-actions-panel {
+    gap: 0.65rem;
+  }
+
+  .simple-actions-panel .settings-actions {
+    margin-top: 0;
   }
 
   .customize-card,

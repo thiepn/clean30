@@ -110,6 +110,11 @@ export default function Customize({
     setCustomizeMode("advanced");
   }
 
+  function openAdvancedCustomize(sectionId = "overview") {
+    setActiveSection(sectionId);
+    setCustomizeMode("advanced");
+  }
+
   return (
     <div className="screen-stack">
       <section className="panel">
@@ -186,10 +191,12 @@ export default function Customize({
           onConfirmEdit={confirmTemplateEdit}
           onUseGalleryTemplate={onUseGalleryTemplate}
           onExportTemplate={onExportTemplate}
+          onImportTemplateClick={() => templateImportRef.current?.click()}
           onExportFullBackup={onExportFullBackup}
           onResetHistory={onResetHistory}
           onResetAll={onResetAll}
           onOpenAdvancedRoutine={openAdvancedRoutine}
+          onOpenAdvancedCustomize={openAdvancedCustomize}
         />
       ) : null}
 
