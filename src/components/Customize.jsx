@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getRoutineTotalTasks } from "../utils/calculations.js";
 import { cloneDeep } from "../utils/templateUtils.js";
 import AppearanceSection from "./customize/AppearanceSection.jsx";
 import DailyRulesSection from "./customize/DailyRulesSection.jsx";
@@ -12,16 +13,84 @@ import TemplateGallerySection from "./customize/TemplateGallerySection.jsx";
 import ZonesSection from "./customize/ZonesSection.jsx";
 
 const customizeSections = [
-  { id: "overview", label: "Overview" },
-  { id: "gallery", label: "Gallery" },
-  { id: "profile", label: "Profile" },
-  { id: "zones", label: "Zones" },
-  { id: "routines", label: "Routines" },
-  { id: "daily-rules", label: "Daily Rules" },
-  { id: "systems", label: "Systems" },
-  { id: "schedule", label: "Schedule" },
-  { id: "appearance", label: "Appearance" }
+  {
+    id: "overview",
+    label: "Template Overview",
+    description: "Review the active template, status, goal, and reset option."
+  },
+  {
+    id: "gallery",
+    label: "Gallery Presets",
+    description: "Create an editable copy from a built-in cleaning setup."
+  },
+  {
+    id: "profile",
+    label: "Profile Fields",
+    description: "Edit app labels, home details, and the main cleaning goal."
+  },
+  {
+    id: "zones",
+    label: "Zones",
+    description: "Rename and reorder the real areas used in routines."
+  },
+  {
+    id: "daily-rules",
+    label: "Daily Rules",
+    description: "Edit the tiny checklist shown on Dashboard."
+  },
+  {
+    id: "routines",
+    label: "Routines & Phases",
+    description: "Edit routines, phase order, and individual checklist tasks."
+  },
+  {
+    id: "systems",
+    label: "Systems",
+    description: "Edit apartment laws, bottlenecks, priorities, and system notes."
+  },
+  {
+    id: "schedule",
+    label: "Schedule",
+    description: "Adjust weekly reset timing, fallback day, and due thresholds."
+  },
+  {
+    id: "appearance",
+    label: "Appearance",
+    description: "Tune the calm visual settings for this template."
+  },
+  {
+    id: "import-export",
+    label: "Import / Export",
+    description: "Share templates or back up the whole local app."
+  }
 ];
+
+function getSectionCount(sectionId, activeTemplate, templateGallery) {
+  if (sectionId === "overview") {
+    return activeTemplate.readOnly ? "Default / read-only" : "Custom / editable";
+  }
+  if (sectionId === "gallery") return `${templateGallery.length} presets`;
+  if (sectionId === "profile") return activeTemplate.profile.homeName || "Home profile";
+  if (sectionId === "zones") return `${activeTemplate.zones.length} zones`;
+  if (sectionId === "daily-rules") return `${activeTemplate.dailyRules.length} rules`;
+  if (sectionId === "routines") {
+    const taskCount = activeTemplate.routines.reduce(
+      (total, routine) => total + getRoutineTotalTasks(routine),
+      0
+    );
+    return `${activeTemplate.routines.length} routines / ${taskCount} tasks`;
+  }
+  if (sectionId === "systems") {
+    return `${activeTemplate.systems.systemSections?.length || 0} sections`;
+  }
+  if (sectionId === "schedule") {
+    return `${activeTemplate.schedule.weeklyResetDay} / ${activeTemplate.schedule.backupResetDay}`;
+  }
+  if (sectionId === "appearance") {
+    return `${activeTemplate.appearance.density} / ${activeTemplate.appearance.accentColor}`;
+  }
+  return "Template + full backup";
+}
 
 export default function Customize({
   appState,
@@ -42,7 +111,7 @@ export default function Customize({
 }) {
   const templateImportRef = useRef(null);
   const backupImportRef = useRef(null);
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState("menu");
   const [customizeMode, setCustomizeMode] = useState("simple");
   const [selectedRoutineId, setSelectedRoutineId] = useState(
     activeTemplate.routines[0]?.id || ""
@@ -110,10 +179,125 @@ export default function Customize({
     setCustomizeMode("advanced");
   }
 
-  function openAdvancedCustomize(sectionId = "overview") {
+  function openAdvancedCustomize(sectionId = "menu") {
     setActiveSection(sectionId);
     setCustomizeMode("advanced");
   }
+
+  function renderAdvancedSection() {
+    if (activeSection === "overview") {
+      return (
+        <OverviewSection
+          templates={appState.templates}
+          activeTemplate={activeTemplate}
+          message={message}
+          onSetActiveTemplate={onSetActiveTemplate}
+          onDuplicateDefault={onDuplicateDefault}
+          onResetTemplate={onResetTemplate}
+          onExportTemplate={onExportTemplate}
+        />
+      );
+    }
+
+    if (activeSection === "gallery") {
+      return (
+        <TemplateGallerySection
+          gallery={templateGallery}
+          onUseTemplate={onUseGalleryTemplate}
+          compact
+        />
+      );
+    }
+
+    if (activeSection === "profile") {
+      return (
+        <ProfileSection template={activeTemplate} canEdit={canEdit} onEditTemplate={editTemplate} />
+      );
+    }
+
+    if (activeSection === "zones") {
+      return (
+        <ZonesSection
+          zones={activeTemplate.zones}
+          canEdit={canEdit}
+          onEditTemplate={editTemplate}
+          onConfirmEdit={confirmTemplateEdit}
+        />
+      );
+    }
+
+    if (activeSection === "routines") {
+      return (
+        <RoutinesSection
+          routines={activeTemplate.routines}
+          selectedRoutine={selectedRoutine}
+          selectedRoutineId={selectedRoutineId}
+          canEdit={canEdit}
+          onSelectRoutine={setSelectedRoutineId}
+          onEditTemplate={editTemplate}
+          onConfirmEdit={confirmTemplateEdit}
+        />
+      );
+    }
+
+    if (activeSection === "daily-rules") {
+      return (
+        <DailyRulesSection
+          dailyRules={activeTemplate.dailyRules}
+          canEdit={canEdit}
+          onEditTemplate={editTemplate}
+          onConfirmEdit={confirmTemplateEdit}
+        />
+      );
+    }
+
+    if (activeSection === "systems") {
+      return (
+        <SystemsSection
+          systems={activeTemplate.systems}
+          canEdit={canEdit}
+          onEditTemplate={editTemplate}
+          onConfirmEdit={confirmTemplateEdit}
+        />
+      );
+    }
+
+    if (activeSection === "schedule") {
+      return (
+        <ScheduleSection
+          schedule={activeTemplate.schedule}
+          canEdit={canEdit}
+          onEditTemplate={editTemplate}
+        />
+      );
+    }
+
+    if (activeSection === "appearance") {
+      return (
+        <AppearanceSection
+          appearance={activeTemplate.appearance}
+          canEdit={canEdit}
+          onEditTemplate={editTemplate}
+        />
+      );
+    }
+
+    if (activeSection === "import-export") {
+      return (
+        <ImportExportSection
+          message={message}
+          onExportTemplate={onExportTemplate}
+          onImportTemplateClick={() => templateImportRef.current?.click()}
+          onExportFullBackup={onExportFullBackup}
+          onImportFullBackupClick={() => backupImportRef.current?.click()}
+        />
+      );
+    }
+
+    return null;
+  }
+
+  const activeSectionMeta = customizeSections.find((section) => section.id === activeSection);
 
   return (
     <div className="screen-stack">
@@ -140,7 +324,7 @@ export default function Customize({
           <button
             className={customizeMode === "advanced" ? "tab active" : "tab"}
             type="button"
-            onClick={() => setCustomizeMode("advanced")}
+            onClick={() => openAdvancedCustomize()}
           >
             Advanced customization
           </button>
@@ -150,20 +334,6 @@ export default function Customize({
             Advanced customization is for editing routines, phases, tasks, systems, and template
             internals. Most users do not need this every day.
           </p>
-        ) : null}
-        {customizeMode === "advanced" ? (
-          <div className="tab-row customize-tabs" role="tablist" aria-label="Customize sections">
-            {customizeSections.map((section) => (
-              <button
-                className={activeSection === section.id ? "tab active" : "tab"}
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSection(section.id)}
-              >
-                {section.label}
-              </button>
-            ))}
-          </div>
         ) : null}
         {!canEdit && customizeMode === "advanced" ? (
           <div className="readonly-notice">
@@ -196,90 +366,68 @@ export default function Customize({
           onResetHistory={onResetHistory}
           onResetAll={onResetAll}
           onOpenAdvancedRoutine={openAdvancedRoutine}
-          onOpenAdvancedCustomize={openAdvancedCustomize}
+          onOpenAdvancedCustomize={() => openAdvancedCustomize()}
         />
       ) : null}
 
-      {customizeMode === "advanced" && activeSection === "overview" ? (
-        <OverviewSection
-          templates={appState.templates}
-          activeTemplate={activeTemplate}
-          message={message}
-          onSetActiveTemplate={onSetActiveTemplate}
-          onDuplicateDefault={onDuplicateDefault}
-          onResetTemplate={onResetTemplate}
-          onExportTemplate={onExportTemplate}
-          onImportTemplateClick={() => templateImportRef.current?.click()}
-          onExportFullBackup={onExportFullBackup}
-          onImportFullBackupClick={() => backupImportRef.current?.click()}
-        />
+      {customizeMode === "advanced" && activeSection === "menu" ? (
+        <section className="panel advanced-menu-panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Advanced Customize</p>
+              <h2>Choose what to edit</h2>
+              <p>Open one category at a time. Cleaning screens are for doing; Customize is for editing.</p>
+            </div>
+            <span className="pill">{canEdit ? "Editable" : "Read-only"}</span>
+          </div>
+          <div className="advanced-category-list" aria-label="Advanced customize categories">
+            {customizeSections.map((section) => (
+              <button
+                className="advanced-category-card"
+                key={section.id}
+                type="button"
+                aria-expanded={activeSection === section.id}
+                onClick={() => setActiveSection(section.id)}
+              >
+                <span>
+                  <strong>{section.label}</strong>
+                  <small>{section.description}</small>
+                </span>
+                <span className="advanced-category-meta">
+                  {getSectionCount(section.id, activeTemplate, templateGallery)}
+                  <span aria-hidden="true">›</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
       ) : null}
 
-      {customizeMode === "advanced" && activeSection === "gallery" ? (
-        <TemplateGallerySection gallery={templateGallery} onUseTemplate={onUseGalleryTemplate} />
-      ) : null}
-
-      {customizeMode === "advanced" && activeSection === "profile" ? (
-        <ProfileSection
-          template={activeTemplate}
-          canEdit={canEdit}
-          onEditTemplate={editTemplate}
-        />
-      ) : null}
-
-      {customizeMode === "advanced" && activeSection === "zones" ? (
-        <ZonesSection
-          zones={activeTemplate.zones}
-          canEdit={canEdit}
-          onEditTemplate={editTemplate}
-          onConfirmEdit={confirmTemplateEdit}
-        />
-      ) : null}
-
-      {customizeMode === "advanced" && activeSection === "routines" ? (
-        <RoutinesSection
-          routines={activeTemplate.routines}
-          selectedRoutine={selectedRoutine}
-          selectedRoutineId={selectedRoutineId}
-          canEdit={canEdit}
-          onSelectRoutine={setSelectedRoutineId}
-          onEditTemplate={editTemplate}
-          onConfirmEdit={confirmTemplateEdit}
-        />
-      ) : null}
-
-      {customizeMode === "advanced" && activeSection === "daily-rules" ? (
-        <DailyRulesSection
-          dailyRules={activeTemplate.dailyRules}
-          canEdit={canEdit}
-          onEditTemplate={editTemplate}
-          onConfirmEdit={confirmTemplateEdit}
-        />
-      ) : null}
-
-      {customizeMode === "advanced" && activeSection === "systems" ? (
-        <SystemsSection
-          systems={activeTemplate.systems}
-          canEdit={canEdit}
-          onEditTemplate={editTemplate}
-          onConfirmEdit={confirmTemplateEdit}
-        />
-      ) : null}
-
-      {customizeMode === "advanced" && activeSection === "schedule" ? (
-        <ScheduleSection
-          schedule={activeTemplate.schedule}
-          canEdit={canEdit}
-          onEditTemplate={editTemplate}
-        />
-      ) : null}
-
-      {customizeMode === "advanced" && activeSection === "appearance" ? (
-        <AppearanceSection
-          appearance={activeTemplate.appearance}
-          canEdit={canEdit}
-          onEditTemplate={editTemplate}
-        />
+      {customizeMode === "advanced" && activeSection !== "menu" ? (
+        <>
+          <section className="panel advanced-detail-header">
+            <button className="button ghost" type="button" onClick={() => setActiveSection("menu")}>
+              Back to Advanced
+            </button>
+            <div>
+              <p className="eyebrow">Advanced Customize</p>
+              <h2>{activeSectionMeta?.label || "Category"}</h2>
+              {activeSectionMeta?.description ? <p>{activeSectionMeta.description}</p> : null}
+            </div>
+            <select
+              aria-label="Switch advanced category"
+              value={activeSection}
+              onChange={(event) => setActiveSection(event.target.value)}
+            >
+              {customizeSections.map((section) => (
+                <option key={section.id} value={section.id}>
+                  {section.label}
+                </option>
+              ))}
+            </select>
+          </section>
+          {renderAdvancedSection()}
+        </>
       ) : null}
 
       <input
@@ -301,5 +449,68 @@ export default function Customize({
         }
       />
     </div>
+  );
+}
+
+function ImportExportSection({
+  message,
+  onExportTemplate,
+  onImportTemplateClick,
+  onExportFullBackup,
+  onImportFullBackupClick
+}) {
+  return (
+    <section className="panel">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Import / Export</p>
+          <h2>Templates and Full Backups</h2>
+          <p>
+            Template files share the cleaning system only. Full backups save the whole local app,
+            including history and sessions.
+          </p>
+        </div>
+      </div>
+
+      <div className="customize-action-grid advanced-import-grid">
+        <section className="customize-card">
+          <p className="eyebrow">Template only</p>
+          <h3>Share routines and settings</h3>
+          <p className="muted">
+            Export or import routines, daily rules, zones, systems, schedule, and appearance.
+          </p>
+          <div className="settings-actions">
+            <button className="button primary" type="button" onClick={onExportTemplate}>
+              Export template JSON
+            </button>
+            <button className="button ghost" type="button" onClick={onImportTemplateClick}>
+              Import template JSON
+            </button>
+          </div>
+        </section>
+
+        <section className="customize-card">
+          <p className="eyebrow">Full backup</p>
+          <h3>Whole local app data</h3>
+          <p className="muted">
+            Export or restore templates, settings, history, active session, and completed daily
+            rules.
+          </p>
+          <div className="settings-actions">
+            <button className="button primary" type="button" onClick={onExportFullBackup}>
+              Export full backup
+            </button>
+            <button className="button ghost" type="button" onClick={onImportFullBackupClick}>
+              Import full backup
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <p className="callout small">
+        Backup here means data backup. Cleaning fallback timing is edited in Schedule.
+      </p>
+      {message ? <p className="form-message">{message}</p> : null}
+    </section>
   );
 }

@@ -1,11 +1,29 @@
+import { useEffect, useState } from "react";
 import { moveItem } from "../../utils/routineUtils.js";
 import { createId } from "../../utils/templateUtils.js";
 
 export default function ZonesSection({ zones, canEdit, onEditTemplate, onConfirmEdit }) {
+  const [selectedZoneId, setSelectedZoneId] = useState(zones[0]?.id || "");
+  const selectedZone = zones.find((zone) => zone.id === selectedZoneId) || zones[0] || null;
+  const selectedZoneIndex = selectedZone
+    ? zones.findIndex((zone) => zone.id === selectedZone.id)
+    : -1;
+
+  useEffect(() => {
+    if (!selectedZone && zones[0]) {
+      setSelectedZoneId(zones[0].id);
+    }
+    if (!zones.length) {
+      setSelectedZoneId("");
+    }
+  }, [zones, selectedZone]);
+
   function addZone() {
+    const zone = { id: createId("zone"), name: "New zone" };
     onEditTemplate((draft) => {
-      draft.zones.push({ id: createId("zone"), name: "New zone" });
+      draft.zones.push(zone);
     });
+    setSelectedZoneId(zone.id);
   }
 
   function renameZone(index, value) {
@@ -21,13 +39,15 @@ export default function ZonesSection({ zones, canEdit, onEditTemplate, onConfirm
   }
 
   function deleteZone(zone, index) {
+    const fallback = zones[index + 1] || zones[index - 1] || null;
     onConfirmEdit({
       title: "Delete zone?",
       message: `"${zone.name}" will be removed from this custom template.`,
       confirmLabel: "Delete zone",
       edit: (draft) => {
         draft.zones.splice(index, 1);
-      }
+      },
+      afterConfirm: () => setSelectedZoneId(fallback?.id || "")
     });
   }
 
@@ -44,21 +64,13 @@ export default function ZonesSection({ zones, canEdit, onEditTemplate, onConfirm
         </button>
       </div>
 
-      <div className="editor-list">
+      <div className="editor-list compact-editor-list">
         {zones.map((zone, index) => (
-          <div className="editor-row" key={zone.id}>
-            <div className="editor-row-main">
-              <span className="editor-index">{index + 1}</span>
-              <label className="field-label" htmlFor={`zone-${zone.id}`}>
-                Zone
-                <input
-                  id={`zone-${zone.id}`}
-                  value={zone.name}
-                  disabled={!canEdit}
-                  onChange={(event) => renameZone(index, event.target.value)}
-                />
-              </label>
-            </div>
+          <div className={selectedZone?.id === zone.id ? "editor-row active" : "editor-row"} key={zone.id}>
+            <button className="editor-select" type="button" onClick={() => setSelectedZoneId(zone.id)}>
+              <strong>{zone.name}</strong>
+              <span>Zone {index + 1}</span>
+            </button>
             <div className="row-actions">
               <button
                 className="button small ghost"
@@ -88,6 +100,25 @@ export default function ZonesSection({ zones, canEdit, onEditTemplate, onConfirm
           </div>
         ))}
       </div>
+
+      {selectedZone && selectedZoneIndex >= 0 ? (
+        <div className="editor-card selected-editor-card">
+          <div className="editor-row-main">
+            <span className="editor-index">{selectedZoneIndex + 1}</span>
+            <label className="field-label" htmlFor={`zone-${selectedZone.id}`}>
+              Selected zone
+              <input
+                id={`zone-${selectedZone.id}`}
+                value={selectedZone.name}
+                disabled={!canEdit}
+                onChange={(event) => renameZone(selectedZoneIndex, event.target.value)}
+              />
+            </label>
+          </div>
+        </div>
+      ) : (
+        <p className="callout small">No zones yet. Add a zone to organize routines.</p>
+      )}
     </section>
   );
 }

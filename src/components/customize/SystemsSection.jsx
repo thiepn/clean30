@@ -221,7 +221,13 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
 
         <div className="editor-list">
           {bottlenecks.map((item, index) => (
-            <div className="editor-card" key={`${item.problem}-${index}`}>
+            <details className="editor-card compact-disclosure" key={`${item.problem}-${index}`}>
+              <summary className="disclosure-summary">
+                <div>
+                  <h3>{item.problem || `Bottleneck ${index + 1}`}</h3>
+                  {item.consequence ? <p>{item.consequence}</p> : null}
+                </div>
+              </summary>
               <div className="form-grid">
                 <label className="field-label" htmlFor={`bottleneck-problem-${index}`}>
                   Problem
@@ -252,7 +258,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
                   Delete
                 </button>
               </div>
-            </div>
+            </details>
           ))}
         </div>
       </section>
@@ -271,7 +277,13 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
 
         <div className="editor-list">
           {priorityOrder.map((item, index) => (
-            <div className="editor-card" key={`${item.title}-${index}`}>
+            <details className="editor-card compact-disclosure" key={`${item.title}-${index}`}>
+              <summary className="disclosure-summary">
+                <div>
+                  <h3>{item.title || `Priority ${index + 1}`}</h3>
+                  {item.detail ? <p>{item.detail}</p> : null}
+                </div>
+              </summary>
               <div className="form-grid">
                 <label className="field-label" htmlFor={`priority-title-${index}`}>
                   Title
@@ -318,7 +330,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
                   Delete
                 </button>
               </div>
-            </div>
+            </details>
           ))}
         </div>
       </section>
@@ -342,11 +354,12 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
 
         <div className="editor-list">
           {systemSections.map((section, index) => (
-            <details className="editor-card system-section-editor" key={section.id} open>
+            <details className="editor-card system-section-editor compact-disclosure" key={section.id}>
               <summary className="disclosure-summary">
                 <div>
                   <h3>{section.title || "System section"}</h3>
                   {section.problem ? <p>{section.problem}</p> : null}
+                  <p>{(section.items?.length || 0) + (section.secondaryItems?.length || 0)} notes</p>
                 </div>
               </summary>
               <div className="editor-card-header">

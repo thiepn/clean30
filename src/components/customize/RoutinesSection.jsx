@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { getRoutineTotalTasks } from "../../utils/calculations.js";
 import { createPhase, createRoutine, createTask, moveItem } from "../../utils/routineUtils.js";
 import { priorityOptions } from "../../utils/templateUtils.js";
@@ -21,6 +22,27 @@ export default function RoutinesSection({
   onConfirmEdit
 }) {
   const dailyRulesRoutineSelected = selectedRoutine?.id === "daily-rules";
+  const [selectedPhaseId, setSelectedPhaseId] = useState(selectedRoutine?.phases[0]?.id || "");
+  const selectedPhase = useMemo(() => {
+    return (
+      selectedRoutine?.phases.find((phase) => phase.id === selectedPhaseId) ||
+      selectedRoutine?.phases[0] ||
+      null
+    );
+  }, [selectedRoutine, selectedPhaseId]);
+  const selectedPhaseIndex = selectedPhase
+    ? selectedRoutine.phases.findIndex((phase) => phase.id === selectedPhase.id)
+    : -1;
+
+  useEffect(() => {
+    if (!selectedRoutine) {
+      setSelectedPhaseId("");
+      return;
+    }
+    if (!selectedPhase && selectedRoutine.phases[0]) {
+      setSelectedPhaseId(selectedRoutine.phases[0].id);
+    }
+  }, [selectedRoutine, selectedPhase]);
 
   function editSelectedRoutine(mutator) {
     if (!selectedRoutine) return;
@@ -36,6 +58,12 @@ export default function RoutinesSection({
       draft.routines.push(routine);
     });
     onSelectRoutine(routine.id);
+    setSelectedPhaseId(routine.phases[0]?.id || "");
+  }
+
+  function selectRoutine(routine) {
+    onSelectRoutine(routine.id);
+    setSelectedPhaseId(routine.phases[0]?.id || "");
   }
 
   function updateRoutine(field, value) {
@@ -64,9 +92,11 @@ export default function RoutinesSection({
   }
 
   function addPhase() {
+    const phase = createPhase();
     editSelectedRoutine((routine) => {
-      routine.phases.push(createPhase());
+      routine.phases.push(phase);
     });
+    setSelectedPhaseId(phase.id);
   }
 
   function updatePhase(phaseIndex, value) {
@@ -82,6 +112,7 @@ export default function RoutinesSection({
   }
 
   function deletePhase(phase, phaseIndex) {
+    const fallback = selectedRoutine.phases[phaseIndex + 1] || selectedRoutine.phases[phaseIndex - 1] || null;
     onConfirmEdit({
       title: "Delete phase?",
       message: `"${phase.title}" and its tasks will be removed from this routine.`,
@@ -89,7 +120,8 @@ export default function RoutinesSection({
       edit: (draft) => {
         const routine = draft.routines.find((item) => item.id === selectedRoutine.id);
         routine?.phases.splice(phaseIndex, 1);
-      }
+      },
+      afterConfirm: () => setSelectedPhaseId(fallback?.id || "")
     });
   }
 
@@ -154,7 +186,7 @@ export default function RoutinesSection({
                 <button
                   className="editor-select"
                   type="button"
-                  onClick={() => onSelectRoutine(routine.id)}
+                  onClick={() => selectRoutine(routine)}
                 >
                   <strong>{routine.title}</strong>
                   <span>
@@ -277,159 +309,188 @@ export default function RoutinesSection({
             </button>
           </div>
 
-          <div className="editor-list">
+          <div className="editor-list phase-picker-list">
             {selectedRoutine.phases.map((phase, phaseIndex) => (
-              <section className="editor-card phase-editor" key={phase.id}>
-                <div className="editor-card-header">
-                  <div className="editor-row-main">
-                    <span className="editor-index">{phaseIndex + 1}</span>
-                    <label className="field-label" htmlFor={`phase-${phase.id}`}>
-                      Phase title
-                      <input
-                        id={`phase-${phase.id}`}
-                        value={phase.title}
-                        disabled={!canEdit || dailyRulesRoutineSelected}
-                        onChange={(event) => updatePhase(phaseIndex, event.target.value)}
-                      />
-                    </label>
-                  </div>
-                  <div className="row-actions">
-                    <button
-                      className="button small ghost"
-                      type="button"
-                      disabled={!canEdit || dailyRulesRoutineSelected || phaseIndex === 0}
-                      onClick={() => movePhase(phaseIndex, -1)}
-                    >
-                      Move up
-                    </button>
-                    <button
-                      className="button small ghost"
-                      type="button"
-                      disabled={
-                        !canEdit ||
-                        dailyRulesRoutineSelected ||
-                        phaseIndex === selectedRoutine.phases.length - 1
-                      }
-                      onClick={() => movePhase(phaseIndex, 1)}
-                    >
-                      Move down
-                    </button>
-                    <button
-                      className="button small danger-ghost"
-                      type="button"
-                      disabled={!canEdit || dailyRulesRoutineSelected}
-                      onClick={() => deletePhase(phase, phaseIndex)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                <div className="editor-list nested">
-                  {phase.tasks.map((task, taskIndex) => (
-                    <div className="editor-card task-editor" key={task.id}>
-                      <div className="task-editor-title">
-                        <span className="editor-index subtle">{taskIndex + 1}</span>
-                        <strong>Task {taskIndex + 1}</strong>
-                      </div>
-                      <div className="form-grid three">
-                        <label className="field-label" htmlFor={`task-title-${task.id}`}>
-                          Task title
-                          <input
-                            id={`task-title-${task.id}`}
-                            value={task.title}
-                            disabled={!canEdit || dailyRulesRoutineSelected}
-                            onChange={(event) =>
-                              updateTask(phaseIndex, taskIndex, "title", event.target.value)
-                            }
-                          />
-                        </label>
-                        <label className="field-label" htmlFor={`task-duration-${task.id}`}>
-                          Duration
-                          <input
-                            id={`task-duration-${task.id}`}
-                            value={task.duration}
-                            disabled={!canEdit || dailyRulesRoutineSelected}
-                            onChange={(event) =>
-                              updateTask(phaseIndex, taskIndex, "duration", event.target.value)
-                            }
-                          />
-                        </label>
-                        <label className="field-label" htmlFor={`task-priority-${task.id}`}>
-                          Priority
-                          <select
-                            id={`task-priority-${task.id}`}
-                            value={task.priority || "normal"}
-                            disabled={!canEdit || dailyRulesRoutineSelected}
-                            onChange={(event) =>
-                              updateTask(phaseIndex, taskIndex, "priority", event.target.value)
-                            }
-                          >
-                            {priorityOptions.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="field-label field-span" htmlFor={`task-detail-${task.id}`}>
-                          Detail/explanation
-                          <textarea
-                            id={`task-detail-${task.id}`}
-                            className="textarea-small"
-                            value={task.detail}
-                            disabled={!canEdit || dailyRulesRoutineSelected}
-                            onChange={(event) =>
-                              updateTask(phaseIndex, taskIndex, "detail", event.target.value)
-                            }
-                          />
-                        </label>
-                      </div>
-                      <div className="row-actions">
-                        <button
-                          className="button small ghost"
-                          type="button"
-                          disabled={!canEdit || dailyRulesRoutineSelected || taskIndex === 0}
-                          onClick={() => moveTask(phaseIndex, taskIndex, -1)}
-                        >
-                          Move up
-                        </button>
-                        <button
-                          className="button small ghost"
-                          type="button"
-                          disabled={
-                            !canEdit ||
-                            dailyRulesRoutineSelected ||
-                            taskIndex === phase.tasks.length - 1
-                          }
-                          onClick={() => moveTask(phaseIndex, taskIndex, 1)}
-                        >
-                          Move down
-                        </button>
-                        <button
-                          className="button small danger-ghost"
-                          type="button"
-                          disabled={!canEdit || dailyRulesRoutineSelected}
-                          onClick={() => deleteTask(task, phaseIndex, taskIndex)}
-                        >
-                          Delete task
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
+              <div
+                className={selectedPhase?.id === phase.id ? "editor-row active" : "editor-row"}
+                key={phase.id}
+              >
                 <button
-                  className="button ghost"
+                  className="editor-select"
                   type="button"
-                  disabled={!canEdit || dailyRulesRoutineSelected}
-                  onClick={() => addTask(phaseIndex)}
+                  onClick={() => setSelectedPhaseId(phase.id)}
                 >
-                  Add task
+                  <strong>{phase.title || `Phase ${phaseIndex + 1}`}</strong>
+                  <span>{phase.tasks.length} tasks</span>
                 </button>
-              </section>
+                <div className="row-actions">
+                  <button
+                    className="button small ghost"
+                    type="button"
+                    disabled={!canEdit || dailyRulesRoutineSelected || phaseIndex === 0}
+                    onClick={() => movePhase(phaseIndex, -1)}
+                  >
+                    Move up
+                  </button>
+                  <button
+                    className="button small ghost"
+                    type="button"
+                    disabled={
+                      !canEdit ||
+                      dailyRulesRoutineSelected ||
+                      phaseIndex === selectedRoutine.phases.length - 1
+                    }
+                    onClick={() => movePhase(phaseIndex, 1)}
+                  >
+                    Move down
+                  </button>
+                  <button
+                    className="button small danger-ghost"
+                    type="button"
+                    disabled={!canEdit || dailyRulesRoutineSelected}
+                    onClick={() => deletePhase(phase, phaseIndex)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
+
+          {selectedPhase && selectedPhaseIndex >= 0 ? (
+            <section className="editor-card phase-editor advanced-phase-detail">
+              <div className="editor-card-header">
+                <div className="editor-row-main">
+                  <span className="editor-index">{selectedPhaseIndex + 1}</span>
+                  <label className="field-label" htmlFor={`phase-${selectedPhase.id}`}>
+                    Phase title
+                    <input
+                      id={`phase-${selectedPhase.id}`}
+                      value={selectedPhase.title}
+                      disabled={!canEdit || dailyRulesRoutineSelected}
+                      onChange={(event) => updatePhase(selectedPhaseIndex, event.target.value)}
+                    />
+                  </label>
+                </div>
+                <span className="task-count">{selectedPhase.tasks.length} tasks</span>
+              </div>
+
+              <div className="editor-list nested">
+                {selectedPhase.tasks.map((task, taskIndex) => (
+                  <div className="editor-card task-editor" key={task.id}>
+                    <div className="task-editor-title">
+                      <span className="editor-index subtle">{taskIndex + 1}</span>
+                      <strong>Task {taskIndex + 1}</strong>
+                    </div>
+                    <div className="form-grid three">
+                      <label className="field-label" htmlFor={`task-title-${task.id}`}>
+                        Task title
+                        <input
+                          id={`task-title-${task.id}`}
+                          value={task.title}
+                          disabled={!canEdit || dailyRulesRoutineSelected}
+                          onChange={(event) =>
+                            updateTask(selectedPhaseIndex, taskIndex, "title", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label className="field-label" htmlFor={`task-duration-${task.id}`}>
+                        Duration
+                        <input
+                          id={`task-duration-${task.id}`}
+                          value={task.duration}
+                          disabled={!canEdit || dailyRulesRoutineSelected}
+                          onChange={(event) =>
+                            updateTask(
+                              selectedPhaseIndex,
+                              taskIndex,
+                              "duration",
+                              event.target.value
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="field-label" htmlFor={`task-priority-${task.id}`}>
+                        Priority
+                        <select
+                          id={`task-priority-${task.id}`}
+                          value={task.priority || "normal"}
+                          disabled={!canEdit || dailyRulesRoutineSelected}
+                          onChange={(event) =>
+                            updateTask(
+                              selectedPhaseIndex,
+                              taskIndex,
+                              "priority",
+                              event.target.value
+                            )
+                          }
+                        >
+                          {priorityOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field-label field-span" htmlFor={`task-detail-${task.id}`}>
+                        Detail/explanation
+                        <textarea
+                          id={`task-detail-${task.id}`}
+                          className="textarea-small"
+                          value={task.detail}
+                          disabled={!canEdit || dailyRulesRoutineSelected}
+                          onChange={(event) =>
+                            updateTask(selectedPhaseIndex, taskIndex, "detail", event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                    <div className="row-actions">
+                      <button
+                        className="button small ghost"
+                        type="button"
+                        disabled={!canEdit || dailyRulesRoutineSelected || taskIndex === 0}
+                        onClick={() => moveTask(selectedPhaseIndex, taskIndex, -1)}
+                      >
+                        Move up
+                      </button>
+                      <button
+                        className="button small ghost"
+                        type="button"
+                        disabled={
+                          !canEdit ||
+                          dailyRulesRoutineSelected ||
+                          taskIndex === selectedPhase.tasks.length - 1
+                        }
+                        onClick={() => moveTask(selectedPhaseIndex, taskIndex, 1)}
+                      >
+                        Move down
+                      </button>
+                      <button
+                        className="button small danger-ghost"
+                        type="button"
+                        disabled={!canEdit || dailyRulesRoutineSelected}
+                        onClick={() => deleteTask(task, selectedPhaseIndex, taskIndex)}
+                      >
+                        Delete task
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                className="button ghost"
+                type="button"
+                disabled={!canEdit || dailyRulesRoutineSelected}
+                onClick={() => addTask(selectedPhaseIndex)}
+              >
+                Add task
+              </button>
+            </section>
+          ) : (
+            <p className="callout small">No phases yet. Add a phase to start building this routine.</p>
+          )}
         </section>
       ) : null}
     </>

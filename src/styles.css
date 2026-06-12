@@ -1956,6 +1956,98 @@ details[open] > .phase-summary .phase-chevron::before {
   flex: 0 1 auto;
 }
 
+.advanced-menu-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.advanced-category-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.advanced-category-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  color: var(--text);
+  padding: 0.95rem;
+  text-align: left;
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+}
+
+.advanced-category-card:hover,
+.advanced-category-card:focus-visible {
+  border-color: rgba(88, 116, 97, 0.5);
+  background: var(--accent-soft);
+}
+
+.advanced-category-card > span:first-child {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.advanced-category-card strong {
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.advanced-category-card small {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 560;
+  line-height: 1.4;
+}
+
+.advanced-category-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.advanced-category-meta span {
+  color: var(--accent-strong);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.advanced-detail-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(180px, 240px);
+  align-items: center;
+  gap: 1rem;
+}
+
+.advanced-detail-header .button {
+  margin: 0;
+}
+
+.advanced-detail-header h2 {
+  margin: 0.05rem 0;
+}
+
+.advanced-detail-header select {
+  width: 100%;
+}
+
+.advanced-import-grid {
+  margin-bottom: 1rem;
+}
+
 .editor-heading {
   margin-top: 1.4rem;
 }
@@ -1968,6 +2060,16 @@ details[open] > .phase-summary .phase-chevron::before {
 
 .editor-list.nested {
   margin: 1rem 0;
+}
+
+.compact-editor-list,
+.phase-picker-list {
+  margin-bottom: 1rem;
+}
+
+.selected-editor-card,
+.advanced-phase-detail {
+  margin-top: 1rem;
 }
 
 .editor-row,
@@ -2075,9 +2177,21 @@ details[open] > .phase-summary .phase-chevron::before {
   overflow: hidden;
 }
 
+.compact-disclosure {
+  padding: 0;
+  overflow: hidden;
+}
+
 .system-section-editor > .editor-card-header,
-.system-section-editor > .form-grid {
+.system-section-editor > .form-grid,
+.compact-disclosure > .form-grid,
+.compact-disclosure > .row-actions,
+.compact-disclosure > .editor-card-header {
   padding: 0 0.9rem 0.9rem;
+}
+
+.compact-disclosure > .row-actions {
+  padding-top: 0.1rem;
 }
 
 .disclosure-summary {
@@ -2488,6 +2602,23 @@ details[open] > .phase-summary .phase-chevron::before {
   .customize-tabs .tab {
     flex: 0 0 auto;
     min-width: max-content;
+  }
+
+  .advanced-category-list {
+    grid-template-columns: 1fr;
+  }
+
+  .advanced-detail-header {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .advanced-detail-header select {
+    max-width: 100%;
+  }
+
+  .advanced-category-card {
+    padding: 0.85rem;
   }
 
   .editor-row-main {
@@ -3273,6 +3404,50 @@ details[open] > .phase-summary .phase-chevron::before {
 
   .simple-actions-panel .settings-actions {
     margin-top: 0;
+  }
+
+  .advanced-menu-panel {
+    gap: 0.75rem;
+  }
+
+  .advanced-category-list {
+    gap: 0.55rem;
+  }
+
+  .advanced-category-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.55rem;
+    padding: 0.75rem;
+  }
+
+  .advanced-category-card small {
+    font-size: 0.8rem;
+  }
+
+  .advanced-category-meta {
+    justify-content: space-between;
+    width: 100%;
+    white-space: normal;
+  }
+
+  .advanced-detail-header {
+    gap: 0.65rem;
+  }
+
+  .compact-editor-list,
+  .phase-picker-list {
+    margin-bottom: 0.75rem;
+  }
+
+  .selected-editor-card,
+  .advanced-phase-detail {
+    margin-top: 0.75rem;
+  }
+
+  .compact-disclosure > .form-grid,
+  .compact-disclosure > .row-actions,
+  .compact-disclosure > .editor-card-header {
+    padding: 0 0.75rem 0.75rem;
   }
 
   .customize-card,
