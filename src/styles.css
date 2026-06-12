@@ -1336,13 +1336,13 @@ details[open] > .phase-summary .phase-chevron::before {
 .routine-library-card {
   display: grid;
   align-content: start;
-  gap: 0.35rem;
-  min-height: 148px;
+  gap: 0.28rem;
+  min-height: 122px;
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   background: var(--surface-strong);
   color: var(--text);
-  padding: 0.95rem;
+  padding: 0.85rem;
   text-align: left;
   box-shadow: var(--shadow-soft);
 }
@@ -1391,6 +1391,37 @@ details[open] > .phase-summary .phase-chevron::before {
   margin-bottom: 0;
 }
 
+.routine-guide-heading {
+  align-items: flex-start;
+}
+
+.routine-meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.routine-meta-strip span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  padding: 0.18rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.routine-guide-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 0.85rem;
+}
+
+.routine-guide-block p:not(.eyebrow) {
+  margin-top: 0.25rem;
+}
+
 .routine-fact-grid,
 .routine-prep-grid {
   display: grid;
@@ -1405,8 +1436,43 @@ details[open] > .phase-summary .phase-chevron::before {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.routine-prep-grid.compact {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.routine-tools-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid rgba(88, 116, 97, 0.26);
+  border-radius: var(--radius-card);
+  background: var(--accent-soft);
+  padding: 0.9rem;
+}
+
+.routine-tools-panel h3 {
+  margin-top: 0.15rem;
+  color: var(--text);
+  font-size: 1rem;
+}
+
 .routine-reference-actions {
   justify-content: flex-end;
+}
+
+.checklist-reference-panel {
+  display: block;
+}
+
+.checklist-reference-summary {
+  cursor: pointer;
+}
+
+.checklist-reference-panel[open] .checklist-reference-summary {
+  margin-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(207, 194, 174, 0.65);
+  padding-bottom: 0.75rem;
 }
 
 .active-session-panel {
@@ -1583,7 +1649,8 @@ details[open] > .phase-summary .phase-chevron::before {
   list-style: none;
 }
 
-.reference-chip-list li {
+.reference-chip-list li,
+.reference-chip-list span {
   border: 1px solid rgba(88, 116, 97, 0.26);
   border-radius: 999px;
   background: var(--accent-soft);
@@ -2587,6 +2654,11 @@ details[open] > .phase-summary .phase-chevron::before {
     grid-template-columns: 1fr;
   }
 
+  .routine-prep-grid.compact,
+  .routine-tools-panel {
+    grid-template-columns: 1fr;
+  }
+
   .detail-panel {
     position: static;
   }
@@ -3220,13 +3292,74 @@ details[open] > .phase-summary .phase-chevron::before {
   }
 
   .routine-library-card {
+    gap: 0.18rem;
     min-height: auto;
-    padding: 0.75rem;
+    padding: 0.62rem;
+  }
+
+  .routine-library-card strong {
+    font-size: 0.92rem;
+  }
+
+  .routine-library-card span,
+  .routine-library-card small {
+    font-size: 0.76rem;
+    line-height: 1.28;
+  }
+
+  .daily-routine-note {
+    margin-top: 0.65rem;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.86rem;
   }
 
   .routine-fact-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.55rem;
+  }
+
+  .routine-reference-panel {
+    gap: 0.75rem;
+  }
+
+  .routine-guide-heading h2 {
+    font-size: 1.08rem;
+  }
+
+  .routine-guide-heading p:not(.eyebrow) {
+    font-size: 0.9rem;
+    line-height: 1.42;
+  }
+
+  .routine-meta-strip {
+    gap: 0.3rem;
+  }
+
+  .routine-meta-strip span {
+    padding: 0.14rem 0.45rem;
+    font-size: 0.74rem;
+  }
+
+  .routine-prep-grid.compact {
+    gap: 0.55rem;
+  }
+
+  .routine-guide-block {
+    padding: 0.7rem;
+  }
+
+  .routine-tools-panel {
+    gap: 0.65rem;
+    padding: 0.7rem;
+  }
+
+  .routine-tools-panel h3 {
+    font-size: 0.92rem;
+  }
+
+  .checklist-reference-panel[open] .checklist-reference-summary {
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.6rem;
   }
 
   .mobile-routine-summary-grid {

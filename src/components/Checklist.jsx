@@ -37,7 +37,9 @@ export default function Checklist({
   onCompletePhase,
   readonly = false,
   collapsible = false,
-  focusFirstIncomplete = false
+  focusFirstIncomplete = false,
+  startCollapsed = false,
+  showTaskCountOnly = false
 }) {
   const completed = new Set(completedTaskIds || []);
   const phaseStates = useMemo(
@@ -49,12 +51,14 @@ export default function Checklist({
     .join("|");
   const firstIncompletePhaseId = phaseStates.find((item) => !item.complete)?.phase.id || null;
   const [openPhaseIds, setOpenPhaseIds] = useState(
-    () => new Set(getDefaultOpenPhaseIds(phaseStates, focusFirstIncomplete))
+    () => new Set(startCollapsed ? [] : getDefaultOpenPhaseIds(phaseStates, focusFirstIncomplete))
   );
 
   useEffect(() => {
-    setOpenPhaseIds(new Set(getDefaultOpenPhaseIds(phaseStates, focusFirstIncomplete)));
-  }, [routine.id, collapsible, focusFirstIncomplete]);
+    setOpenPhaseIds(
+      new Set(startCollapsed ? [] : getDefaultOpenPhaseIds(phaseStates, focusFirstIncomplete))
+    );
+  }, [routine.id, collapsible, focusFirstIncomplete, startCollapsed]);
 
   useEffect(() => {
     if (!collapsible) return;
@@ -100,7 +104,7 @@ export default function Checklist({
                 <span className="phase-summary-main">
                   <strong>{phase.title}</strong>
                   <span className="phase-summary-count">
-                    {completedInPhase}/{phase.tasks.length}
+                    {showTaskCountOnly ? `${phase.tasks.length} tasks` : `${completedInPhase}/${phase.tasks.length}`}
                   </span>
                 </span>
                 <span className="phase-summary-status">

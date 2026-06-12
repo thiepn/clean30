@@ -10,6 +10,18 @@ function inferComplexity(taskCount) {
   return "detailed";
 }
 
+const routinePurposeLabels = {
+  "initial-reset": "Foundation reset",
+  "weekly-reset": "Main weekly routine",
+  "minimal-reset": "Fast maintenance reset",
+  "guest-reset": "Guest-ready cleanup",
+  "monthly-deep-clean": "Deeper maintenance"
+};
+
+function getRoutinePurposeLabel(routine) {
+  return routinePurposeLabels[routine.id] || "Reference routine";
+}
+
 function averageCompletion(history, routineId) {
   const entries = history.filter((entry) => entry.routineId === routineId);
   if (!entries.length) return null;
@@ -67,14 +79,21 @@ function createChecklistText(routine) {
 }
 
 export default function Routines({ routines, history, template, onStartRoutine }) {
-  const [selectedRoutineId, setSelectedRoutineId] = useState(routines[0]?.id || "");
+  const referenceRoutines = useMemo(
+    () => routines.filter((routine) => routine.id !== "daily-rules"),
+    [routines]
+  );
+  const [selectedRoutineId, setSelectedRoutineId] = useState(referenceRoutines[0]?.id || "");
   const [copyMessage, setCopyMessage] = useState("");
+  const [checklistOpen, setChecklistOpen] = useState(false);
   const selectedRoutine =
-    routines.find((routine) => routine.id === selectedRoutineId) || routines[0] || null;
+    referenceRoutines.find((routine) => routine.id === selectedRoutineId) ||
+    referenceRoutines[0] ||
+    null;
 
   const routineSummaries = useMemo(
     () =>
-      routines.map((routine) => {
+      referenceRoutines.map((routine) => {
         const taskCount = getRoutineTotalTasks(routine);
         return {
           routine,
@@ -84,12 +103,17 @@ export default function Routines({ routines, history, template, onStartRoutine }
           average: averageCompletion(history, routine.id)
         };
       }),
-    [history, routines]
+    [history, referenceRoutines]
   );
 
   useEffect(() => {
-    if (!selectedRoutine && routines[0]) setSelectedRoutineId(routines[0].id);
-  }, [routines, selectedRoutine]);
+    if (!selectedRoutine && referenceRoutines[0]) setSelectedRoutineId(referenceRoutines[0].id);
+  }, [referenceRoutines, selectedRoutine]);
+
+  useEffect(() => {
+    setChecklistOpen(false);
+    setCopyMessage("");
+  }, [selectedRoutineId]);
 
   async function copyChecklist() {
     if (!selectedRoutine || !navigator.clipboard) {
@@ -101,7 +125,12 @@ export default function Routines({ routines, history, template, onStartRoutine }
   }
 
   if (!selectedRoutine) {
-    return <EmptyState title="No routines" message="Add a routine in Customize to use this page." />;
+    return (
+      <EmptyState
+        title="No reset routines"
+        message="Daily Rules are handled from Dashboard. Add reset routines in Customize to use this page."
+      />
+    );
   }
 
   const selectedSummary = routineSummaries.find((item) => item.routine.id === selectedRoutine.id);
@@ -138,80 +167,76 @@ export default function Routines({ routines, history, template, onStartRoutine }
               <small>
                 {item.taskCount} tasks / {item.complexity}
               </small>
+              <small>{getRoutinePurposeLabel(item.routine)}</small>
               <small>
-                Last: {item.lastCompleted ? formatRelativeDays(item.lastCompleted) : "Not yet"}
+                {item.lastCompleted || item.average !== null
+                  ? `${item.lastCompleted ? `Last: ${formatRelativeDays(item.lastCompleted)}` : ""}${
+                      item.lastCompleted && item.average !== null ? " / " : ""
+                    }${item.average !== null ? `Avg: ${item.average}%` : ""}`
+                  : "No completions yet"}
               </small>
-              <small>Average: {item.average === null ? "Not yet" : `${item.average}%`}</small>
             </button>
           ))}
         </div>
+        {routines.some((routine) => routine.id === "daily-rules") ? (
+          <p className="callout small daily-routine-note">
+            Tiny Rules are handled from the Dashboard. This page focuses on reset routines.
+          </p>
+        ) : null}
       </section>
 
       <section className="panel routine-reference-panel">
-        <div className="section-heading">
+        <div className="section-heading routine-guide-heading">
           <div>
             <p className="eyebrow">Routine reference</p>
             <h2>{selectedRoutine.title}</h2>
             <p>{selectedRoutine.purpose}</p>
           </div>
-          <span className="task-count">{selectedSummary?.taskCount || 0} tasks</span>
         </div>
 
-        <div className="routine-fact-grid">
-          <div className="metric-card">
-            <span>Estimated time</span>
-            <strong>{selectedRoutine.estimatedTime || "Not set"}</strong>
-          </div>
-          <div className="metric-card">
-            <span>Complexity</span>
-            <strong>{selectedSummary?.complexity}</strong>
-          </div>
-          <div className="metric-card">
-            <span>Phases</span>
-            <strong>{selectedRoutine.phases.length}</strong>
-          </div>
-          <div className="metric-card">
-            <span>Last completed</span>
-            <strong>
-              {selectedSummary?.lastCompleted
-                ? formatRelativeDays(selectedSummary.lastCompleted)
-                : "Not yet"}
-            </strong>
-          </div>
+        <div className="routine-meta-strip" aria-label="Routine summary">
+          <span>{selectedRoutine.estimatedTime || "No estimate"}</span>
+          <span>{selectedSummary?.taskCount || 0} tasks</span>
+          <span>{selectedRoutine.phases.length} phases</span>
+          <span>{selectedSummary?.complexity}</span>
+          {selectedSummary?.lastCompleted || selectedSummary?.average !== null ? (
+            <>
+              {selectedSummary.lastCompleted ? (
+                <span>Last: {formatRelativeDays(selectedSummary.lastCompleted)}</span>
+              ) : null}
+              {selectedSummary.average !== null ? <span>Avg: {selectedSummary.average}%</span> : null}
+            </>
+          ) : (
+            <span>No completions yet</span>
+          )}
         </div>
 
         {selectedRoutine.whenToUse ? (
-          <div className="insight-card">
+          <div className="routine-guide-block">
             <p className="eyebrow">When to use</p>
             <p>{selectedRoutine.whenToUse}</p>
           </div>
         ) : null}
 
-        <div className="routine-prep-grid">
-          <div className="insight-card">
-            <p className="eyebrow">Before you start</p>
-            <ul className="system-list compact">
-              <li>{mindsetForRoutine(selectedRoutine)}</li>
-              <li>Keep the routine bounded to its purpose.</li>
-              <li>Stop when the main bottlenecks are controlled.</li>
-            </ul>
+        <div className="routine-prep-grid compact">
+          <div className="routine-guide-block">
+            <p className="eyebrow">Preparation note</p>
+            <p>{mindsetForRoutine(selectedRoutine)}</p>
           </div>
-          <div className="insight-card">
+          <div className="routine-guide-block">
             <p className="eyebrow">Likely supplies</p>
-            <ul className="system-list compact">
+            <div className="reference-chip-list">
               {supplies.map((item) => (
-                <li key={item}>{item}</li>
+                <span key={item}>{item}</span>
               ))}
-            </ul>
+            </div>
           </div>
-          <div className="insight-card">
+          <div className="routine-guide-block">
             <p className="eyebrow">Related zones</p>
             {relatedZones.length ? (
-              <div className="zone-chip-list compact">
+              <div className="reference-chip-list">
                 {relatedZones.map((zone) => (
-                  <span className="date-chip" key={zone.id}>
-                    {zone.name}
-                  </span>
+                  <span key={zone.id}>{zone.name}</span>
                 ))}
               </div>
             ) : (
@@ -222,26 +247,62 @@ export default function Routines({ routines, history, template, onStartRoutine }
 
         {selectedRoutine.message ? <p className="callout small">{selectedRoutine.message}</p> : null}
 
-        <div className="card-actions routine-reference-actions">
-          <button className="button ghost" type="button" onClick={copyChecklist}>
-            Copy checklist
-          </button>
-          <button
-            className="button primary"
-            type="button"
-            onClick={() => onStartRoutine(selectedRoutine.id)}
-          >
-            Start this routine
-          </button>
+        <div className="routine-tools-panel">
+          <div>
+            <p className="eyebrow">Preparation tools</p>
+            <h3>Use this page to prepare. Use Start to execute.</h3>
+          </div>
+          <div className="card-actions routine-reference-actions">
+            <button className="button primary" type="button" onClick={copyChecklist}>
+              Copy checklist
+            </button>
+            <button
+              className="button ghost"
+              type="button"
+              onClick={() => setChecklistOpen((current) => !current)}
+            >
+              {checklistOpen ? "Hide checklist" : "View checklist"}
+            </button>
+            <button
+              className="button ghost"
+              type="button"
+              onClick={() => onStartRoutine(selectedRoutine.id)}
+            >
+              Start this routine
+            </button>
+          </div>
         </div>
         {copyMessage ? <p className="form-message">{copyMessage}</p> : null}
       </section>
 
-      <section className="panel">
-        <p className="eyebrow">Checklist reference</p>
-        <h2>{selectedRoutine.title}</h2>
-        <Checklist routine={selectedRoutine} completedTaskIds={[]} readonly collapsible />
-      </section>
+      <details
+        className="panel checklist-reference-panel"
+        open={checklistOpen}
+        onToggle={(event) => setChecklistOpen(event.currentTarget.open)}
+      >
+        <summary className="system-info-summary compact checklist-reference-summary">
+          <span>
+            <span className="eyebrow">Checklist reference</span>
+            <strong>{selectedRoutine.title}</strong>
+            <small>
+              {selectedRoutine.phases.length} phases / {selectedSummary?.taskCount || 0} tasks
+            </small>
+          </span>
+        </summary>
+        <div className="card-actions routine-reference-actions">
+          <button className="button ghost" type="button" onClick={copyChecklist}>
+            Copy checklist
+          </button>
+        </div>
+        <Checklist
+          routine={selectedRoutine}
+          completedTaskIds={[]}
+          readonly
+          collapsible
+          startCollapsed
+          showTaskCountOnly
+        />
+      </details>
     </div>
   );
 }
