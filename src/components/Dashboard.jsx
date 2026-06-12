@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   getDashboardStatus,
   getLastCompleted,
@@ -29,13 +30,16 @@ export default function Dashboard({
   activeSession,
   backupDue,
   lastFullBackupExportedAt,
+  dismissedRecommendations,
   onToggleDailyRule,
   onStartRoutine,
+  onDismissRecommendation,
   onResumeSession,
   onFinishPartialSession,
   onDiscardSession,
   onExportFullBackup
 }) {
+  const [selectedQuickStart, setSelectedQuickStart] = useState("");
   const todayKey = getTodayKey();
   const todayCompleted = dailyRuleCompletions[todayKey] || [];
   const dailyRules = template.dailyRules;
@@ -45,7 +49,9 @@ export default function Dashboard({
     percent: dailyRules.length ? Math.round((todayCompleted.length / dailyRules.length) * 100) : 0
   };
   const status = getDashboardStatus({ history, template, dailyProgress });
-  const recommendation = getRecommendedAction(status, dailyProgress);
+  const recommendation = getRecommendedAction(status, dailyProgress, { template });
+  const dismissedToday = dismissedRecommendations[todayKey] || [];
+  const showRecommendation = !dismissedToday.includes(recommendation.key);
   const recommendedRoutine = template.routines.find(
     (routine) => routine.id === recommendation.routineId
   );
@@ -166,20 +172,36 @@ export default function Dashboard({
           </div>
         </section>
 
-        <section className="panel action-panel dashboard-action-panel">
-          <p className="eyebrow">Recommended next action</p>
-          <h2>{recommendation.label}</h2>
-          <p>{recommendation.detail}</p>
-          {recommendedRoutine ? (
+        {showRecommendation ? (
+          <section className="panel action-panel dashboard-action-panel">
             <button
-              className="button primary wide"
+              className="dismiss-button"
               type="button"
-              onClick={() => onStartRoutine(recommendation.routineId)}
+              aria-label="Dismiss recommendation"
+              onClick={() => onDismissRecommendation(recommendation.key)}
             >
-              {recommendation.label}
+              X
             </button>
-          ) : null}
-        </section>
+            <p className="eyebrow">Recommended next action</p>
+            <h2>{recommendation.label}</h2>
+            <p>{recommendation.detail}</p>
+            {recommendedRoutine ? (
+              <button
+                className="button primary wide"
+                type="button"
+                onClick={() => onStartRoutine(recommendation.routineId)}
+              >
+                {recommendation.label}
+              </button>
+            ) : null}
+          </section>
+        ) : (
+          <section className="panel action-panel dashboard-action-panel recommendation-muted">
+            <p className="eyebrow">Recommendation hidden</p>
+            <h2>Dashboard stays usable</h2>
+            <p>Recommendations can appear again tomorrow or when the status changes.</p>
+          </section>
+        )}
       </div>
 
       <section className="panel">
@@ -188,22 +210,40 @@ export default function Dashboard({
             <p className="eyebrow">Quick start</p>
             <h2>Fixed Sequences</h2>
           </div>
+          {selectedQuickStart ? (
+            <span className="pill">
+              {template.routines.find((routine) => routine.id === selectedQuickStart)?.title}
+            </span>
+          ) : null}
         </div>
-        <div className="quick-grid">
+        <div className="quick-grid quick-start-grid">
           {quickStarts
             .map((routineId) => template.routines.find((item) => item.id === routineId))
             .filter(Boolean)
             .map((routine) => (
               <button
-                className="quick-button"
+                className={
+                  selectedQuickStart === routine.id ? "quick-button selected" : "quick-button"
+                }
                 type="button"
                 key={routine.id}
-                onClick={() => onStartRoutine(routine.id)}
+                onClick={() => setSelectedQuickStart(routine.id)}
               >
-                <strong>Start {routine.title}</strong>
+                <strong>{routine.title}</strong>
                 <span>{routine.estimatedTime}</span>
               </button>
             ))}
+          <button
+            className={
+              selectedQuickStart ? "quick-button quick-confirm active" : "quick-button quick-confirm"
+            }
+            type="button"
+            disabled={!selectedQuickStart}
+            onClick={() => selectedQuickStart && onStartRoutine(selectedQuickStart)}
+          >
+            <strong>Start</strong>
+            <span>{selectedQuickStart ? "Start selected" : "Select a routine first"}</span>
+          </button>
         </div>
       </section>
 

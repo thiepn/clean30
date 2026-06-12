@@ -21,6 +21,79 @@ const zoneDescriptions = {
   kids: "Shared or kids areas work best with broad reset categories, not perfection."
 };
 
+const zoneGuidance = {
+  trash: {
+    frequency: "Check daily; remove before smell appears.",
+    watch: "Overflowing bins, food packaging, bathroom trash, and recycling piles.",
+    tips: "Keep one obvious exit path for trash and recycling. Do not sort everything perfectly before taking obvious trash out.",
+    supplies: "trash bags, recycling bag, gloves if needed",
+    goodEnough: "Bins are not overflowing and food trash is out of the room."
+  },
+  dishes: {
+    frequency: "Check daily; reset before cooking or sleeping.",
+    watch: "Sink blockage, cups around the room, food smell, and no clean prep space.",
+    tips: "Collect dishes first, then wash or stage them. A clear sink matters more than a perfect kitchen.",
+    supplies: "dish soap, sponge, drying space",
+    goodEnough: "Sink and counters can be used again."
+  },
+  laundry: {
+    frequency: "Contain daily; run a cycle when the basket is realistically full.",
+    watch: "Clothes on floor, damp towels, chair piles, and blocked walkways.",
+    tips: "Contain first, sort second. Getting fabric off the floor changes the whole room quickly.",
+    supplies: "laundry basket, detergent, hangers",
+    goodEnough: "Dirty clothes are contained and clean clothes have a landing place."
+  },
+  bathroom: {
+    frequency: "Light reset weekly; smell check more often.",
+    watch: "Toilet smell, sink film, wet towels, trash, and floor hair.",
+    tips: "Do toilet and sink before detail cleaning. Bathroom smell has high impact.",
+    supplies: "bathroom cleaner, toilet brush, cloth, trash bag",
+    goodEnough: "Toilet, sink, trash, and towel situation are guest-safe."
+  },
+  kitchen: {
+    frequency: "Light reset daily; deeper reset weekly.",
+    watch: "Dishes, sticky counters, food trash, floor crumbs, and blocked prep space.",
+    tips: "Start with trash and dishes. Wiping counters before those are handled wastes energy.",
+    supplies: "dish soap, cloth, surface cleaner, trash bag",
+    goodEnough: "You can prepare food without moving clutter first."
+  },
+  bedroom: {
+    frequency: "Reset weekly or when laundry spreads.",
+    watch: "Bed clutter, laundry piles, cups, trash, and blocked floor space.",
+    tips: "Make the bed or clear it enough to use as a sorting surface, then remove laundry and trash.",
+    supplies: "laundry basket, trash bag, fresh bedding if needed",
+    goodEnough: "Bed and floor are usable, and laundry is contained."
+  },
+  living: {
+    frequency: "Reset before guests or weekly.",
+    watch: "Table clutter, cups, dishes, blankets, visible trash, and seating blocked.",
+    tips: "Clear sightlines first: tables, seating, and floor paths.",
+    supplies: "basket, trash bag, cloth",
+    goodEnough: "Someone can sit down without you apologizing for the room."
+  },
+  entrance: {
+    frequency: "Check weekly and before guests.",
+    watch: "Shoes, bags, mail, and hallway clutter that migrates inward.",
+    tips: "The entrance is a boundary. Keep it easy to pass through.",
+    supplies: "shoe spot, small tray, bag hook",
+    goodEnough: "You can enter and leave without stepping around things."
+  },
+  floors: {
+    frequency: "After surfaces and clutter; spot clean as needed.",
+    watch: "Crumbs, hair, dust paths, sticky spots, and blocked vacuum access.",
+    tips: "Floors are a final pass. Clear trash, dishes, and laundry first.",
+    supplies: "vacuum, broom, mop or cloth",
+    goodEnough: "Main walking paths are clear and visibly decent."
+  },
+  windows: {
+    frequency: "Monthly or when visible marks bother you.",
+    watch: "Fingerprints, dust on sills, condensation, and mold-prone edges.",
+    tips: "Windows are maintenance, not emergency cleaning. Do them after core bottlenecks.",
+    supplies: "glass cloth, mild cleaner",
+    goodEnough: "Main marks are gone and moisture-prone edges are checked."
+  }
+};
+
 function normalizeWords(value) {
   return String(value || "")
     .toLowerCase()
@@ -52,6 +125,20 @@ function describeZone(zoneName) {
   return (
     zoneDescriptions[match] ||
     "This zone matters because it is part of the apartment reset map. Use it to focus the next small cleaning action."
+  );
+}
+
+function getZoneGuidance(zoneName) {
+  const keywords = zoneKeywords(zoneName);
+  const match = keywords.find((keyword) => zoneGuidance[keyword]);
+  return (
+    zoneGuidance[match] || {
+      frequency: "Fold into the weekly reset or inspect when it starts bothering you.",
+      watch: "Visible clutter, blocked access, smell, dirt, or anything that spreads into other zones.",
+      tips: "Use this zone as a focus lens. Remove obvious trash and blockers before detail work.",
+      supplies: "cloth, basket, trash bag",
+      goodEnough: "The zone is usable and no longer pulling attention."
+    }
   );
 }
 
@@ -87,7 +174,7 @@ function findRelatedTasks(routines, keywords) {
   return matches.slice(0, 6);
 }
 
-export default function Systems({ template, onStartRoutine }) {
+export default function Systems({ template }) {
   const { systems, zones } = template;
   const [selectedZoneId, setSelectedZoneId] = useState(zones[0]?.id || "");
   const selectedZone = zones.find((zone) => zone.id === selectedZoneId) || zones[0] || null;
@@ -97,39 +184,14 @@ export default function Systems({ template, onStartRoutine }) {
     const relatedTasks = findRelatedTasks(template.routines, keywords);
     return {
       description: describeZone(selectedZone.name),
+      guidance: getZoneGuidance(selectedZone.name),
       relatedSystems: findRelatedSystems(systems, keywords),
-      relatedTasks,
-      nextActionRoutineId: relatedTasks.some((task) => task.routineId === "minimal-reset")
-        ? "minimal-reset"
-        : "weekly-reset"
+      relatedTasks
     };
   }, [selectedZone, systems, template.routines]);
 
   return (
     <div className="screen-stack">
-      <section className="panel">
-        <p className="eyebrow">Permanent system</p>
-        <h2>Bottlenecks</h2>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Problem</th>
-                <th>Consequence</th>
-              </tr>
-            </thead>
-            <tbody>
-              {systems.bottlenecks.map((item) => (
-                <tr key={`${item.problem}-${item.consequence}`}>
-                  <td>{item.problem}</td>
-                  <td>{item.consequence}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
       <section className="panel">
         <p className="eyebrow">Apartment map</p>
         <h2>Zones</h2>
@@ -161,6 +223,25 @@ export default function Systems({ template, onStartRoutine }) {
               </span>
             </div>
             <p>{zoneFocus.description}</p>
+            <div className="zone-guidance-grid">
+              <div className="metric-card">
+                <span>Frequency</span>
+                <strong>{zoneFocus.guidance.frequency}</strong>
+              </div>
+              <div className="metric-card">
+                <span>Watch for</span>
+                <strong>{zoneFocus.guidance.watch}</strong>
+              </div>
+              <div className="metric-card">
+                <span>Useful supplies</span>
+                <strong>{zoneFocus.guidance.supplies}</strong>
+              </div>
+              <div className="metric-card">
+                <span>Good enough</span>
+                <strong>{zoneFocus.guidance.goodEnough}</strong>
+              </div>
+            </div>
+            <p className="callout small">{zoneFocus.guidance.tips}</p>
             <div className="zone-focus-grid">
               <div>
                 <h3>Related systems</h3>
@@ -177,37 +258,23 @@ export default function Systems({ template, onStartRoutine }) {
               <div>
                 <h3>Related routine tasks</h3>
                 {zoneFocus.relatedTasks.length ? (
-                  <ul className="system-list compact">
-                    {zoneFocus.relatedTasks.map((task) => (
-                      <li key={`${task.routineId}-${task.phaseTitle}-${task.taskTitle}`}>
-                        <strong>{task.routineTitle}:</strong> {task.taskTitle}
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <p className="muted">Reference only. Start sessions from the Start tab.</p>
+                    <ul className="system-list compact">
+                      {zoneFocus.relatedTasks.map((task) => (
+                        <li key={`${task.routineId}-${task.phaseTitle}-${task.taskTitle}`}>
+                          <strong>{task.routineTitle}:</strong> {task.taskTitle}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
                 ) : (
                   <p className="muted">
-                    No checklist task matched this zone. Start with trash, dishes, laundry, or the
-                    most visible surface.
+                    No checklist task matched this zone. Use the guidance above and the priority
+                    order below.
                   </p>
                 )}
               </div>
-            </div>
-            <div className="zone-focus-action">
-              <p className="callout small">
-                Useful next action:{" "}
-                {zoneFocus.nextActionRoutineId === "minimal-reset"
-                  ? "Start Minimal Reset"
-                  : "Start Weekly Reset"}
-              </p>
-              <button
-                className="button primary"
-                type="button"
-                onClick={() => onStartRoutine(zoneFocus.nextActionRoutineId)}
-              >
-                {zoneFocus.nextActionRoutineId === "minimal-reset"
-                  ? "Start Minimal Reset"
-                  : "Start Weekly Reset"}
-              </button>
             </div>
           </div>
         ) : null}

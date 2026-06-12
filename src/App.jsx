@@ -92,6 +92,29 @@ export default function App() {
       : { ...state, firstMeaningfulUseAt: new Date().toISOString() };
   }
 
+  function clearTodayRecommendationDismissals(state) {
+    const todayKey = getTodayKey();
+    if (!state.dismissedRecommendations?.[todayKey]?.length) return state;
+    const { [todayKey]: _today, ...remaining } = state.dismissedRecommendations;
+    return { ...state, dismissedRecommendations: remaining };
+  }
+
+  function dismissRecommendation(recommendationKey) {
+    if (!recommendationKey) return;
+    const todayKey = getTodayKey();
+    setAppState((current) => {
+      const existing = new Set(current.dismissedRecommendations?.[todayKey] || []);
+      existing.add(recommendationKey);
+      return {
+        ...current,
+        dismissedRecommendations: {
+          ...(current.dismissedRecommendations || {}),
+          [todayKey]: [...existing]
+        }
+      };
+    });
+  }
+
   function requestConfirmation({ title, message, confirmLabel, onConfirm }) {
     setConfirmDialog({ title, message, confirmLabel, onConfirm });
   }
@@ -247,7 +270,7 @@ export default function App() {
         message: "This will discard the current active session and start the selected routine.",
         confirmLabel: "Replace",
         onConfirm: () => {
-          setAppState((current) => ({
+          setAppState((current) => clearTodayRecommendationDismissals({
             ...current,
             activeSession: createSession(routine, activeTemplate)
           }));
@@ -258,7 +281,7 @@ export default function App() {
       return;
     }
 
-    setAppState((current) => ({
+    setAppState((current) => clearTodayRecommendationDismissals({
       ...current,
       activeSession: createSession(routine, activeTemplate)
     }));
@@ -493,9 +516,16 @@ export default function App() {
       />
     );
   } else if (currentView === "routines") {
-    content = <Routines routines={activeTemplate.routines} onStartRoutine={startSession} />;
+    content = (
+      <Routines
+        routines={activeTemplate.routines}
+        history={appState.history}
+        template={activeTemplate}
+        onStartRoutine={startSession}
+      />
+    );
   } else if (currentView === "systems") {
-    content = <Systems template={activeTemplate} onStartRoutine={startSession} />;
+    content = <Systems template={activeTemplate} />;
   } else if (currentView === "customize") {
     content = (
       <Customize
@@ -547,8 +577,10 @@ export default function App() {
         activeSession={appState.activeSession}
         backupDue={backupDue}
         lastFullBackupExportedAt={appState.lastFullBackupExportedAt}
+        dismissedRecommendations={appState.dismissedRecommendations}
         onToggleDailyRule={toggleDailyRule}
         onStartRoutine={startSession}
+        onDismissRecommendation={dismissRecommendation}
         onResumeSession={() => setCurrentView("start")}
         onFinishPartialSession={finishSession}
         onDiscardSession={cancelSession}

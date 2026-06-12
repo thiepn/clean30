@@ -1,6 +1,22 @@
 import { daysBetween } from "./dates.js";
 import { cloneDeep } from "./templateUtils.js";
 
+const weekdayIndexes = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6
+};
+
+function daysUntilWeekday(dayName, date = new Date()) {
+  const target = weekdayIndexes[dayName];
+  if (target === undefined) return null;
+  return (target - date.getDay() + 7) % 7;
+}
+
 export function getRoutineById(routines, routineId) {
   return (routines || []).find((routine) => routine.id === routineId);
 }
@@ -102,9 +118,31 @@ export function getDashboardStatus({ history, template, dailyProgress }) {
   };
 }
 
-export function getRecommendedAction(status, dailyProgress) {
+export function getRecommendedAction(status, dailyProgress, options = {}) {
+  const daysUntilWeekly = daysUntilWeekday(options.template?.schedule?.weeklyResetDay, options.date);
+
   if (status.status === "Weekly reset due") {
+    if (daysUntilWeekly === 1) {
+      return {
+        key: "weekly-reset-upcoming",
+        label: "Upcoming: Weekly Reset tomorrow",
+        routineId: null,
+        detail:
+          "Your weekly reset day is tomorrow. Keep today light unless the apartment needs attention."
+      };
+    }
+
+    if (daysUntilWeekly && daysUntilWeekly > 1) {
+      return {
+        key: "weekly-reset-scheduled",
+        label: "Weekly Reset scheduled",
+        routineId: null,
+        detail: `Your weekly reset day is in ${daysUntilWeekly} days. Keep today light unless the apartment needs attention.`
+      };
+    }
+
     return {
+      key: "weekly-reset-due",
       label: "Start Weekly Reset",
       routineId: "weekly-reset",
       detail: "Use the laundry cycle as the anchor and clear the bottlenecks first."
@@ -112,6 +150,7 @@ export function getRecommendedAction(status, dailyProgress) {
   }
   if (status.status === "Monthly deep clean due") {
     return {
+      key: "monthly-deep-clean-due",
       label: "Start Monthly Deep Clean",
       routineId: "monthly-deep-clean",
       detail: "Handle monthly maintenance without turning it into a weekly burden."
@@ -119,12 +158,14 @@ export function getRecommendedAction(status, dailyProgress) {
   }
   if (dailyProgress.completed < dailyProgress.total) {
     return {
+      key: "daily-rules-incomplete",
       label: "Finish Daily Rules",
       routineId: "daily-rules",
       detail: "Spend five minutes keeping trash, dishes, clothes, and bathroom smell controlled."
     };
   }
   return {
+    key: "stable",
     label: "Maintain. No full clean needed.",
     routineId: null,
     detail: "The system is stable. Avoid over-cleaning."

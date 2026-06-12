@@ -74,6 +74,17 @@ function normalizeDailyRuleCompletions(value) {
   );
 }
 
+function normalizeDismissedRecommendations(value) {
+  if (!isPlainObject(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([dateKey, recommendationKeys]) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(dateKey) && Array.isArray(recommendationKeys)
+      )
+      .map(([dateKey, recommendationKeys]) => [dateKey, uniqueStrings(recommendationKeys)])
+  );
+}
+
 function normalizeHistory(value) {
   if (!Array.isArray(value)) return [];
   return value
@@ -170,6 +181,7 @@ function createLegacyState() {
       history: [],
       activeSession: null,
       dailyRuleCompletions: {},
+      dismissedRecommendations: {},
       onboardingCompleted: false,
       onboardingCompletedAt: null,
       lastFullBackupExportedAt: null,
@@ -190,6 +202,7 @@ function createLegacyState() {
       history: [],
       activeSession: null,
       dailyRuleCompletions: {},
+      dismissedRecommendations: {},
       onboardingCompleted: false,
       onboardingCompletedAt: null,
       lastFullBackupExportedAt: null,
@@ -217,6 +230,7 @@ function createLegacyState() {
       activeTemplateId
     ),
     dailyRuleCompletions,
+    dismissedRecommendations: {},
     onboardingCompleted: false,
     onboardingCompletedAt: null,
     lastFullBackupExportedAt: null,
@@ -247,6 +261,7 @@ export function normalizeAppState(value) {
     history,
     activeSession: normalizeActiveSession(value.activeSession, templates, activeTemplateId),
     dailyRuleCompletions,
+    dismissedRecommendations: normalizeDismissedRecommendations(value.dismissedRecommendations),
     onboardingCompleted: Boolean(value.onboardingCompleted),
     onboardingCompletedAt: normalizeDateString(value.onboardingCompletedAt),
     lastFullBackupExportedAt: normalizeDateString(value.lastFullBackupExportedAt),
@@ -296,6 +311,7 @@ export function resetToFreshState() {
     history: [],
     activeSession: null,
     dailyRuleCompletions: {},
+    dismissedRecommendations: {},
     onboardingCompleted: false,
     onboardingCompletedAt: null,
     lastFullBackupExportedAt: null,
