@@ -37,6 +37,7 @@ export default function ZonesSection({ zones, canEdit, onEditTemplate, onConfirm
         <div>
           <p className="eyebrow">Zones</p>
           <h2>Apartment Map</h2>
+          <p>Zones keep routines scannable by naming the real areas you clean.</p>
         </div>
         <button className="button primary" type="button" disabled={!canEdit} onClick={addZone}>
           Add zone
@@ -46,15 +47,18 @@ export default function ZonesSection({ zones, canEdit, onEditTemplate, onConfirm
       <div className="editor-list">
         {zones.map((zone, index) => (
           <div className="editor-row" key={zone.id}>
-            <label className="field-label" htmlFor={`zone-${zone.id}`}>
-              Zone
-              <input
-                id={`zone-${zone.id}`}
-                value={zone.name}
-                disabled={!canEdit}
-                onChange={(event) => renameZone(index, event.target.value)}
-              />
-            </label>
+            <div className="editor-row-main">
+              <span className="editor-index">{index + 1}</span>
+              <label className="field-label" htmlFor={`zone-${zone.id}`}>
+                Zone
+                <input
+                  id={`zone-${zone.id}`}
+                  value={zone.name}
+                  disabled={!canEdit}
+                  onChange={(event) => renameZone(index, event.target.value)}
+                />
+              </label>
+            </div>
             <div className="row-actions">
               <button
                 className="button small ghost"

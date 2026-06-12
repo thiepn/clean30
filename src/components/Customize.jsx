@@ -103,6 +103,10 @@ export default function Customize({
           <div>
             <p className="eyebrow">Customize</p>
             <h2>Cleaning System Editor</h2>
+            <p>
+              Edit templates here. Cleaning screens are for doing; Customize is for changing the
+              system.
+            </p>
           </div>
           <span className="pill">{activeTemplate.readOnly ? "Default" : "Custom"}</span>
         </div>

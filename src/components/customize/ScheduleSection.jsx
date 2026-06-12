@@ -13,12 +13,14 @@ export default function ScheduleSection({ schedule, canEdit, onEditTemplate }) {
         <div>
           <p className="eyebrow">Schedule</p>
           <h2>Reset Timing</h2>
+          <p>These settings drive dashboard due dates and backup reminders.</p>
         </div>
       </div>
 
-      <div className="form-grid">
+      <div className="form-grid customize-card">
         <label className="field-label" htmlFor="weekly-reset-day">
           Weekly reset day
+          <span className="field-help">The preferred anchor day for the full weekly reset.</span>
           <select
             id="weekly-reset-day"
             value={schedule.weeklyResetDay}
@@ -35,6 +37,7 @@ export default function ScheduleSection({ schedule, canEdit, onEditTemplate }) {
 
         <label className="field-label" htmlFor="backup-reset-day">
           Backup reset day
+          <span className="field-help">A weekly cue for exporting local data from this browser.</span>
           <select
             id="backup-reset-day"
             value={schedule.backupResetDay}
@@ -51,6 +54,7 @@ export default function ScheduleSection({ schedule, canEdit, onEditTemplate }) {
 
         <label className="field-label" htmlFor="monthly-interval">
           Monthly deep clean interval in days
+          <span className="field-help">How many days before monthly maintenance becomes due.</span>
           <input
             id="monthly-interval"
             type="number"
@@ -66,6 +70,7 @@ export default function ScheduleSection({ schedule, canEdit, onEditTemplate }) {
 
         <label className="field-label" htmlFor="weekly-due-after">
           Weekly reset due after X days
+          <span className="field-help">How many days can pass before the dashboard marks it due.</span>
           <input
             id="weekly-due-after"
             type="number"
@@ -79,6 +84,7 @@ export default function ScheduleSection({ schedule, canEdit, onEditTemplate }) {
 
         <label className="field-label" htmlFor="minimal-fallback">
           Minimal reset fallback label
+          <span className="field-help">The label used when a smaller reset is enough.</span>
           <input
             id="minimal-fallback"
             value={schedule.minimalResetFallbackLabel}

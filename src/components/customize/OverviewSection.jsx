@@ -25,7 +25,26 @@ export default function OverviewSection({
         <span className="pill">{activeTemplate.readOnly ? "Read-only" : "Editable"}</span>
       </div>
 
-      <div className="form-grid">
+      <div className="customize-info-grid">
+        <article className="info-card">
+          <strong>Protected default</strong>
+          <p>The Clean30 default template is read-only so there is always a stable copy.</p>
+        </article>
+        <article className="info-card">
+          <strong>Duplicate to edit</strong>
+          <p>Creating a personal editable copy lets you adjust routines, zones, and systems.</p>
+        </article>
+        <article className="info-card">
+          <strong>Template export</strong>
+          <p>Shares routines, settings, daily rules, systems, and appearance only.</p>
+        </article>
+        <article className="info-card">
+          <strong>Full backup</strong>
+          <p>Saves personal app data too, including history, active session, and completions.</p>
+        </article>
+      </div>
+
+      <div className="form-grid customize-card">
         <label className="field-label" htmlFor="active-template">
           Active template
           <select
@@ -66,30 +85,53 @@ export default function OverviewSection({
         </div>
       </div>
 
-      <div className="settings-actions">
-        <button className="button primary" type="button" onClick={onDuplicateDefault}>
-          Duplicate default template
-        </button>
-        <button
-          className="button danger-ghost"
-          type="button"
-          disabled={activeTemplate.readOnly}
-          onClick={onResetTemplate}
-        >
-          Reset current template to default
-        </button>
-        <button className="button ghost" type="button" onClick={onExportTemplate}>
-          Export template JSON
-        </button>
-        <button className="button ghost" type="button" onClick={onImportTemplateClick}>
-          Import template JSON
-        </button>
-        <button className="button ghost" type="button" onClick={onExportFullBackup}>
-          Export full backup
-        </button>
-        <button className="button ghost" type="button" onClick={onImportFullBackupClick}>
-          Import full backup
-        </button>
+      <div className="customize-action-grid">
+        <section className="customize-card">
+          <p className="eyebrow">Template sharing</p>
+          <h3>Routines and Settings</h3>
+          <p className="muted">Use this when sharing a cleaning template without personal history.</p>
+          <div className="settings-actions">
+            <button className="button primary" type="button" onClick={onDuplicateDefault}>
+              Duplicate default template
+            </button>
+            <button className="button ghost" type="button" onClick={onExportTemplate}>
+              Export template JSON
+            </button>
+            <button className="button ghost" type="button" onClick={onImportTemplateClick}>
+              Import template JSON
+            </button>
+          </div>
+        </section>
+
+        <section className="customize-card">
+          <p className="eyebrow">Full backup</p>
+          <h3>Personal App Data</h3>
+          <p className="muted">Use this to save or restore templates, history, sessions, and rules.</p>
+          <div className="settings-actions">
+            <button className="button ghost" type="button" onClick={onExportFullBackup}>
+              Export full backup
+            </button>
+            <button className="button ghost" type="button" onClick={onImportFullBackupClick}>
+              Import full backup
+            </button>
+          </div>
+        </section>
+
+        <section className="danger-zone">
+          <p className="eyebrow">Danger zone</p>
+          <h3>Reset Active Template</h3>
+          <p className="muted">
+            This replaces the current custom template with the default content. History is kept.
+          </p>
+          <button
+            className="button danger-ghost"
+            type="button"
+            disabled={activeTemplate.readOnly}
+            onClick={onResetTemplate}
+          >
+            Reset current template to default
+          </button>
+        </section>
       </div>
 
       {message ? <p className="form-message">{message}</p> : null}

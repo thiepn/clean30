@@ -38,12 +38,18 @@ export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate,
         <div>
           <p className="eyebrow">Daily Rules</p>
           <h2>Tiny Preventive Rules</h2>
-          <p>These rules appear on the dashboard and generate the Daily Rules routine.</p>
+          <p>
+            These rules appear on the dashboard and also power the generated Daily Rules routine.
+          </p>
         </div>
         <button className="button primary" type="button" disabled={!canEdit} onClick={addRule}>
           Add daily rule
         </button>
       </div>
+
+      <p className="callout small">
+        Edit daily rules here. The Daily Rules routine mirrors this list automatically.
+      </p>
 
       <div className="editor-list">
         {dailyRules.map((rule, index) => (

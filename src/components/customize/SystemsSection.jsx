@@ -152,6 +152,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
           <div>
             <p className="eyebrow">Systems</p>
             <h2>Apartment Laws</h2>
+            <p>High-level rules that appear on the dashboard and Systems page.</p>
           </div>
           <button className="button primary" type="button" disabled={!canEdit} onClick={addLaw}>
             Add law
@@ -206,6 +207,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
           <div>
             <p className="eyebrow">Systems</p>
             <h2>Bottlenecks</h2>
+            <p>Name the failure points that make the apartment feel messy fastest.</p>
           </div>
           <button
             className="button primary"
@@ -260,6 +262,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
           <div>
             <p className="eyebrow">Systems</p>
             <h2>Priority Order</h2>
+            <p>Control the order shown in the Systems priority list.</p>
           </div>
           <button className="button primary" type="button" disabled={!canEdit} onClick={addPriority}>
             Add priority
@@ -325,6 +328,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
           <div>
             <p className="eyebrow">Systems</p>
             <h2>System Sections</h2>
+            <p>Expandable maintenance notes for supplies, prevention, and recurring problems.</p>
           </div>
           <button
             className="button primary"
@@ -338,9 +342,14 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
 
         <div className="editor-list">
           {systemSections.map((section, index) => (
-            <section className="editor-card" key={section.id}>
+            <details className="editor-card system-section-editor" key={section.id} open>
+              <summary className="disclosure-summary">
+                <div>
+                  <h3>{section.title || "System section"}</h3>
+                  {section.problem ? <p>{section.problem}</p> : null}
+                </div>
+              </summary>
               <div className="editor-card-header">
-                <h3>{section.title || "System section"}</h3>
                 <div className="row-actions">
                   <button
                     className="button small ghost"
@@ -425,7 +434,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
                   />
                 </label>
               </div>
-            </section>
+            </details>
           ))}
         </div>
       </section>

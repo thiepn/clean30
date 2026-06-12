@@ -134,6 +134,7 @@ export default function RoutinesSection({
           <div>
             <p className="eyebrow">Routines</p>
             <h2>Routine Library</h2>
+            <p>Select a routine to edit its checklist structure below.</p>
           </div>
           <button className="button primary" type="button" disabled={!canEdit} onClick={addRoutine}>
             Add routine
@@ -198,11 +199,12 @@ export default function RoutinesSection({
             <div>
               <p className="eyebrow">Routine editor</p>
               <h2>{selectedRoutine.title}</h2>
+              <p>Routine details explain why and when this checklist should be used.</p>
             </div>
             <span className="task-count">{getRoutineTotalTasks(selectedRoutine)} tasks</span>
           </div>
 
-          <div className="form-grid">
+          <div className="form-grid customize-card routine-detail-card">
             <label className="field-label" htmlFor="routine-title">
               Routine title
               <input
@@ -263,6 +265,7 @@ export default function RoutinesSection({
             <div>
               <p className="eyebrow">Phases</p>
               <h3>Checklist structure</h3>
+              <p>Phases group tasks into a practical cleaning order.</p>
             </div>
             <button
               className="button ghost"
@@ -276,17 +279,20 @@ export default function RoutinesSection({
 
           <div className="editor-list">
             {selectedRoutine.phases.map((phase, phaseIndex) => (
-              <section className="editor-card" key={phase.id}>
+              <section className="editor-card phase-editor" key={phase.id}>
                 <div className="editor-card-header">
-                  <label className="field-label" htmlFor={`phase-${phase.id}`}>
-                    Phase title
-                    <input
-                      id={`phase-${phase.id}`}
-                      value={phase.title}
-                      disabled={!canEdit || dailyRulesRoutineSelected}
-                      onChange={(event) => updatePhase(phaseIndex, event.target.value)}
-                    />
-                  </label>
+                  <div className="editor-row-main">
+                    <span className="editor-index">{phaseIndex + 1}</span>
+                    <label className="field-label" htmlFor={`phase-${phase.id}`}>
+                      Phase title
+                      <input
+                        id={`phase-${phase.id}`}
+                        value={phase.title}
+                        disabled={!canEdit || dailyRulesRoutineSelected}
+                        onChange={(event) => updatePhase(phaseIndex, event.target.value)}
+                      />
+                    </label>
+                  </div>
                   <div className="row-actions">
                     <button
                       className="button small ghost"
@@ -322,6 +328,10 @@ export default function RoutinesSection({
                 <div className="editor-list nested">
                   {phase.tasks.map((task, taskIndex) => (
                     <div className="editor-card task-editor" key={task.id}>
+                      <div className="task-editor-title">
+                        <span className="editor-index subtle">{taskIndex + 1}</span>
+                        <strong>Task {taskIndex + 1}</strong>
+                      </div>
                       <div className="form-grid three">
                         <label className="field-label" htmlFor={`task-title-${task.id}`}>
                           Task title

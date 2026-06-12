@@ -17,10 +17,11 @@ export default function ProfileSection({ template, canEdit, onEditTemplate }) {
         <div>
           <p className="eyebrow">Apartment Profile</p>
           <h2>Display and Home Details</h2>
+          <p>These labels appear in the header, dashboard, exports, and routine context.</p>
         </div>
       </div>
 
-      <div className="form-grid">
+      <div className="form-grid customize-card">
         <label className="field-label" htmlFor="template-name">
           Template name
           <input
