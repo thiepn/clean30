@@ -86,7 +86,12 @@ export default function App() {
     appState.firstMeaningfulUseAt ||
     appState.onboardingCompletedAt;
   const backupAge = daysBetween(backupReferenceDate);
-  const backupDue = hasMeaningfulData && backupAge !== null && backupAge >= 30;
+  const backupReminderInterval = Number(appState.appSettings?.backupReminderIntervalDays ?? 30);
+  const backupDue =
+    backupReminderInterval > 0 &&
+    hasMeaningfulData &&
+    backupAge !== null &&
+    backupAge >= backupReminderInterval;
 
   function markMeaningfulUse(state) {
     return state.firstMeaningfulUseAt
@@ -437,6 +442,29 @@ export default function App() {
     setCurrentView("dashboard");
   }
 
+  function updateBackupReminderInterval(value) {
+    const interval = Number(value);
+    if (![0, 14, 30, 60].includes(interval)) return;
+    setAppState((current) => ({
+      ...current,
+      appSettings: {
+        ...(current.appSettings || {}),
+        backupReminderIntervalDays: interval
+      }
+    }));
+  }
+
+  function resetHiddenRecommendations() {
+    requestConfirmation({
+      title: "Reset hidden recommendations?",
+      message: "Dismissed Dashboard recommendations will be allowed to appear again.",
+      confirmLabel: "Reset recommendations",
+      onConfirm: () => {
+        setAppState((current) => ({ ...current, dismissedRecommendations: {} }));
+      }
+    });
+  }
+
   function completeOnboarding({ setupMode, profile, schedule }) {
     setAppState((current) => {
       const defaultTemplate =
@@ -581,7 +609,12 @@ export default function App() {
         onImportFullBackup={importFullBackup}
         lastFullBackupExportedAt={appState.lastFullBackupExportedAt}
         backupDue={backupDue}
+        backupReminderIntervalDays={backupReminderInterval}
+        onUpdateBackupReminderInterval={updateBackupReminderInterval}
         onRestartOnboarding={restartOnboarding}
+        onOpenHelp={() => setHelpOpen(true)}
+        onManageCustomize={() => setCurrentView("customize")}
+        onResetHiddenRecommendations={resetHiddenRecommendations}
         onResetAll={resetEverything}
         onResetHistory={resetOnlyHistory}
       />

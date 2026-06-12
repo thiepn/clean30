@@ -85,6 +85,13 @@ function normalizeDismissedRecommendations(value) {
   );
 }
 
+function normalizeAppSettings(value) {
+  const interval = Number(value?.backupReminderIntervalDays);
+  return {
+    backupReminderIntervalDays: [0, 14, 30, 60].includes(interval) ? interval : 30
+  };
+}
+
 function normalizeHistory(value) {
   if (!Array.isArray(value)) return [];
   return value
@@ -191,6 +198,7 @@ function createLegacyState() {
       activeSession: null,
       dailyRuleCompletions: {},
       dismissedRecommendations: {},
+      appSettings: normalizeAppSettings(),
       onboardingCompleted: false,
       onboardingCompletedAt: null,
       lastFullBackupExportedAt: null,
@@ -212,6 +220,7 @@ function createLegacyState() {
       activeSession: null,
       dailyRuleCompletions: {},
       dismissedRecommendations: {},
+      appSettings: normalizeAppSettings(),
       onboardingCompleted: false,
       onboardingCompletedAt: null,
       lastFullBackupExportedAt: null,
@@ -240,6 +249,7 @@ function createLegacyState() {
     ),
     dailyRuleCompletions,
     dismissedRecommendations: {},
+    appSettings: normalizeAppSettings(),
     onboardingCompleted: false,
     onboardingCompletedAt: null,
     lastFullBackupExportedAt: null,
@@ -271,6 +281,7 @@ export function normalizeAppState(value) {
     activeSession: normalizeActiveSession(value.activeSession, templates, activeTemplateId),
     dailyRuleCompletions,
     dismissedRecommendations: normalizeDismissedRecommendations(value.dismissedRecommendations),
+    appSettings: normalizeAppSettings(value.appSettings),
     onboardingCompleted: Boolean(value.onboardingCompleted),
     onboardingCompletedAt: normalizeDateString(value.onboardingCompletedAt),
     lastFullBackupExportedAt: normalizeDateString(value.lastFullBackupExportedAt),
@@ -321,6 +332,7 @@ export function resetToFreshState() {
     activeSession: null,
     dailyRuleCompletions: {},
     dismissedRecommendations: {},
+    appSettings: normalizeAppSettings(),
     onboardingCompleted: false,
     onboardingCompletedAt: null,
     lastFullBackupExportedAt: null,

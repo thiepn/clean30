@@ -6,7 +6,7 @@ import EmptyState from "./EmptyState.jsx";
 import ProgressBar from "./ProgressBar.jsx";
 
 function displayDays(value) {
-  if (value === null || value === undefined) return "Never";
+  if (value === null || value === undefined) return "Not yet";
   if (value === 0) return "Today";
   return `${value} days`;
 }
@@ -23,6 +23,22 @@ function displayDuration(minutes) {
   return remainder ? `${hours} hr ${remainder} min` : `${hours} hr`;
 }
 
+function filterLabel(routine) {
+  const labels = {
+    "daily-rules": "Daily",
+    "weekly-reset": "Weekly",
+    "minimal-reset": "Minimal",
+    "guest-reset": "Guest",
+    "monthly-deep-clean": "Monthly",
+    "initial-reset": "Initial"
+  };
+  return labels[routine.id] || routine.title;
+}
+
+function entryKindLabel(entry) {
+  return isDailyRulesHistoryEntry(entry) ? "Daily" : "Reset";
+}
+
 export default function History({ history, routines, template, onDeleteEntry }) {
   const [filter, setFilter] = useState("all");
   const [selectedId, setSelectedId] = useState(null);
@@ -30,8 +46,10 @@ export default function History({ history, routines, template, onDeleteEntry }) 
   const insights = getHistoryInsights(history, routines, template);
   const filterOptions = [
     { id: "all", label: "All" },
-    ...routines.map((routine) => ({ id: routine.id, label: routine.title }))
+    ...routines.map((routine) => ({ id: routine.id, label: filterLabel(routine) }))
   ];
+  const hasHistory = history.length > 0;
+  const mostRecent = [...history].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0];
 
   const filtered = useMemo(() => {
     const items = filter === "all" ? history : history.filter((entry) => entry.routineId === filter);
@@ -55,40 +73,67 @@ export default function History({ history, routines, template, onDeleteEntry }) 
             <h2>History</h2>
           </div>
         </div>
-        <div className="stats-grid">
-          <div className="metric-card">
-            <span>Total sessions</span>
-            <strong>{stats.total}</strong>
+        {!hasHistory ? (
+          <div className="history-empty-panel">
+            <div>
+              <h3>No cleaning history yet.</h3>
+              <p>Complete Tiny Rules or finish a reset to start building history.</p>
+            </div>
+            <div className="history-starter-stats">
+              <div>
+                <span>Daily rules completed</span>
+                <strong>0</strong>
+              </div>
+              <div>
+                <span>Completed resets</span>
+                <strong>0</strong>
+              </div>
+              <div>
+                <span>Most recent</span>
+                <strong>Not yet</strong>
+              </div>
+            </div>
           </div>
-          <div className="metric-card">
-            <span>Weekly resets</span>
-            <strong>{stats.weekly}</strong>
+        ) : (
+          <div className="stats-grid">
+            <div className="metric-card">
+              <span>Completed resets</span>
+              <strong>{stats.total}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Weekly resets</span>
+              <strong>{stats.weekly}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Minimal resets</span>
+              <strong>{stats.minimal}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Monthly deep cleans</span>
+              <strong>{stats.monthly}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Daily rules completed</span>
+              <strong>{stats.dailyRules}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Average completion</span>
+              <strong>{stats.total ? `${stats.average}%` : "Not yet"}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Last weekly reset</span>
+              <strong>{displayDays(stats.daysSinceWeekly)}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Last monthly deep clean</span>
+              <strong>{displayDays(stats.daysSinceMonthly)}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Most recent</span>
+              <strong>{mostRecent ? formatRelativeDays(mostRecent.finishedAt) : "Not yet"}</strong>
+            </div>
           </div>
-          <div className="metric-card">
-            <span>Minimal resets</span>
-            <strong>{stats.minimal}</strong>
-          </div>
-          <div className="metric-card">
-            <span>Monthly deep cleans</span>
-            <strong>{stats.monthly}</strong>
-          </div>
-          <div className="metric-card">
-            <span>Daily rules logged</span>
-            <strong>{stats.dailyRules}</strong>
-          </div>
-          <div className="metric-card">
-            <span>Average completion</span>
-            <strong>{stats.average}%</strong>
-          </div>
-          <div className="metric-card">
-            <span>Since weekly reset</span>
-            <strong>{displayDays(stats.daysSinceWeekly)}</strong>
-          </div>
-          <div className="metric-card">
-            <span>Since monthly deep clean</span>
-            <strong>{displayDays(stats.daysSinceMonthly)}</strong>
-          </div>
-        </div>
+        )}
       </section>
 
       <section className="panel">
@@ -103,7 +148,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
         {history.length === 0 ? (
           <EmptyState
             title="No insights yet"
-            message="Finish a session to see routine usage, reset gaps, and completion patterns."
+            message="Complete Tiny Rules or finish a reset to reveal useful patterns."
           />
         ) : (
           <>
@@ -136,19 +181,19 @@ export default function History({ history, routines, template, onDeleteEntry }) 
               <div className="metric-card">
                 <span>Last 7 days</span>
                 <strong>{insights.recent7}</strong>
-                <small>completed sessions</small>
+                <small>completed resets</small>
               </div>
               <div className="metric-card">
                 <span>Last 30 days</span>
                 <strong>{insights.recent30}</strong>
-                <small>completed sessions</small>
+                <small>completed resets</small>
               </div>
               <div className="metric-card">
                 <span>Average completion</span>
                 <strong>
                   {insights.averageCompletion === null ? "Not yet" : `${insights.averageCompletion}%`}
                 </strong>
-                <small>across all sessions</small>
+                <small>across reset sessions</small>
               </div>
             </div>
 
@@ -186,7 +231,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
 
       <section className="panel">
         <p className="eyebrow">Filter by type</p>
-        <div className="tab-row">
+        <div className="tab-row history-filter-row" aria-label="History filters">
           {filterOptions.map((option) => (
             <button
               className={filter === option.id ? "tab active" : "tab"}
@@ -202,8 +247,12 @@ export default function History({ history, routines, template, onDeleteEntry }) 
 
       {filtered.length === 0 ? (
         <EmptyState
-          title="No sessions yet"
-          message="Complete a routine to build cleaning history."
+          title={hasHistory ? "No entries for this filter." : "No cleaning history yet."}
+          message={
+            hasHistory
+              ? "Try another filter to review completed entries."
+              : "Complete Tiny Rules or finish a reset to build cleaning history."
+          }
         />
       ) : (
         <div className="history-grid">
@@ -215,7 +264,10 @@ export default function History({ history, routines, template, onDeleteEntry }) 
                 type="button"
                 onClick={() => setSelectedId(entry.id)}
               >
-                <span>{entry.routineTitle}</span>
+                <div className="history-card-topline">
+                  <span>{entry.routineTitle}</span>
+                  <small className="pill">{entryKindLabel(entry)}</small>
+                </div>
                 <strong>{formatDateTime(entry.finishedAt)}</strong>
                 <ProgressBar
                   percent={entry.percent}
@@ -229,7 +281,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
           <section className="panel detail-panel">
             {selected ? (
               <>
-                <p className="eyebrow">Session details</p>
+                <p className="eyebrow">Entry details</p>
                 <h2>{selected.routineTitle}</h2>
                 <dl className="detail-list">
                   <div>

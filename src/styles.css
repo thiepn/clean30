@@ -601,6 +601,43 @@ textarea {
   margin-top: 1rem;
 }
 
+.settings-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.settings-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.settings-summary-row span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  padding: 0.18rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.settings-inline-field {
+  max-width: 320px;
+  margin-top: 0.85rem;
+}
+
+.settings-danger-detail {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-danger-detail > p,
+.settings-danger-detail > .settings-actions {
+  margin: 1rem;
+}
+
 .action-panel {
   position: relative;
   display: grid;
@@ -812,6 +849,75 @@ textarea {
   display: grid;
   gap: 0.25rem;
   margin-top: 0;
+}
+
+.history-empty-panel {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 1rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.history-empty-panel h3 {
+  color: var(--text);
+}
+
+.history-empty-panel p {
+  margin-top: 0.25rem;
+}
+
+.history-starter-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.history-starter-stats div {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0.7rem;
+}
+
+.history-starter-stats span,
+.history-starter-stats strong {
+  display: block;
+}
+
+.history-starter-stats span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 680;
+}
+
+.history-starter-stats strong {
+  margin-top: 0.15rem;
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+.history-filter-row {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding-bottom: 0.15rem;
+}
+
+.history-filter-row .tab {
+  flex: 0 0 auto;
+}
+
+.history-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.history-card-topline .pill {
+  margin: 0;
 }
 
 .metric-card small {
@@ -1778,6 +1884,15 @@ details[open] > .phase-summary .phase-chevron::before {
 
 .history-card small {
   color: var(--muted);
+}
+
+.history-card .history-card-topline {
+  display: flex;
+}
+
+.history-card .history-card-topline span,
+.history-card .history-card-topline small {
+  display: inline-flex;
 }
 
 .detail-panel {
@@ -3834,6 +3949,15 @@ details[open] > .phase-summary .phase-chevron::before {
     gap: 0.55rem;
   }
 
+  .history-starter-stats {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .history-empty-panel {
+    padding: 0.8rem;
+  }
+
   .history-card {
     padding: 0.75rem;
   }
@@ -3848,6 +3972,27 @@ details[open] > .phase-summary .phase-chevron::before {
 
   .settings-actions {
     gap: 0.5rem;
+  }
+
+  .settings-card {
+    gap: 0.65rem;
+  }
+
+  .settings-summary-row {
+    gap: 0.3rem;
+  }
+
+  .settings-summary-row span {
+    font-size: 0.76rem;
+  }
+
+  .settings-inline-field {
+    max-width: none;
+  }
+
+  .settings-danger-detail > p,
+  .settings-danger-detail > .settings-actions {
+    margin: 0.75rem;
   }
 
   .button {
