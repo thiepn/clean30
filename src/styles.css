@@ -822,6 +822,33 @@ textarea {
   font-weight: 620;
 }
 
+.start-summary-grid,
+.active-session-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.start-routine-summary {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.start-routine-summary .section-heading {
+  margin-bottom: 0;
+}
+
+.start-summary-actions {
+  margin-top: 0;
+}
+
+.start-reference-note {
+  border-top: 1px solid rgba(207, 194, 174, 0.65);
+  padding-top: 0.75rem;
+  font-size: 0.92rem;
+}
+
 .quick-button {
   min-height: 96px;
   border: 1px solid var(--border);
@@ -1086,6 +1113,67 @@ textarea {
   margin-bottom: 0.9rem;
   border-bottom: 1px solid rgba(207, 194, 174, 0.65);
   padding-bottom: 0.75rem;
+}
+
+.phase-summary {
+  cursor: pointer;
+  color: var(--text);
+  list-style: none;
+}
+
+.phase-summary::-webkit-details-marker {
+  display: none;
+}
+
+.phase-summary-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.phase-summary-main strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.phase-summary-count,
+.phase-complete-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(207, 194, 174, 0.75);
+  background: var(--surface-soft);
+  color: var(--muted);
+  padding: 0.12rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.phase-complete-mark {
+  border-color: rgba(86, 117, 92, 0.3);
+  background: var(--success-soft);
+  color: var(--accent-strong);
+}
+
+.phase-summary-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.phase-chevron::before {
+  color: var(--accent-strong);
+  font-weight: 760;
+  content: ">";
+}
+
+details[open] > .phase-summary .phase-chevron::before {
+  content: "v";
 }
 
 .task-list {
@@ -2065,6 +2153,8 @@ textarea {
   }
 
   .quick-grid,
+  .start-summary-grid,
+  .active-session-summary,
   .routine-library-grid,
   .routine-fact-grid,
   .routine-prep-grid,
@@ -2173,6 +2263,8 @@ textarea {
   .last-grid,
   .stats-grid,
   .quick-grid,
+  .start-summary-grid,
+  .active-session-summary,
   .routine-library-grid,
   .routine-prep-grid,
   .zone-guidance-grid,
@@ -2629,6 +2721,34 @@ textarea {
     gap: 0.55rem;
   }
 
+  .start-summary-grid,
+  .active-session-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.65rem;
+  }
+
+  .start-summary-grid .metric-card,
+  .active-session-summary .metric-card {
+    min-height: 58px;
+    padding: 0.55rem;
+  }
+
+  .start-summary-grid .metric-card strong,
+  .active-session-summary .metric-card strong {
+    font-size: 0.82rem;
+    line-height: 1.2;
+  }
+
+  .start-routine-summary {
+    gap: 0.65rem;
+  }
+
+  .start-reference-note {
+    padding-top: 0.55rem;
+    font-size: 0.84rem;
+  }
+
   .picker-item {
     min-height: 74px;
     justify-content: flex-start;
@@ -2723,22 +2843,43 @@ textarea {
     padding: 0.7rem;
   }
 
+  details.phase:not([open]) {
+    padding: 0;
+    overflow: hidden;
+  }
+
   .phase.complete {
     background: var(--success-soft);
   }
 
   .phase-summary {
-    cursor: pointer;
-    color: var(--text);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 42px;
+    padding: 0.6rem 0.7rem;
   }
 
-  .phase-summary span,
-  .phase-summary strong {
-    display: block;
+  details.phase[open] .phase-summary {
+    margin: -0.1rem -0.1rem 0.55rem;
+    border-bottom: 1px solid rgba(207, 194, 174, 0.65);
   }
 
-  .phase-summary strong {
-    margin-top: 0.15rem;
+  .phase-summary-main {
+    gap: 0.45rem;
+  }
+
+  .phase-summary-main strong {
+    font-size: 0.92rem;
+    line-height: 1.2;
+  }
+
+  .phase-summary-count,
+  .phase-complete-mark {
+    min-height: 22px;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.72rem;
   }
 
   .phase-summary::marker {
@@ -2766,13 +2907,17 @@ textarea {
     padding-bottom: 0.55rem;
   }
 
+  .phase-header.visually-nested h3 {
+    display: none;
+  }
+
   .task-list {
     gap: 0.45rem;
   }
 
   .task-row {
-    min-height: 46px;
-    padding: 0.6rem;
+    min-height: 48px;
+    padding: 0.62rem;
   }
 
   .task-title-line {

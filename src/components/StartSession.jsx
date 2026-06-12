@@ -1,9 +1,28 @@
 import { useMemo } from "react";
-import { getRoutineById, getSessionProgress } from "../utils/calculations.js";
+import { getRoutineById, getRoutineTotalTasks, getSessionProgress } from "../utils/calculations.js";
 import { formatDateTime } from "../utils/dates.js";
 import Checklist from "./Checklist.jsx";
 import ProgressBar from "./ProgressBar.jsx";
-import RoutineCard from "./RoutineCard.jsx";
+
+const startRoutineOrder = [
+  "initial-reset",
+  "weekly-reset",
+  "minimal-reset",
+  "guest-reset",
+  "monthly-deep-clean"
+];
+
+const routinePurposeLabels = {
+  "initial-reset": "Full baseline reset",
+  "weekly-reset": "Main weekly routine",
+  "minimal-reset": "Fast maintenance reset",
+  "guest-reset": "Guest-ready cleanup",
+  "monthly-deep-clean": "Deeper maintenance"
+};
+
+function getStartPurposeLabel(routine) {
+  return routinePurposeLabels[routine.id] || "Cleaning reset";
+}
 
 export default function StartSession({
   routines,
@@ -19,9 +38,16 @@ export default function StartSession({
   onCancelSession,
   onUpdateNotes
 }) {
+  const startRoutines = useMemo(
+    () =>
+      startRoutineOrder
+        .map((routineId) => getRoutineById(routines, routineId))
+        .filter(Boolean),
+    [routines]
+  );
   const selectedRoutine = useMemo(
-    () => getRoutineById(routines, selectedRoutineId) || routines[0],
-    [routines, selectedRoutineId]
+    () => getRoutineById(startRoutines, selectedRoutineId) || startRoutines[0],
+    [startRoutines, selectedRoutineId]
   );
 
   if (activeSession) {
@@ -51,12 +77,28 @@ export default function StartSession({
             percent={progress.percent}
             label={`${progress.completed}/${progress.total} tasks complete`}
           />
+          <div className="active-session-summary">
+            <div className="metric-card">
+              <span>Progress</span>
+              <strong>
+                {progress.completed}/{progress.total}
+              </strong>
+            </div>
+            <div className="metric-card">
+              <span>Complete</span>
+              <strong>{progress.percent}%</strong>
+            </div>
+            <div className="metric-card">
+              <span>Estimated time</span>
+              <strong>{routine.estimatedTime || "Not set"}</strong>
+            </div>
+          </div>
           <div className="session-actions">
             <button className="button ghost" type="button" onClick={onResetSession}>
               Reset session
             </button>
             <button className="button danger-ghost" type="button" onClick={onCancelSession}>
-              Cancel session
+              Discard session
             </button>
             <button className="button primary" type="button" onClick={onFinishSession}>
               Finish session
@@ -70,6 +112,7 @@ export default function StartSession({
           onToggleTask={onToggleTask}
           onCompletePhase={onCompletePhase}
           collapsible
+          focusFirstIncomplete
         />
 
         <section className="panel">
@@ -108,7 +151,7 @@ export default function StartSession({
           </div>
         </div>
         <div className="routine-picker">
-          {routines.map((routine) => (
+          {startRoutines.map((routine) => (
             <button
               className={selectedRoutine?.id === routine.id ? "picker-item active" : "picker-item"}
               key={routine.id}
@@ -117,22 +160,49 @@ export default function StartSession({
             >
               <strong>{routine.title}</strong>
               <span>{routine.estimatedTime}</span>
-              {routine.purpose ? <small>{routine.purpose}</small> : null}
+              <small>{getStartPurposeLabel(routine)}</small>
             </button>
           ))}
         </div>
       </section>
 
-      {selectedRoutine ? <RoutineCard routine={selectedRoutine} onStart={onStartSession} /> : null}
-
       {selectedRoutine ? (
-        <section className="panel">
-          <p className="eyebrow">Routine overview</p>
-          <h2>{selectedRoutine.title}</h2>
-          <p>{selectedRoutine.purpose}</p>
+        <section className="panel start-routine-summary">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Selected reset</p>
+              <h2>{selectedRoutine.title}</h2>
+              <p>{selectedRoutine.purpose}</p>
+            </div>
+            <span className="task-count">{getRoutineTotalTasks(selectedRoutine)} tasks</span>
+          </div>
+          <div className="start-summary-grid">
+            <div className="metric-card">
+              <span>Duration</span>
+              <strong>{selectedRoutine.estimatedTime || "Not set"}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Phases</span>
+              <strong>{selectedRoutine.phases.length}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Use case</span>
+              <strong>{getStartPurposeLabel(selectedRoutine)}</strong>
+            </div>
+          </div>
           {selectedRoutine.whenToUse ? <p className="muted">{selectedRoutine.whenToUse}</p> : null}
-          {selectedRoutine.message ? <p className="callout">{selectedRoutine.message}</p> : null}
-          <Checklist routine={selectedRoutine} completedTaskIds={[]} readonly collapsible />
+          <div className="card-actions start-summary-actions">
+            <button
+              className="button primary"
+              type="button"
+              onClick={() => onStartSession(selectedRoutine.id)}
+            >
+              Start {selectedRoutine.title}
+            </button>
+          </div>
+          <p className="muted start-reference-note">
+            Need to inspect the full checklist? Open Routines for the reference view.
+          </p>
         </section>
       ) : null}
     </div>

@@ -1,33 +1,111 @@
+import { useEffect, useMemo, useState } from "react";
+
+function createPhaseStates(routine, completed) {
+  return routine.phases.map((phase) => {
+    const taskIds = phase.tasks.map((task) => task.id);
+    const completedInPhase = taskIds.filter((id) => completed.has(id)).length;
+    return {
+      phase,
+      taskIds,
+      completedInPhase,
+      complete: phase.tasks.length > 0 && completedInPhase === phase.tasks.length
+    };
+  });
+}
+
+function getDefaultOpenPhaseIds(phaseStates, focusFirstIncomplete) {
+  if (!focusFirstIncomplete) {
+    return phaseStates.filter((item) => !item.complete).map((item) => item.phase.id);
+  }
+
+  const firstIncomplete = phaseStates.find((item) => !item.complete) || phaseStates[0];
+  return firstIncomplete ? [firstIncomplete.phase.id] : [];
+}
+
+function setsMatch(first, second) {
+  if (first.size !== second.size) return false;
+  for (const item of first) {
+    if (!second.has(item)) return false;
+  }
+  return true;
+}
+
 export default function Checklist({
   routine,
   completedTaskIds,
   onToggleTask,
   onCompletePhase,
   readonly = false,
-  collapsible = false
+  collapsible = false,
+  focusFirstIncomplete = false
 }) {
   const completed = new Set(completedTaskIds || []);
+  const phaseStates = useMemo(
+    () => createPhaseStates(routine, completed),
+    [routine, completedTaskIds]
+  );
+  const phaseSignature = phaseStates
+    .map((item) => `${item.phase.id}:${item.completedInPhase}:${item.complete}`)
+    .join("|");
+  const firstIncompletePhaseId = phaseStates.find((item) => !item.complete)?.phase.id || null;
+  const [openPhaseIds, setOpenPhaseIds] = useState(
+    () => new Set(getDefaultOpenPhaseIds(phaseStates, focusFirstIncomplete))
+  );
+
+  useEffect(() => {
+    setOpenPhaseIds(new Set(getDefaultOpenPhaseIds(phaseStates, focusFirstIncomplete)));
+  }, [routine.id, collapsible, focusFirstIncomplete]);
+
+  useEffect(() => {
+    if (!collapsible) return;
+    const completedPhaseIds = new Set(
+      phaseStates.filter((item) => item.complete).map((item) => item.phase.id)
+    );
+
+    setOpenPhaseIds((current) => {
+      const next = new Set([...current].filter((id) => !completedPhaseIds.has(id)));
+      if (focusFirstIncomplete && next.size === 0 && firstIncompletePhaseId) {
+        next.add(firstIncompletePhaseId);
+      }
+      return setsMatch(current, next) ? current : next;
+    });
+  }, [collapsible, focusFirstIncomplete, firstIncompletePhaseId, phaseSignature]);
+
+  function handlePhaseToggle(phaseId, isOpen) {
+    setOpenPhaseIds((current) => {
+      const next = new Set(current);
+      if (isOpen) next.add(phaseId);
+      else next.delete(phaseId);
+      return next;
+    });
+  }
 
   return (
     <div className="checklist">
-      {routine.phases.map((phase) => {
-        const phaseTaskIds = phase.tasks.map((task) => task.id);
-        const completedInPhase = phaseTaskIds.filter((id) => completed.has(id)).length;
-        const phaseComplete = phase.tasks.length > 0 && completedInPhase === phase.tasks.length;
+      {phaseStates.map(({ phase, taskIds, completedInPhase, complete }) => {
         const Wrapper = collapsible ? "details" : "section";
         return (
           <Wrapper
-            className={phaseComplete ? "phase complete" : "phase"}
+            className={complete ? "phase complete" : "phase"}
             key={phase.id}
-            open={collapsible ? !phaseComplete : undefined}
+            open={collapsible ? openPhaseIds.has(phase.id) : undefined}
+            onToggle={
+              collapsible
+                ? (event) => handlePhaseToggle(phase.id, event.currentTarget.open)
+                : undefined
+            }
           >
             {collapsible ? (
               <summary className="phase-summary">
-                <span>
-                  <span className="eyebrow">
-                    {completedInPhase}/{phase.tasks.length} complete
-                  </span>
+                <span className="phase-summary-main">
                   <strong>{phase.title}</strong>
+                  <span className="phase-summary-count">
+                    {completedInPhase}/{phase.tasks.length}
+                  </span>
+                </span>
+                <span className="phase-summary-status">
+                  {complete ? <span className="phase-complete-mark">Done</span> : null}
+                  <span className="phase-chevron" aria-hidden="true" />
                 </span>
               </summary>
             ) : null}
@@ -43,7 +121,7 @@ export default function Checklist({
                   <button
                     className="button small ghost"
                     type="button"
-                    onClick={() => onCompletePhase(phaseTaskIds)}
+                    onClick={() => onCompletePhase(taskIds)}
                   >
                     Mark phase complete
                   </button>
