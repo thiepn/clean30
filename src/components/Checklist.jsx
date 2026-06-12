@@ -3,7 +3,8 @@ export default function Checklist({
   completedTaskIds,
   onToggleTask,
   onCompletePhase,
-  readonly = false
+  readonly = false,
+  collapsible = false
 }) {
   const completed = new Set(completedTaskIds || []);
 
@@ -12,25 +13,43 @@ export default function Checklist({
       {routine.phases.map((phase) => {
         const phaseTaskIds = phase.tasks.map((task) => task.id);
         const completedInPhase = phaseTaskIds.filter((id) => completed.has(id)).length;
+        const phaseComplete = phase.tasks.length > 0 && completedInPhase === phase.tasks.length;
+        const Wrapper = collapsible ? "details" : "section";
         return (
-          <section className="phase" key={phase.id}>
-            <div className="phase-header">
-              <div>
-                <p className="eyebrow">
-                  {completedInPhase}/{phase.tasks.length} complete
-                </p>
-                <h3>{phase.title}</h3>
+          <Wrapper
+            className={phaseComplete ? "phase complete" : "phase"}
+            key={phase.id}
+            open={collapsible ? !phaseComplete : undefined}
+          >
+            {collapsible ? (
+              <summary className="phase-summary">
+                <span>
+                  <span className="eyebrow">
+                    {completedInPhase}/{phase.tasks.length} complete
+                  </span>
+                  <strong>{phase.title}</strong>
+                </span>
+              </summary>
+            ) : null}
+            {!collapsible || (!readonly && onCompletePhase) ? (
+              <div className={collapsible ? "phase-header visually-nested" : "phase-header"}>
+                <div>
+                  <p className="eyebrow">
+                    {completedInPhase}/{phase.tasks.length} complete
+                  </p>
+                  <h3>{phase.title}</h3>
+                </div>
+                {!readonly && onCompletePhase ? (
+                  <button
+                    className="button small ghost"
+                    type="button"
+                    onClick={() => onCompletePhase(phaseTaskIds)}
+                  >
+                    Mark phase complete
+                  </button>
+                ) : null}
               </div>
-              {!readonly && onCompletePhase ? (
-                <button
-                  className="button small ghost"
-                  type="button"
-                  onClick={() => onCompletePhase(phaseTaskIds)}
-                >
-                  Mark phase complete
-                </button>
-              ) : null}
-            </div>
+            ) : null}
             <div className="task-list">
               {phase.tasks.map((item) => {
                 const checked = completed.has(item.id);
@@ -58,7 +77,7 @@ export default function Checklist({
                 );
               })}
             </div>
-          </section>
+          </Wrapper>
         );
       })}
     </div>

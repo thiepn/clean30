@@ -790,6 +790,10 @@ textarea {
   margin-top: 1rem;
 }
 
+.mobile-routine-summary-grid {
+  display: none;
+}
+
 .quick-button strong,
 .quick-button span {
   display: block;
@@ -1172,6 +1176,29 @@ textarea {
 
 .system-list.compact {
   margin-top: 0.5rem;
+}
+
+.system-info-detail {
+  display: block;
+}
+
+.system-info-summary {
+  cursor: pointer;
+  color: var(--text);
+}
+
+.system-info-summary span,
+.system-info-summary strong {
+  display: block;
+}
+
+.system-info-summary strong {
+  margin-top: 0.2rem;
+  font-size: 1.15rem;
+}
+
+.system-info-summary::marker {
+  color: var(--accent-strong);
 }
 
 .history-list {
@@ -1977,5 +2004,486 @@ textarea {
 
   .detail-list dd {
     text-align: left;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-shell {
+    width: min(100% - 16px, 540px);
+    padding-top: 10px;
+  }
+
+  .app-header {
+    gap: 0.55rem;
+    padding: 4px 0 12px;
+  }
+
+  .app-header h1 {
+    font-size: 1.75rem;
+    line-height: 1.05;
+  }
+
+  .app-kicker,
+  .eyebrow {
+    font-size: 0.68rem;
+  }
+
+  .header-target strong {
+    font-size: 0.84rem;
+  }
+
+  .help-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .screen-stack {
+    gap: 12px;
+  }
+
+  .panel,
+  .routine-card,
+  .phase,
+  .empty-state {
+    padding: 0.85rem;
+  }
+
+  .panel h2,
+  .hero-status h2 {
+    font-size: 1.22rem;
+  }
+
+  .panel h3,
+  .routine-card h3,
+  .phase h3 {
+    font-size: 0.98rem;
+  }
+
+  .hero-status {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem;
+  }
+
+  .hero-status h2 {
+    margin: 0.15rem 0 0;
+  }
+
+  .hero-status > div:first-child > p:not(.eyebrow) {
+    display: none;
+  }
+
+  .status-meter {
+    width: 76px;
+    min-width: 76px;
+    min-height: 58px;
+    border-radius: var(--radius-card);
+    box-shadow: inset 0 0 0 4px rgba(227, 236, 227, 0.55);
+  }
+
+  .status-meter span {
+    font-size: 1.15rem;
+  }
+
+  .status-meter small {
+    font-size: 0.68rem;
+  }
+
+  .session-resume-panel,
+  .active-session-panel {
+    gap: 0.55rem;
+  }
+
+  .session-resume-panel .section-heading,
+  .active-session-panel .session-topline {
+    gap: 0.5rem;
+  }
+
+  .session-resume-panel p:not(.eyebrow),
+  .active-session-panel .muted {
+    font-size: 0.9rem;
+  }
+
+  .dashboard-grid .dashboard-action-panel {
+    order: -1;
+  }
+
+  .backup-reminder-panel {
+    order: 6;
+    gap: 0.7rem;
+  }
+
+  .backup-reminder-panel p:not(.eyebrow),
+  .backup-box p {
+    font-size: 0.9rem;
+  }
+
+  .dashboard-daily-panel .task-list.daily {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .dashboard-daily-panel .task-row {
+    min-height: 46px;
+    gap: 0.55rem;
+    padding: 0.6rem;
+  }
+
+  .dashboard-daily-panel .task-detail {
+    display: none;
+  }
+
+  .dashboard-daily-panel .duration {
+    padding: 0.12rem 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  .action-panel {
+    gap: 0.45rem;
+  }
+
+  .action-panel p:not(.eyebrow) {
+    font-size: 0.92rem;
+  }
+
+  .maintenance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metric-card {
+    min-height: 64px;
+    padding: 0.7rem;
+  }
+
+  .metric-card span,
+  .metric-card small {
+    font-size: 0.75rem;
+  }
+
+  .metric-card strong {
+    margin-top: 0.2rem;
+    font-size: 0.98rem;
+    line-height: 1.25;
+  }
+
+  .quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .quick-button {
+    min-height: 68px;
+    padding: 0.7rem;
+  }
+
+  .quick-button span {
+    font-size: 0.8rem;
+  }
+
+  .dashboard-laws-panel .law-list {
+    margin-top: 0.65rem;
+  }
+
+  .dashboard-laws-panel .law-list li {
+    margin: 0.35rem 0;
+    font-size: 0.9rem;
+  }
+
+  .routine-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .picker-item {
+    min-height: 74px;
+    justify-content: flex-start;
+    padding: 0.65rem;
+  }
+
+  .picker-item span {
+    font-size: 0.78rem;
+  }
+
+  .picker-item small {
+    display: block;
+    color: var(--muted);
+    font-size: 0.76rem;
+    line-height: 1.25;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  .routine-card {
+    gap: 0.45rem;
+  }
+
+  .routine-card > p,
+  .routine-card .muted {
+    font-size: 0.9rem;
+  }
+
+  .routine-card .callout {
+    margin-top: 0.35rem;
+  }
+
+  .mobile-routine-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-top: 0.75rem;
+  }
+
+  .tab-row[aria-label="Routine tabs"] {
+    display: none;
+  }
+
+  .mobile-routine-summary {
+    min-height: 66px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface-strong);
+    padding: 0.65rem;
+    color: var(--text);
+    text-align: left;
+  }
+
+  .mobile-routine-summary.active {
+    border-color: rgba(88, 116, 97, 0.42);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  .mobile-routine-summary strong,
+  .mobile-routine-summary span {
+    display: block;
+  }
+
+  .mobile-routine-summary span {
+    margin-top: 0.15rem;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .checklist {
+    gap: 0.7rem;
+  }
+
+  .phase {
+    padding: 0.7rem;
+  }
+
+  .phase.complete {
+    background: var(--success-soft);
+  }
+
+  .phase-summary {
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  .phase-summary span,
+  .phase-summary strong {
+    display: block;
+  }
+
+  .phase-summary strong {
+    margin-top: 0.15rem;
+  }
+
+  .phase-summary::marker {
+    color: var(--accent-strong);
+  }
+
+  .phase-header.visually-nested {
+    margin-top: 0.65rem;
+    padding-bottom: 0.55rem;
+  }
+
+  .task-list {
+    gap: 0.45rem;
+  }
+
+  .task-row {
+    min-height: 46px;
+    padding: 0.6rem;
+  }
+
+  .task-title-line {
+    gap: 0.3rem;
+  }
+
+  .task-detail {
+    font-size: 0.86rem;
+  }
+
+  .systems-table-stack table,
+  .table-wrap table {
+    min-width: 0;
+  }
+
+  .table-wrap thead {
+    display: none;
+  }
+
+  .table-wrap tbody,
+  .table-wrap tr,
+  .table-wrap td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-wrap tr {
+    border-bottom: 1px solid var(--border);
+    padding: 0.55rem 0;
+  }
+
+  .table-wrap tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table-wrap td {
+    border-bottom: 0;
+  }
+
+  .table-wrap td:first-child::before {
+    content: "Problem";
+  }
+
+  .table-wrap td:nth-child(2)::before {
+    content: "Consequence";
+  }
+
+  .table-wrap td::before {
+    display: block;
+    color: var(--accent-strong);
+    font-size: 0.68rem;
+    font-weight: 760;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .table-wrap th,
+  .table-wrap td {
+    padding: 0.65rem;
+  }
+
+  .zone-chip-list {
+    gap: 0.4rem;
+    margin-top: 0.7rem;
+  }
+
+  .date-chip,
+  .task-count,
+  .pill,
+  .duration {
+    min-height: 22px;
+    padding: 0.16rem 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  .zone-focus-panel {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .priority-list {
+    gap: 0.55rem;
+  }
+
+  .priority-list li {
+    padding: 0.7rem;
+  }
+
+  .system-grid {
+    gap: 12px;
+  }
+
+  .system-list li {
+    margin: 0.35rem 0;
+  }
+
+  .customize-mode-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customize-mode-tabs .tab {
+    min-height: 42px;
+    padding: 0.5rem 0.55rem;
+  }
+
+  .customize-card,
+  .danger-zone,
+  .info-card,
+  .gallery-card,
+  .insight-card {
+    padding: 0.8rem;
+  }
+
+  .quick-routine-list,
+  .gallery-grid,
+  .gallery-grid.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .editor-list {
+    gap: 0.6rem;
+  }
+
+  .editor-row,
+  .editor-card {
+    padding: 0.75rem;
+  }
+
+  .form-grid {
+    gap: 0.75rem;
+  }
+
+  textarea {
+    min-height: 104px;
+  }
+
+  .textarea-small {
+    min-height: 76px;
+  }
+
+  .history-grid {
+    gap: 12px;
+  }
+
+  .insight-grid,
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .history-card {
+    padding: 0.75rem;
+  }
+
+  .history-card .progress-block {
+    margin: 0.55rem 0;
+  }
+
+  .detail-panel {
+    padding: 0.85rem;
+  }
+
+  .settings-actions {
+    gap: 0.5rem;
+  }
+
+  .button {
+    min-height: 40px;
+    padding: 0.58rem 0.75rem;
+  }
+
+  .button.small {
+    min-height: 34px;
   }
 }

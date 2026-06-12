@@ -231,10 +231,14 @@ export default function Systems({ template, onStartRoutine }) {
       </section>
 
       <div className="system-grid">
-        {systems.systemSections.map((section) => (
-          <section className="panel" key={section.id}>
-            <p className="eyebrow">System</p>
-            <h2>{section.title}</h2>
+        {systems.systemSections.map((section, index) => (
+          <details className="panel system-info-detail" key={section.id} open={index === 0}>
+            <summary className="system-info-summary">
+              <span>
+                <span className="eyebrow">System</span>
+                <strong>{section.title}</strong>
+              </span>
+            </summary>
             <p className="muted">{section.problem}</p>
             <ul className="system-list">
               {section.items.map((item) => (
@@ -251,7 +255,7 @@ export default function Systems({ template, onStartRoutine }) {
                 </ul>
               </div>
             ) : null}
-          </section>
+          </details>
         ))}
       </div>
     </div>

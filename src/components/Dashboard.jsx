@@ -131,7 +131,7 @@ export default function Dashboard({
       ) : null}
 
       <div className="dashboard-grid">
-        <section className="panel">
+        <section className="panel dashboard-daily-panel">
           <div className="section-heading">
             <div>
               <p className="eyebrow">Today</p>
@@ -166,7 +166,7 @@ export default function Dashboard({
           </div>
         </section>
 
-        <section className="panel action-panel">
+        <section className="panel action-panel dashboard-action-panel">
           <p className="eyebrow">Recommended next action</p>
           <h2>{recommendation.label}</h2>
           <p>{recommendation.detail}</p>
@@ -208,7 +208,7 @@ export default function Dashboard({
       </section>
 
       <div className="dashboard-grid">
-        <section className="panel">
+        <section className="panel dashboard-laws-panel">
           <p className="eyebrow">Permanent principles</p>
           <h2>Apartment Laws</h2>
           <ol className="law-list">
@@ -218,10 +218,10 @@ export default function Dashboard({
           </ol>
         </section>
 
-        <section className="panel">
+        <section className="panel dashboard-memory-panel">
           <p className="eyebrow">Last completed</p>
           <h2>Maintenance Memory</h2>
-          <div className="last-grid">
+          <div className="last-grid maintenance-grid">
             {lastCards.map((item) => (
               <div className="metric-card" key={item.routineId}>
                 <span>{item.label}</span>

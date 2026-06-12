@@ -37,6 +37,23 @@ export default function Routines({ routines, onStartRoutine }) {
             </button>
           ))}
         </div>
+        <div className="mobile-routine-summary-grid">
+          {routines.map((routine) => (
+            <button
+              className={
+                selectedRoutine.id === routine.id
+                  ? "mobile-routine-summary active"
+                  : "mobile-routine-summary"
+              }
+              key={routine.id}
+              type="button"
+              onClick={() => setSelectedRoutineId(routine.id)}
+            >
+              <strong>{routine.title}</strong>
+              <span>{routine.estimatedTime}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <RoutineCard routine={selectedRoutine} onStart={onStartRoutine} />
@@ -47,7 +64,7 @@ export default function Routines({ routines, onStartRoutine }) {
         <p>{selectedRoutine.purpose}</p>
         {selectedRoutine.whenToUse ? <p className="muted">{selectedRoutine.whenToUse}</p> : null}
         {selectedRoutine.message ? <p className="callout">{selectedRoutine.message}</p> : null}
-        <Checklist routine={selectedRoutine} completedTaskIds={[]} readonly />
+        <Checklist routine={selectedRoutine} completedTaskIds={[]} readonly collapsible />
       </section>
     </div>
   );

@@ -69,6 +69,7 @@ export default function StartSession({
           completedTaskIds={activeSession.completedTaskIds}
           onToggleTask={onToggleTask}
           onCompletePhase={onCompletePhase}
+          collapsible
         />
 
         <section className="panel">
@@ -116,6 +117,7 @@ export default function StartSession({
             >
               <strong>{routine.title}</strong>
               <span>{routine.estimatedTime}</span>
+              {routine.purpose ? <small>{routine.purpose}</small> : null}
             </button>
           ))}
         </div>
@@ -130,7 +132,7 @@ export default function StartSession({
           <p>{selectedRoutine.purpose}</p>
           {selectedRoutine.whenToUse ? <p className="muted">{selectedRoutine.whenToUse}</p> : null}
           {selectedRoutine.message ? <p className="callout">{selectedRoutine.message}</p> : null}
-          <Checklist routine={selectedRoutine} completedTaskIds={[]} readonly />
+          <Checklist routine={selectedRoutine} completedTaskIds={[]} readonly collapsible />
         </section>
       ) : null}
     </div>
