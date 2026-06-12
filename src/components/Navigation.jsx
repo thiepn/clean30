@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from "react";
 const navItems = [
   { id: "dashboard", label: "Dashboard" },
   { id: "start", label: "Start Session" },
-  { id: "routines", label: "Routines" },
   { id: "systems", label: "Systems" },
+  { id: "routines", label: "Routines" },
   { id: "customize", label: "Customize" },
   { id: "history", label: "History" },
   { id: "settings", label: "Settings" }
@@ -13,11 +13,11 @@ const navItems = [
 const mobilePrimaryItems = [
   { id: "dashboard", label: "Dashboard" },
   { id: "start", label: "Start" },
-  { id: "routines", label: "Routines" }
+  { id: "systems", label: "Systems" }
 ];
 
 const moreItems = [
-  { id: "systems", label: "Systems" },
+  { id: "routines", label: "Routines" },
   { id: "customize", label: "Customize" },
   { id: "history", label: "History" },
   { id: "settings", label: "Settings" }

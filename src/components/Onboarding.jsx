@@ -78,6 +78,15 @@ export default function Onboarding({ template, onComplete }) {
           <div className="onboarding-step">
             <p className="eyebrow">Choose setup</p>
             <h2 id="onboarding-title">Start With A Template</h2>
+            <p>
+              A template is your starting cleaning system. The Clean30 default is protected and
+              read-only so it cannot be accidentally broken. You can duplicate a template if you
+              want to edit routines, phases, or tasks, and you can change templates later in
+              Customize.
+            </p>
+            <p className="muted">
+              Most users should start with the default unless they already know they want changes.
+            </p>
             <div className="setup-options">
               <label className={setupMode === "default" ? "setup-option active" : "setup-option"}>
                 <input
@@ -132,6 +141,7 @@ export default function Onboarding({ template, onComplete }) {
               </label>
               <label className="field-label">
                 Weekly reset day
+                <span className="field-help">Your main cleaning day for the full weekly reset.</span>
                 <select
                   value={weeklyResetDay}
                   onChange={(event) => setWeeklyResetDay(event.target.value)}
@@ -144,7 +154,11 @@ export default function Onboarding({ template, onComplete }) {
                 </select>
               </label>
               <label className="field-label">
-                Backup reset day
+                Fallback reset day
+                <span className="field-help">
+                  Your backup cleaning slot if the weekly reset did not happen. This is not a full
+                  data backup.
+                </span>
                 <select
                   value={backupResetDay}
                   onChange={(event) => setBackupResetDay(event.target.value)}
@@ -177,7 +191,7 @@ export default function Onboarding({ template, onComplete }) {
               <strong>{homeName.trim() || "Home"}</strong>
               <span>Weekly reset</span>
               <strong>{weeklyResetDay}</strong>
-              <span>Backup reminder day</span>
+              <span>Fallback reset</span>
               <strong>{backupResetDay}</strong>
             </div>
           </div>

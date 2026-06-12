@@ -1,6 +1,6 @@
 import { getRoutineTotalTasks } from "../../utils/calculations.js";
 
-export default function TemplateGallerySection({ gallery, onUseTemplate }) {
+export default function TemplateGallerySection({ gallery, onUseTemplate, compact = false }) {
   return (
     <section className="panel">
       <div className="section-heading">
@@ -13,7 +13,7 @@ export default function TemplateGallerySection({ gallery, onUseTemplate }) {
         </div>
       </div>
 
-      <div className="gallery-grid">
+      <div className={compact ? "gallery-grid compact" : "gallery-grid"}>
         {gallery.map((item) => {
           const routineCount = item.template.routines.length;
           const taskCount = item.template.routines.reduce(

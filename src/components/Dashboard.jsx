@@ -113,10 +113,10 @@ export default function Dashboard({
         <section className="panel backup-reminder-panel">
           <div>
             <p className="eyebrow">Local backup</p>
-            <h2>Backup Reminder</h2>
+            <h2>Gentle Backup Reminder</h2>
             <p>
-              Your data is stored only on this device/browser. Export a backup occasionally so you
-              do not lose your routines and history.
+              Your Clean30 data lives only in this browser. Since you have started using the app,
+              it is a good time to export a full backup.
             </p>
             {lastFullBackupExportedAt ? (
               <p className="muted">Last full backup: {formatDateTime(lastFullBackupExportedAt)}</p>

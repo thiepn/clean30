@@ -6,6 +6,7 @@ import OverviewSection from "./customize/OverviewSection.jsx";
 import ProfileSection from "./customize/ProfileSection.jsx";
 import RoutinesSection from "./customize/RoutinesSection.jsx";
 import ScheduleSection from "./customize/ScheduleSection.jsx";
+import SimpleCustomizeSection from "./customize/SimpleCustomizeSection.jsx";
 import SystemsSection from "./customize/SystemsSection.jsx";
 import TemplateGallerySection from "./customize/TemplateGallerySection.jsx";
 import ZonesSection from "./customize/ZonesSection.jsx";
@@ -35,11 +36,14 @@ export default function Customize({
   onImportFullBackup,
   templateGallery,
   onUseGalleryTemplate,
+  onResetHistory,
+  onResetAll,
   onRequestConfirmation
 }) {
   const templateImportRef = useRef(null);
   const backupImportRef = useRef(null);
   const [activeSection, setActiveSection] = useState("overview");
+  const [customizeMode, setCustomizeMode] = useState("simple");
   const [selectedRoutineId, setSelectedRoutineId] = useState(
     activeTemplate.routines[0]?.id || ""
   );
@@ -100,6 +104,12 @@ export default function Customize({
     reader.readAsText(file);
   }
 
+  function openAdvancedRoutine(routineId) {
+    setSelectedRoutineId(routineId);
+    setActiveSection("routines");
+    setCustomizeMode("advanced");
+  }
+
   return (
     <div className="screen-stack">
       <section className="panel">
@@ -114,19 +124,43 @@ export default function Customize({
           </div>
           <span className="pill">{activeTemplate.readOnly ? "Default" : "Custom"}</span>
         </div>
-        <div className="tab-row customize-tabs" role="tablist" aria-label="Customize sections">
-          {customizeSections.map((section) => (
-            <button
-              className={activeSection === section.id ? "tab active" : "tab"}
-              key={section.id}
-              type="button"
-              onClick={() => setActiveSection(section.id)}
-            >
-              {section.label}
-            </button>
-          ))}
+        <div className="tab-row customize-mode-tabs" role="tablist" aria-label="Customize mode">
+          <button
+            className={customizeMode === "simple" ? "tab active" : "tab"}
+            type="button"
+            onClick={() => setCustomizeMode("simple")}
+          >
+            Simple
+          </button>
+          <button
+            className={customizeMode === "advanced" ? "tab active" : "tab"}
+            type="button"
+            onClick={() => setCustomizeMode("advanced")}
+          >
+            Advanced customization
+          </button>
         </div>
-        {!canEdit ? (
+        {customizeMode === "advanced" ? (
+          <p className="callout small">
+            Advanced customization is for editing routines, phases, tasks, systems, and template
+            internals. Most users do not need this every day.
+          </p>
+        ) : null}
+        {customizeMode === "advanced" ? (
+          <div className="tab-row customize-tabs" role="tablist" aria-label="Customize sections">
+            {customizeSections.map((section) => (
+              <button
+                className={activeSection === section.id ? "tab active" : "tab"}
+                key={section.id}
+                type="button"
+                onClick={() => setActiveSection(section.id)}
+              >
+                {section.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {!canEdit && customizeMode === "advanced" ? (
           <div className="readonly-notice">
             <div>
               <strong>Clean30 Default is protected.</strong>
@@ -139,7 +173,27 @@ export default function Customize({
         ) : null}
       </section>
 
-      {activeSection === "overview" ? (
+      {customizeMode === "simple" ? (
+        <SimpleCustomizeSection
+          templates={appState.templates}
+          activeTemplate={activeTemplate}
+          canEdit={canEdit}
+          message={message}
+          templateGallery={templateGallery}
+          onSetActiveTemplate={onSetActiveTemplate}
+          onDuplicateDefault={onDuplicateDefault}
+          onEditTemplate={editTemplate}
+          onConfirmEdit={confirmTemplateEdit}
+          onUseGalleryTemplate={onUseGalleryTemplate}
+          onExportTemplate={onExportTemplate}
+          onExportFullBackup={onExportFullBackup}
+          onResetHistory={onResetHistory}
+          onResetAll={onResetAll}
+          onOpenAdvancedRoutine={openAdvancedRoutine}
+        />
+      ) : null}
+
+      {customizeMode === "advanced" && activeSection === "overview" ? (
         <OverviewSection
           templates={appState.templates}
           activeTemplate={activeTemplate}
@@ -154,11 +208,11 @@ export default function Customize({
         />
       ) : null}
 
-      {activeSection === "gallery" ? (
+      {customizeMode === "advanced" && activeSection === "gallery" ? (
         <TemplateGallerySection gallery={templateGallery} onUseTemplate={onUseGalleryTemplate} />
       ) : null}
 
-      {activeSection === "profile" ? (
+      {customizeMode === "advanced" && activeSection === "profile" ? (
         <ProfileSection
           template={activeTemplate}
           canEdit={canEdit}
@@ -166,7 +220,7 @@ export default function Customize({
         />
       ) : null}
 
-      {activeSection === "zones" ? (
+      {customizeMode === "advanced" && activeSection === "zones" ? (
         <ZonesSection
           zones={activeTemplate.zones}
           canEdit={canEdit}
@@ -175,7 +229,7 @@ export default function Customize({
         />
       ) : null}
 
-      {activeSection === "routines" ? (
+      {customizeMode === "advanced" && activeSection === "routines" ? (
         <RoutinesSection
           routines={activeTemplate.routines}
           selectedRoutine={selectedRoutine}
@@ -187,7 +241,7 @@ export default function Customize({
         />
       ) : null}
 
-      {activeSection === "daily-rules" ? (
+      {customizeMode === "advanced" && activeSection === "daily-rules" ? (
         <DailyRulesSection
           dailyRules={activeTemplate.dailyRules}
           canEdit={canEdit}
@@ -196,7 +250,7 @@ export default function Customize({
         />
       ) : null}
 
-      {activeSection === "systems" ? (
+      {customizeMode === "advanced" && activeSection === "systems" ? (
         <SystemsSection
           systems={activeTemplate.systems}
           canEdit={canEdit}
@@ -205,7 +259,7 @@ export default function Customize({
         />
       ) : null}
 
-      {activeSection === "schedule" ? (
+      {customizeMode === "advanced" && activeSection === "schedule" ? (
         <ScheduleSection
           schedule={activeTemplate.schedule}
           canEdit={canEdit}
@@ -213,7 +267,7 @@ export default function Customize({
         />
       ) : null}
 
-      {activeSection === "appearance" ? (
+      {customizeMode === "advanced" && activeSection === "appearance" ? (
         <AppearanceSection
           appearance={activeTemplate.appearance}
           canEdit={canEdit}

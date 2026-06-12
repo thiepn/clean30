@@ -43,6 +43,28 @@ function normalizeDateString(value) {
   return Number.isNaN(parsed.getTime()) ? null : value;
 }
 
+function earliestHistoryDate(history) {
+  const dates = history
+    .map((entry) => normalizeDateString(entry.finishedAt || entry.startedAt))
+    .filter(Boolean)
+    .sort((a, b) => new Date(a) - new Date(b));
+  return dates[0] || null;
+}
+
+function hasCustomTemplate(templates) {
+  return templates.some((template) => template.id !== "clean30-default" && !template.readOnly);
+}
+
+function inferFirstMeaningfulUse(value, templates, history, dailyRuleCompletions) {
+  const saved = normalizeDateString(value?.firstMeaningfulUseAt);
+  if (saved) return saved;
+  const historyDate = earliestHistoryDate(history);
+  if (historyDate) return historyDate;
+  const hasDailyRules = Object.values(dailyRuleCompletions).some((ruleIds) => ruleIds.length > 0);
+  if (hasDailyRules || hasCustomTemplate(templates)) return new Date().toISOString();
+  return null;
+}
+
 function normalizeDailyRuleCompletions(value) {
   if (!isPlainObject(value)) return {};
   return Object.fromEntries(
@@ -149,7 +171,9 @@ function createLegacyState() {
       activeSession: null,
       dailyRuleCompletions: {},
       onboardingCompleted: false,
-      lastFullBackupExportedAt: null
+      onboardingCompletedAt: null,
+      lastFullBackupExportedAt: null,
+      firstMeaningfulUseAt: null
     };
   }
 
@@ -167,7 +191,9 @@ function createLegacyState() {
       activeSession: null,
       dailyRuleCompletions: {},
       onboardingCompleted: false,
-      lastFullBackupExportedAt: null
+      onboardingCompletedAt: null,
+      lastFullBackupExportedAt: null,
+      firstMeaningfulUseAt: null
     };
   }
 
@@ -178,19 +204,23 @@ function createLegacyState() {
   );
   const templates = [defaultTemplate, customTemplate];
   const activeTemplateId = customTemplate.id;
+  const history = normalizeHistory(readJson(STORAGE_KEYS.history, []));
+  const dailyRuleCompletions = normalizeDailyRuleCompletions(readJson(STORAGE_KEYS.dailyRules, {}));
 
   return {
     templates,
     activeTemplateId,
-    history: normalizeHistory(readJson(STORAGE_KEYS.history, [])),
+    history,
     activeSession: normalizeActiveSession(
       readJson(STORAGE_KEYS.activeSession, null),
       templates,
       activeTemplateId
     ),
-    dailyRuleCompletions: normalizeDailyRuleCompletions(readJson(STORAGE_KEYS.dailyRules, {})),
+    dailyRuleCompletions,
     onboardingCompleted: false,
-    lastFullBackupExportedAt: null
+    onboardingCompletedAt: null,
+    lastFullBackupExportedAt: null,
+    firstMeaningfulUseAt: inferFirstMeaningfulUse({}, templates, history, dailyRuleCompletions)
   };
 }
 
@@ -208,15 +238,19 @@ export function normalizeAppState(value) {
   const activeTemplateId = templates.some((template) => template.id === value.activeTemplateId)
     ? value.activeTemplateId
     : templates[0].id;
+  const history = normalizeHistory(value.history);
+  const dailyRuleCompletions = normalizeDailyRuleCompletions(value.dailyRuleCompletions);
 
   return {
     templates,
     activeTemplateId,
-    history: normalizeHistory(value.history),
+    history,
     activeSession: normalizeActiveSession(value.activeSession, templates, activeTemplateId),
-    dailyRuleCompletions: normalizeDailyRuleCompletions(value.dailyRuleCompletions),
+    dailyRuleCompletions,
     onboardingCompleted: Boolean(value.onboardingCompleted),
-    lastFullBackupExportedAt: normalizeDateString(value.lastFullBackupExportedAt)
+    onboardingCompletedAt: normalizeDateString(value.onboardingCompletedAt),
+    lastFullBackupExportedAt: normalizeDateString(value.lastFullBackupExportedAt),
+    firstMeaningfulUseAt: inferFirstMeaningfulUse(value, templates, history, dailyRuleCompletions)
   };
 }
 
@@ -263,6 +297,8 @@ export function resetToFreshState() {
     activeSession: null,
     dailyRuleCompletions: {},
     onboardingCompleted: false,
-    lastFullBackupExportedAt: null
+    onboardingCompletedAt: null,
+    lastFullBackupExportedAt: null,
+    firstMeaningfulUseAt: null
   };
 }

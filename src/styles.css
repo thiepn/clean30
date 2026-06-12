@@ -46,12 +46,14 @@
 
 * {
   box-sizing: border-box;
+  min-width: 0;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   background:
     linear-gradient(180deg, rgba(244, 238, 228, 0.88), rgba(238, 230, 217, 1)),
     var(--bg);
@@ -113,6 +115,7 @@ h3 {
 p {
   color: var(--muted);
   line-height: 1.62;
+  overflow-wrap: anywhere;
 }
 
 table {
@@ -144,6 +147,7 @@ tbody tr:nth-child(even) {
 textarea,
 input,
 select {
+  max-width: 100%;
   width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
@@ -371,6 +375,7 @@ textarea {
 .screen-stack {
   display: grid;
   gap: 20px;
+  min-width: 0;
 }
 
 .panel,
@@ -389,6 +394,7 @@ textarea {
 .routine-card,
 .phase,
 .empty-state {
+  max-width: 100%;
   padding: clamp(1.05rem, 0.85rem + 1vw, 1.55rem);
 }
 
@@ -468,6 +474,7 @@ textarea {
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
+  min-width: 0;
 }
 
 .section-heading,
@@ -503,6 +510,7 @@ textarea {
 }
 
 .button {
+  max-width: 100%;
   min-height: 44px;
   border: 1px solid transparent;
   border-radius: var(--radius-control);
@@ -677,6 +685,10 @@ textarea {
   margin-top: 1rem;
 }
 
+.gallery-grid.compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .gallery-card,
 .insight-card {
   display: grid;
@@ -769,6 +781,13 @@ textarea {
   color: var(--text);
   text-align: left;
   box-shadow: var(--shadow-soft);
+}
+
+.quick-routine-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .quick-button strong,
@@ -1112,6 +1131,49 @@ textarea {
   color: var(--text-soft);
 }
 
+.zone-chip {
+  cursor: pointer;
+}
+
+.zone-chip.active {
+  border-color: rgba(88, 116, 97, 0.52);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.zone-focus-panel {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(88, 116, 97, 0.3);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 1rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.zone-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.zone-focus-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.zone-focus-action .callout {
+  flex: 1;
+  margin-top: 0;
+}
+
+.system-list.compact {
+  margin-top: 0.5rem;
+}
+
 .history-list {
   display: grid;
   gap: 0.8rem;
@@ -1314,6 +1376,14 @@ textarea {
   padding-bottom: 0.15rem;
 }
 
+.customize-mode-tabs {
+  margin-top: 1rem;
+}
+
+.customize-mode-tabs .tab {
+  flex: 0 1 auto;
+}
+
 .editor-heading {
   margin-top: 1.4rem;
 }
@@ -1330,6 +1400,7 @@ textarea {
 
 .editor-row,
 .editor-card {
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   background: var(--surface-strong);
@@ -1377,6 +1448,8 @@ textarea {
 }
 
 .editor-select {
+  min-width: 0;
+  overflow-wrap: anywhere;
   display: grid;
   gap: 0.2rem;
   border: 0;
@@ -1458,6 +1531,11 @@ textarea {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;
+  min-width: 0;
+}
+
+.row-actions .button {
+  white-space: normal;
 }
 
 .density-compact .panel,
@@ -1515,6 +1593,29 @@ textarea {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.guide-accordion {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.guide-detail {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 0.9rem;
+}
+
+.guide-detail summary {
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 760;
+}
+
+.guide-detail summary::marker {
+  color: var(--accent-strong);
 }
 
 .guide-dialog,
@@ -1668,12 +1769,15 @@ textarea {
 
   .quick-grid,
   .gallery-grid,
+  .gallery-grid.compact,
   .insight-grid,
+  .quick-routine-list,
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .history-insight-columns {
+  .history-insight-columns,
+  .zone-focus-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1751,8 +1855,11 @@ textarea {
   .stats-grid,
   .quick-grid,
   .gallery-grid,
+  .gallery-grid.compact,
   .insight-grid,
   .history-insight-columns,
+  .quick-routine-list,
+  .zone-focus-grid,
   .customize-info-grid,
   .customize-action-grid,
   .routine-picker,
@@ -1841,13 +1948,15 @@ textarea {
   }
 
   .backup-reminder-panel,
-  .backup-box {
+  .backup-box,
+  .zone-focus-action {
     display: grid;
     align-items: stretch;
   }
 
   .backup-reminder-panel .button,
-  .backup-box .button {
+  .backup-box .button,
+  .zone-focus-action .button {
     width: 100%;
   }
 

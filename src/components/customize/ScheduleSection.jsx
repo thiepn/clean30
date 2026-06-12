@@ -13,7 +13,7 @@ export default function ScheduleSection({ schedule, canEdit, onEditTemplate }) {
         <div>
           <p className="eyebrow">Schedule</p>
           <h2>Reset Timing</h2>
-          <p>These settings drive dashboard due dates and backup reminders.</p>
+          <p>These settings drive cleaning due dates. Full data backups live in Settings.</p>
         </div>
       </div>
 
@@ -36,8 +36,10 @@ export default function ScheduleSection({ schedule, canEdit, onEditTemplate }) {
         </label>
 
         <label className="field-label" htmlFor="backup-reset-day">
-          Backup reset day
-          <span className="field-help">A weekly cue for exporting local data from this browser.</span>
+          Fallback reset day
+          <span className="field-help">
+            Your backup cleaning slot if the weekly reset did not happen. This is not a data backup.
+          </span>
           <select
             id="backup-reset-day"
             value={schedule.backupResetDay}

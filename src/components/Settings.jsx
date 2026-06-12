@@ -60,8 +60,8 @@ export default function Settings({
           <div>
             <strong>{backupDue ? "Backup reminder" : "Backup status"}</strong>
             <p>
-              Your data is stored only on this device/browser. Export a backup occasionally so you
-              do not lose your routines and history.
+              Your data is stored only on this device/browser. Export a full backup occasionally so
+              your routines and history are easy to restore.
             </p>
             <span>
               Last full backup:{" "}

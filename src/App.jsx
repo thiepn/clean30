@@ -67,8 +67,30 @@ export default function App() {
     }
   }, [activeTemplate, selectedRoutineId]);
 
-  const backupAge = daysBetween(appState.lastFullBackupExportedAt);
-  const backupDue = !appState.lastFullBackupExportedAt || backupAge === null || backupAge > 30;
+  const hasCompletedDailyRules = Object.values(appState.dailyRuleCompletions).some(
+    (ruleIds) => ruleIds.length > 0
+  );
+  const hasCustomTemplate = appState.templates.some(
+    (template) => template.id !== "clean30-default" && !template.readOnly
+  );
+  const onboardingAge = daysBetween(appState.onboardingCompletedAt);
+  const hasMeaningfulData =
+    appState.history.length > 0 ||
+    hasCompletedDailyRules ||
+    hasCustomTemplate ||
+    (onboardingAge !== null && onboardingAge > 30);
+  const backupReferenceDate =
+    appState.lastFullBackupExportedAt ||
+    appState.firstMeaningfulUseAt ||
+    appState.onboardingCompletedAt;
+  const backupAge = daysBetween(backupReferenceDate);
+  const backupDue = hasMeaningfulData && backupAge !== null && backupAge >= 30;
+
+  function markMeaningfulUse(state) {
+    return state.firstMeaningfulUseAt
+      ? state
+      : { ...state, firstMeaningfulUseAt: new Date().toISOString() };
+  }
 
   function requestConfirmation({ title, message, confirmLabel, onConfirm }) {
     setConfirmDialog({ title, message, confirmLabel, onConfirm });
@@ -88,10 +110,10 @@ export default function App() {
       const template = current.templates.find((item) => item.id === current.activeTemplateId);
       if (!template || template.readOnly) return current;
       const updated = normalizeTemplate(updater(template), { readOnly: false });
-      return {
+      return markMeaningfulUse({
         ...current,
         templates: current.templates.map((item) => (item.id === updated.id ? updated : item))
-      };
+      });
     });
   }
 
@@ -108,7 +130,7 @@ export default function App() {
       appState.templates.find((template) => template.id === "clean30-default") ||
       createDefaultTemplate();
     const customTemplate = duplicateTemplate(defaultTemplate, "My Cleaning System");
-    setAppState((current) => ({
+    setAppState((current) => markMeaningfulUse({
       ...current,
       templates: [...current.templates, customTemplate],
       activeTemplateId: customTemplate.id
@@ -128,7 +150,7 @@ export default function App() {
           galleryItem.template,
           `${galleryItem.name} Copy`
         );
-        setAppState((current) => ({
+        setAppState((current) => markMeaningfulUse({
           ...current,
           templates: [...current.templates, customTemplate],
           activeTemplateId: customTemplate.id
@@ -180,7 +202,7 @@ export default function App() {
   function importTemplate(payload) {
     const result = validateTemplatePayload(payload);
     if (!result.ok) return result;
-    setAppState((current) => ({
+    setAppState((current) => markMeaningfulUse({
       ...current,
       templates: [...current.templates, result.template],
       activeTemplateId: result.template.id
@@ -335,7 +357,7 @@ export default function App() {
         };
       }
 
-      return next;
+      return markMeaningfulUse(next);
     });
     setCompletionSummary(entry);
   }
@@ -346,13 +368,13 @@ export default function App() {
       const completed = new Set(current.dailyRuleCompletions[todayKey] || []);
       if (completed.has(ruleId)) completed.delete(ruleId);
       else completed.add(ruleId);
-      return {
+      return markMeaningfulUse({
         ...current,
         dailyRuleCompletions: {
           ...current.dailyRuleCompletions,
           [todayKey]: [...completed]
         }
-      };
+      });
     });
   }
 
@@ -405,19 +427,21 @@ export default function App() {
           { readOnly: false }
         );
 
-        return {
+        return markMeaningfulUse({
           ...current,
           templates: [...templates, customTemplate],
           activeTemplateId: customTemplate.id,
-          onboardingCompleted: true
-        };
+          onboardingCompleted: true,
+          onboardingCompletedAt: new Date().toISOString()
+        });
       }
 
       return {
         ...current,
         templates,
         activeTemplateId: defaultTemplate.id,
-        onboardingCompleted: true
+        onboardingCompleted: true,
+        onboardingCompletedAt: new Date().toISOString()
       };
     });
     setSelectedRoutineId("weekly-reset");
@@ -471,7 +495,7 @@ export default function App() {
   } else if (currentView === "routines") {
     content = <Routines routines={activeTemplate.routines} onStartRoutine={startSession} />;
   } else if (currentView === "systems") {
-    content = <Systems template={activeTemplate} />;
+    content = <Systems template={activeTemplate} onStartRoutine={startSession} />;
   } else if (currentView === "customize") {
     content = (
       <Customize
@@ -487,6 +511,8 @@ export default function App() {
         onImportFullBackup={importFullBackup}
         templateGallery={templateGallery}
         onUseGalleryTemplate={useGalleryTemplate}
+        onResetHistory={resetOnlyHistory}
+        onResetAll={resetEverything}
         onRequestConfirmation={requestConfirmation}
       />
     );

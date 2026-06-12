@@ -1,33 +1,59 @@
 import { useEffect } from "react";
 
-const guideItems = [
+const guideSections = [
   {
-    title: "Dashboard",
-    detail: "Shows what matters today, including daily rules, next action, memory, and alerts."
+    title: "Quick Start",
+    items: [
+      "Start with Dashboard.",
+      "If Clean30 recommends a reset, start that session.",
+      "If you are tired, use Minimal Reset.",
+      "If guests are coming, use Guest Reset.",
+      "Use Customize only when you want to change the system."
+    ]
   },
   {
-    title: "Start Session",
-    detail: "Use this when you are actually cleaning. Active sessions stay saved locally."
+    title: "What Each Area Is For",
+    items: [
+      "Dashboard: today's status and next action.",
+      "Start: do a cleaning session.",
+      "Systems: understand cleaning principles and zones.",
+      "Routines: view the full checklists.",
+      "Customize: edit templates, routines, and rules.",
+      "History: see what you completed.",
+      "Settings: backup, reset, and onboarding."
+    ]
   },
   {
-    title: "Routines",
-    detail: "Reference the built-in and custom cleaning sequences before starting."
+    title: "Templates Explained",
+    items: [
+      "Default templates are protected.",
+      "Duplicate a template to edit it.",
+      "Template export shares routines and settings only.",
+      "Full backup saves personal data too, including history."
+    ]
   },
   {
-    title: "Systems",
-    detail: "Review practical apartment rules, bottlenecks, zones, and prevention habits."
+    title: "Data And Backups",
+    items: [
+      "Data is stored locally on this device/browser.",
+      "Export a full backup occasionally.",
+      "There is no account, cloud sync, or remote storage."
+    ]
   },
   {
-    title: "Customize",
-    detail: "Edit templates, routines, daily rules, profile details, and appearance."
+    title: "If It Feels Overwhelming",
+    items: [
+      "Use the default template.",
+      "Only use Dashboard and Start Session at first.",
+      "Ignore Advanced Customize until you need it."
+    ]
   },
   {
-    title: "History",
-    detail: "See completed sessions, completion rates, notes, and routine memory."
-  },
-  {
-    title: "Settings",
-    detail: "Manage full local backups, imports, resets, and onboarding."
+    title: "Mobile Install",
+    items: [
+      "When installed as a PWA, Clean30 behaves like an app.",
+      "Installed or not, data is still stored locally in this browser profile."
+    ]
   }
 ];
 
@@ -56,19 +82,23 @@ export default function HelpGuide({ open, onClose }) {
         <div className="dialog-header">
           <div>
             <p className="eyebrow">Clean30 guide</p>
-            <h2 id="help-guide-title">Where Things Live</h2>
+            <h2 id="help-guide-title">Clean30 Help</h2>
           </div>
           <button className="icon-button" type="button" onClick={onClose} aria-label="Close guide">
             X
           </button>
         </div>
 
-        <div className="guide-list">
-          {guideItems.map((item) => (
-            <article className="guide-item" key={item.title}>
-              <h3>{item.title}</h3>
-              <p>{item.detail}</p>
-            </article>
+        <div className="guide-accordion">
+          {guideSections.map((section, index) => (
+            <details className="guide-detail" key={section.title} open={index === 0}>
+              <summary>{section.title}</summary>
+              <ul className="system-list compact">
+                {section.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </details>
           ))}
         </div>
 
