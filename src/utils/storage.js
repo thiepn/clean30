@@ -87,8 +87,15 @@ function normalizeDismissedRecommendations(value) {
 
 function normalizeAppSettings(value) {
   const interval = Number(value?.backupReminderIntervalDays);
+  const accentColor = typeof value?.accentColor === "string" ? value.accentColor : "forest";
+  const backgroundColor =
+    typeof value?.backgroundColor === "string" ? value.backgroundColor : "soft-blue";
+  const accentOptions = ["forest", "teal", "navy", "slate", "plum", "brown", "charcoal"];
+  const backgroundOptions = ["soft-blue", "warm-cream", "soft-mint", "pale-green", "lavender", "cool-gray"];
   return {
-    backupReminderIntervalDays: [0, 14, 30, 60].includes(interval) ? interval : 30
+    backupReminderIntervalDays: [0, 14, 30, 60].includes(interval) ? interval : 30,
+    accentColor: accentOptions.includes(accentColor) ? accentColor : "forest",
+    backgroundColor: backgroundOptions.includes(backgroundColor) ? backgroundColor : "soft-blue"
   };
 }
 

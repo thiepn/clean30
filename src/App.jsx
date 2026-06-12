@@ -454,6 +454,28 @@ export default function App() {
     }));
   }
 
+  function updateAppAppearance(field, value) {
+    const allowedValues = {
+      accentColor: ["forest", "teal", "navy", "slate", "plum", "brown", "charcoal"],
+      backgroundColor: [
+        "soft-blue",
+        "warm-cream",
+        "soft-mint",
+        "pale-green",
+        "lavender",
+        "cool-gray"
+      ]
+    };
+    if (!allowedValues[field]?.includes(value)) return;
+    setAppState((current) => ({
+      ...current,
+      appSettings: {
+        ...(current.appSettings || {}),
+        [field]: value
+      }
+    }));
+  }
+
   function resetHiddenRecommendations() {
     requestConfirmation({
       title: "Reset hidden recommendations?",
@@ -590,6 +612,7 @@ export default function App() {
         onResetHistory={resetOnlyHistory}
         onResetAll={resetEverything}
         onRequestConfirmation={requestConfirmation}
+        onUpdateAppAppearance={updateAppAppearance}
       />
     );
   } else if (currentView === "history") {
@@ -610,7 +633,9 @@ export default function App() {
         lastFullBackupExportedAt={appState.lastFullBackupExportedAt}
         backupDue={backupDue}
         backupReminderIntervalDays={backupReminderInterval}
+        appAppearance={appState.appSettings}
         onUpdateBackupReminderInterval={updateBackupReminderInterval}
+        onUpdateAppAppearance={updateAppAppearance}
         onRestartOnboarding={restartOnboarding}
         onOpenHelp={() => setHelpOpen(true)}
         onManageCustomize={() => setCurrentView("customize")}
@@ -647,6 +672,7 @@ export default function App() {
         onNavigate={setCurrentView}
         template={activeTemplate}
         onOpenHelp={() => setHelpOpen(true)}
+        appAppearance={appState.appSettings}
       >
         {content}
       </Layout>

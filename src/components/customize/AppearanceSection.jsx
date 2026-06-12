@@ -1,10 +1,25 @@
 import { accentOptions, densityOptions } from "../../utils/templateUtils.js";
 
-export default function AppearanceSection({ appearance, canEdit, onEditTemplate }) {
+const templateAccentToAppAccent = {
+  green: "forest",
+  blue: "navy",
+  brown: "brown",
+  gray: "charcoal"
+};
+
+export default function AppearanceSection({
+  appearance,
+  canEdit,
+  onEditTemplate,
+  onUpdateAppAppearance
+}) {
   function updateAppearance(field, value) {
     onEditTemplate((draft) => {
       draft.appearance[field] = value;
     });
+    if (field === "accentColor" && templateAccentToAppAccent[value]) {
+      onUpdateAppAppearance?.("accentColor", templateAccentToAppAccent[value]);
+    }
   }
 
   return (
@@ -13,7 +28,10 @@ export default function AppearanceSection({ appearance, canEdit, onEditTemplate 
         <div>
           <p className="eyebrow">Appearance</p>
           <h2>Simple Theme Settings</h2>
-          <p>Keep the interface calm while adjusting accent color and spacing density.</p>
+          <p>
+            Keep the interface calm while adjusting density. Expanded app color controls live in
+            Settings.
+          </p>
         </div>
       </div>
 

@@ -1,6 +1,25 @@
 import { useRef, useState } from "react";
 import { formatDateTime } from "../utils/dates.js";
 
+const accentOptions = [
+  { id: "forest", label: "Forest" },
+  { id: "teal", label: "Teal" },
+  { id: "navy", label: "Navy" },
+  { id: "slate", label: "Slate" },
+  { id: "plum", label: "Plum" },
+  { id: "brown", label: "Brown" },
+  { id: "charcoal", label: "Charcoal" }
+];
+
+const backgroundOptions = [
+  { id: "soft-blue", label: "Soft blue" },
+  { id: "warm-cream", label: "Warm cream" },
+  { id: "soft-mint", label: "Soft mint" },
+  { id: "pale-green", label: "Pale green" },
+  { id: "lavender", label: "Lavender" },
+  { id: "cool-gray", label: "Cool gray" }
+];
+
 export default function Settings({
   template,
   onExportFullBackup,
@@ -8,7 +27,9 @@ export default function Settings({
   lastFullBackupExportedAt,
   backupDue,
   backupReminderIntervalDays,
+  appAppearance,
   onUpdateBackupReminderInterval,
+  onUpdateAppAppearance,
   onRestartOnboarding,
   onOpenHelp,
   onManageCustomize,
@@ -63,6 +84,58 @@ export default function Settings({
         <button className="button ghost" type="button" onClick={onManageCustomize}>
           Manage in Customize
         </button>
+      </section>
+
+      <section className="panel settings-card">
+        <div>
+          <p className="eyebrow">Appearance</p>
+          <h2>App Colors</h2>
+          <p>Choose app-level accent and background colors. Preferences are stored locally.</p>
+        </div>
+        <div className="appearance-setting-group">
+          <p className="field-label">Accent color</p>
+          <div className="appearance-choice-grid">
+            {accentOptions.map((option) => (
+              <button
+                className={
+                  appAppearance?.accentColor === option.id
+                    ? "appearance-choice active"
+                    : "appearance-choice"
+                }
+                data-accent-choice={option.id}
+                key={option.id}
+                type="button"
+                aria-pressed={appAppearance?.accentColor === option.id}
+                onClick={() => onUpdateAppAppearance("accentColor", option.id)}
+              >
+                <span className="appearance-swatch" />
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="appearance-setting-group">
+          <p className="field-label">Background color</p>
+          <div className="appearance-choice-grid">
+            {backgroundOptions.map((option) => (
+              <button
+                className={
+                  appAppearance?.backgroundColor === option.id
+                    ? "appearance-choice active"
+                    : "appearance-choice"
+                }
+                data-background-choice={option.id}
+                key={option.id}
+                type="button"
+                aria-pressed={appAppearance?.backgroundColor === option.id}
+                onClick={() => onUpdateAppAppearance("backgroundColor", option.id)}
+              >
+                <span className="appearance-swatch" />
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="panel settings-card">

@@ -12,7 +12,7 @@ Live app: https://thiepn.github.io/clean30/
 - Routines page for comparing, preparing, and copying checklists.
 - Customize page with Simple and Advanced modes.
 - History page for completed resets, Tiny Rules, and practical patterns.
-- Settings with backup, privacy, help, reminder, and reset tools.
+- Settings with backup, privacy, help, appearance, reminder, and reset tools.
 - PWA install support for phone home screens.
 - Local-only data storage in browser/PWA storage.
 - Full backup export/import for restoring or moving app data.
@@ -66,6 +66,8 @@ Clean30 has:
 - no server database
 
 Data is stored locally in browser/PWA storage. Clearing browser or app data may delete Clean30 data. Export full backups from Settings if you want to protect or move your data.
+
+Appearance preferences, such as accent and background color, are also stored locally with the rest of the app settings.
 
 ## Template Sharing
 

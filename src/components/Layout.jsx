@@ -1,11 +1,22 @@
 import Navigation from "./Navigation.jsx";
 
-export default function Layout({ currentView, onNavigate, template, children, onOpenHelp }) {
+export default function Layout({
+  currentView,
+  onNavigate,
+  template,
+  children,
+  onOpenHelp,
+  appAppearance
+}) {
   const profile = template.profile;
-  const shellClass = `app-shell theme-${template.appearance.accentColor} density-${template.appearance.density}`;
+  const shellClass = `app-shell density-${template.appearance.density}`;
 
   return (
-    <div className={shellClass}>
+    <div
+      className={shellClass}
+      data-accent={appAppearance?.accentColor || "forest"}
+      data-background={appAppearance?.backgroundColor || "soft-blue"}
+    >
       <header className="app-header">
         <div>
           <p className="app-kicker">Apartment Reset System</p>

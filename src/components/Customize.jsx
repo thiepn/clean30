@@ -107,7 +107,8 @@ export default function Customize({
   onUseGalleryTemplate,
   onResetHistory,
   onResetAll,
-  onRequestConfirmation
+  onRequestConfirmation,
+  onUpdateAppAppearance
 }) {
   const templateImportRef = useRef(null);
   const backupImportRef = useRef(null);
@@ -278,6 +279,7 @@ export default function Customize({
           appearance={activeTemplate.appearance}
           canEdit={canEdit}
           onEditTemplate={editTemplate}
+          onUpdateAppAppearance={onUpdateAppAppearance}
         />
       );
     }
