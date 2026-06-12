@@ -1,9 +1,13 @@
 import { useRef, useState } from "react";
+import { formatDateTime } from "../utils/dates.js";
 
 export default function Settings({
   template,
   onExportFullBackup,
   onImportFullBackup,
+  lastFullBackupExportedAt,
+  backupDue,
+  onRestartOnboarding,
   onResetAll,
   onResetHistory
 }) {
@@ -52,10 +56,23 @@ export default function Settings({
         <p className="muted">
           Template editing lives in Customize. This page handles full local backups and resets.
         </p>
-        <div className="settings-actions">
+        <div className={backupDue ? "backup-box due" : "backup-box"}>
+          <div>
+            <strong>{backupDue ? "Backup reminder" : "Backup status"}</strong>
+            <p>
+              Your data is stored only on this device/browser. Export a backup occasionally so you
+              do not lose your routines and history.
+            </p>
+            <span>
+              Last full backup:{" "}
+              {lastFullBackupExportedAt ? formatDateTime(lastFullBackupExportedAt) : "Never"}
+            </span>
+          </div>
           <button className="button primary" type="button" onClick={onExportFullBackup}>
-            Export full backup
+            Export full backup now
           </button>
+        </div>
+        <div className="settings-actions">
           <button
             className="button ghost"
             type="button"
@@ -87,6 +104,11 @@ export default function Settings({
           Clean30 is a local-only cleaning routine app. Data stays in the browser&apos;s
           localStorage unless exported.
         </p>
+        <div className="settings-actions">
+          <button className="button ghost" type="button" onClick={onRestartOnboarding}>
+            Restart onboarding
+          </button>
+        </div>
       </section>
     </div>
   );

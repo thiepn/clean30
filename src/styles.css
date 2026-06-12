@@ -237,6 +237,43 @@ textarea {
   font-weight: 680;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.help-button,
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent-strong);
+  font-weight: 780;
+  box-shadow: var(--shadow-soft);
+}
+
+.help-button {
+  width: 42px;
+  height: 42px;
+  font-size: 1.05rem;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  font-size: 0.9rem;
+}
+
+.help-button:hover,
+.icon-button:hover {
+  border-color: rgba(88, 116, 97, 0.42);
+  background: var(--accent-soft);
+}
+
 .navigation {
   position: sticky;
   top: 0;
@@ -506,6 +543,78 @@ textarea {
 }
 
 .action-panel h2 {
+  color: var(--accent-strong);
+}
+
+.session-resume-panel {
+  border-color: rgba(88, 116, 97, 0.38);
+  background: #f7fbf4;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid rgba(88, 116, 97, 0.34);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.86rem;
+  font-weight: 720;
+  white-space: nowrap;
+}
+
+.backup-reminder-panel,
+.backup-box {
+  border: 1px solid rgba(160, 108, 45, 0.34);
+  border-radius: var(--radius-card);
+  background: var(--warning-soft);
+}
+
+.backup-reminder-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.backup-reminder-panel h2 {
+  color: #6f471c;
+}
+
+.backup-box {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.backup-box strong {
+  display: block;
+  color: #6f471c;
+}
+
+.backup-box p {
+  margin: 0.25rem 0 0.35rem;
+  color: #5f3f18;
+}
+
+.backup-box span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.backup-box:not(.due) {
+  border-color: rgba(88, 116, 97, 0.28);
+  background: var(--accent-soft);
+}
+
+.backup-box:not(.due) strong {
   color: var(--accent-strong);
 }
 
@@ -1140,6 +1249,140 @@ textarea {
   margin-top: 0.65rem;
 }
 
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.guide-dialog,
+.onboarding-dialog {
+  width: min(720px, 100%);
+  max-height: min(86vh, 760px);
+  overflow: auto;
+}
+
+.guide-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.guide-list.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.guide-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 0.9rem;
+}
+
+.guide-item p {
+  margin-top: 0.35rem;
+}
+
+.guide-note {
+  margin-top: 1rem;
+}
+
+.onboarding-backdrop {
+  z-index: 120;
+}
+
+.onboarding-progress {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.onboarding-dot {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.onboarding-dot.active {
+  background: var(--accent);
+}
+
+.onboarding-step {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.setup-options {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.setup-option {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 0.95rem;
+}
+
+.setup-option.active {
+  border-color: rgba(88, 116, 97, 0.46);
+  background: var(--accent-soft);
+}
+
+.setup-option input {
+  width: 20px;
+  height: 20px;
+  margin-top: 0.15rem;
+  accent-color: var(--accent);
+}
+
+.setup-option strong,
+.setup-option small {
+  display: block;
+}
+
+.setup-option small {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.summary-card {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.55fr) minmax(0, 1fr);
+  gap: 0.45rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 1rem;
+}
+
+.summary-card span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.summary-card strong {
+  color: var(--text);
+  font-weight: 730;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.2rem;
+}
+
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -1191,6 +1434,12 @@ textarea {
   .header-target {
     align-items: flex-start;
     text-align: left;
+  }
+
+  .header-actions {
+    width: 100%;
+    align-items: flex-start;
+    justify-content: space-between;
   }
 
   .navigation {
@@ -1264,6 +1513,7 @@ textarea {
   }
 
   .dialog-actions,
+  .onboarding-actions,
   .settings-actions,
   .session-actions,
   .card-actions {
@@ -1271,9 +1521,27 @@ textarea {
   }
 
   .dialog-actions .button,
+  .onboarding-actions .button,
   .settings-actions .button,
   .session-actions .button,
   .card-actions .button {
+    width: 100%;
+  }
+
+  .guide-list,
+  .guide-list.compact,
+  .summary-card {
+    grid-template-columns: 1fr;
+  }
+
+  .backup-reminder-panel,
+  .backup-box {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .backup-reminder-panel .button,
+  .backup-box .button {
     width: 100%;
   }
 

@@ -8,12 +8,14 @@ import Settings from "./components/Settings.jsx";
 import StartSession from "./components/StartSession.jsx";
 import Systems from "./components/Systems.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
+import HelpGuide from "./components/HelpGuide.jsx";
+import Onboarding from "./components/Onboarding.jsx";
 import {
   createHistoryEntry,
   createSession,
   getRoutineById
 } from "./utils/calculations.js";
-import { getTodayKey } from "./utils/dates.js";
+import { daysBetween, getTodayKey } from "./utils/dates.js";
 import {
   createFullBackup,
   loadAppState,
@@ -47,6 +49,7 @@ export default function App() {
   const [selectedRoutineId, setSelectedRoutineId] = useState("weekly-reset");
   const [completionSummary, setCompletionSummary] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const activeTemplate = useMemo(() => {
     return (
@@ -62,6 +65,9 @@ export default function App() {
       setSelectedRoutineId(activeTemplate?.routines[0]?.id || "");
     }
   }, [activeTemplate, selectedRoutineId]);
+
+  const backupAge = daysBetween(appState.lastFullBackupExportedAt);
+  const backupDue = !appState.lastFullBackupExportedAt || backupAge === null || backupAge > 30;
 
   function requestConfirmation({ title, message, confirmLabel, onConfirm }) {
     setConfirmDialog({ title, message, confirmLabel, onConfirm });
@@ -162,7 +168,10 @@ export default function App() {
   }
 
   function exportFullBackup() {
-    downloadJson(`clean30-full-backup-${getTodayKey()}.json`, createFullBackup(appState));
+    const exportedAt = new Date().toISOString();
+    const nextState = { ...appState, lastFullBackupExportedAt: exportedAt };
+    downloadJson(`clean30-full-backup-${getTodayKey()}.json`, createFullBackup(nextState));
+    setAppState(nextState);
   }
 
   function importFullBackup(payload) {
@@ -338,6 +347,61 @@ export default function App() {
     });
   }
 
+  function restartOnboarding() {
+    setAppState((current) => ({ ...current, onboardingCompleted: false }));
+    setCurrentView("dashboard");
+  }
+
+  function completeOnboarding({ setupMode, profile, schedule }) {
+    setAppState((current) => {
+      const defaultTemplate =
+        current.templates.find((template) => template.id === "clean30-default") ||
+        createDefaultTemplate();
+      const templates = current.templates.some((template) => template.id === defaultTemplate.id)
+        ? current.templates
+        : [defaultTemplate, ...current.templates];
+      const profileChanged =
+        profile.appDisplayName !== defaultTemplate.profile.appDisplayName ||
+        profile.homeName !== defaultTemplate.profile.homeName ||
+        schedule.weeklyResetDay !== defaultTemplate.schedule.weeklyResetDay ||
+        schedule.backupResetDay !== defaultTemplate.schedule.backupResetDay;
+
+      if (setupMode === "custom" || profileChanged) {
+        const customTemplate = normalizeTemplate(
+          {
+            ...duplicateTemplate(defaultTemplate, profile.homeName || "My Cleaning System"),
+            name: profile.homeName || "My Cleaning System",
+            profile: {
+              ...defaultTemplate.profile,
+              ...profile
+            },
+            schedule: {
+              ...defaultTemplate.schedule,
+              ...schedule
+            }
+          },
+          { readOnly: false }
+        );
+
+        return {
+          ...current,
+          templates: [...templates, customTemplate],
+          activeTemplateId: customTemplate.id,
+          onboardingCompleted: true
+        };
+      }
+
+      return {
+        ...current,
+        templates,
+        activeTemplateId: defaultTemplate.id,
+        onboardingCompleted: true
+      };
+    });
+    setSelectedRoutineId("weekly-reset");
+    setCurrentView("dashboard");
+  }
+
   function resetOnlyHistory() {
     requestConfirmation({
       title: "Reset history?",
@@ -416,6 +480,9 @@ export default function App() {
         template={activeTemplate}
         onExportFullBackup={exportFullBackup}
         onImportFullBackup={importFullBackup}
+        lastFullBackupExportedAt={appState.lastFullBackupExportedAt}
+        backupDue={backupDue}
+        onRestartOnboarding={restartOnboarding}
         onResetAll={resetEverything}
         onResetHistory={resetOnlyHistory}
       />
@@ -426,17 +493,33 @@ export default function App() {
         template={activeTemplate}
         history={appState.history}
         dailyRuleCompletions={appState.dailyRuleCompletions}
+        activeSession={appState.activeSession}
+        backupDue={backupDue}
+        lastFullBackupExportedAt={appState.lastFullBackupExportedAt}
         onToggleDailyRule={toggleDailyRule}
         onStartRoutine={startSession}
+        onResumeSession={() => setCurrentView("start")}
+        onFinishPartialSession={finishSession}
+        onDiscardSession={cancelSession}
+        onExportFullBackup={exportFullBackup}
       />
     );
   }
 
   return (
     <>
-      <Layout currentView={currentView} onNavigate={setCurrentView} template={activeTemplate}>
+      <Layout
+        currentView={currentView}
+        onNavigate={setCurrentView}
+        template={activeTemplate}
+        onOpenHelp={() => setHelpOpen(true)}
+      >
         {content}
       </Layout>
+      <HelpGuide open={helpOpen} onClose={() => setHelpOpen(false)} />
+      {!appState.onboardingCompleted ? (
+        <Onboarding template={activeTemplate} onComplete={completeOnboarding} />
+      ) : null}
       <ConfirmDialog
         title={confirmDialog?.title}
         message={confirmDialog?.message}

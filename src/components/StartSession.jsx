@@ -37,6 +37,10 @@ export default function StartSession({
               <p className="eyebrow">Active session</p>
               <h2>{routine.title}</h2>
               <p>{routine.purpose}</p>
+              <p className="muted">
+                This unfinished session is saved locally. Continue it, finish partial, or cancel it
+                before starting another routine.
+              </p>
             </div>
             <div className="session-meta">
               <span>{routine.estimatedTime}</span>

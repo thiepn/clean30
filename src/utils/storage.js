@@ -37,6 +37,12 @@ function uniqueStrings(value) {
   return [...new Set(value.filter((item) => typeof item === "string"))];
 }
 
+function normalizeDateString(value) {
+  if (typeof value !== "string") return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : value;
+}
+
 function normalizeDailyRuleCompletions(value) {
   if (!isPlainObject(value)) return {};
   return Object.fromEntries(
@@ -141,7 +147,9 @@ function createLegacyState() {
       activeTemplateId: defaultTemplate.id,
       history: [],
       activeSession: null,
-      dailyRuleCompletions: {}
+      dailyRuleCompletions: {},
+      onboardingCompleted: false,
+      lastFullBackupExportedAt: null
     };
   }
 
@@ -157,7 +165,9 @@ function createLegacyState() {
       activeTemplateId: defaultTemplate.id,
       history: [],
       activeSession: null,
-      dailyRuleCompletions: {}
+      dailyRuleCompletions: {},
+      onboardingCompleted: false,
+      lastFullBackupExportedAt: null
     };
   }
 
@@ -178,7 +188,9 @@ function createLegacyState() {
       templates,
       activeTemplateId
     ),
-    dailyRuleCompletions: normalizeDailyRuleCompletions(readJson(STORAGE_KEYS.dailyRules, {}))
+    dailyRuleCompletions: normalizeDailyRuleCompletions(readJson(STORAGE_KEYS.dailyRules, {})),
+    onboardingCompleted: false,
+    lastFullBackupExportedAt: null
   };
 }
 
@@ -202,7 +214,9 @@ export function normalizeAppState(value) {
     activeTemplateId,
     history: normalizeHistory(value.history),
     activeSession: normalizeActiveSession(value.activeSession, templates, activeTemplateId),
-    dailyRuleCompletions: normalizeDailyRuleCompletions(value.dailyRuleCompletions)
+    dailyRuleCompletions: normalizeDailyRuleCompletions(value.dailyRuleCompletions),
+    onboardingCompleted: Boolean(value.onboardingCompleted),
+    lastFullBackupExportedAt: normalizeDateString(value.lastFullBackupExportedAt)
   };
 }
 
@@ -247,6 +261,8 @@ export function resetToFreshState() {
     activeTemplateId: defaultTemplate.id,
     history: [],
     activeSession: null,
-    dailyRuleCompletions: {}
+    dailyRuleCompletions: {},
+    onboardingCompleted: false,
+    lastFullBackupExportedAt: null
   };
 }

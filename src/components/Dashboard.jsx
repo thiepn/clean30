@@ -1,9 +1,10 @@
 import {
   getDashboardStatus,
   getLastCompleted,
-  getRecommendedAction
+  getRecommendedAction,
+  getSessionProgress
 } from "../utils/calculations.js";
-import { formatRelativeDays, getTodayKey } from "../utils/dates.js";
+import { formatDateTime, formatRelativeDays, getTodayKey } from "../utils/dates.js";
 import ProgressBar from "./ProgressBar.jsx";
 
 const quickStarts = [
@@ -25,8 +26,15 @@ export default function Dashboard({
   template,
   history,
   dailyRuleCompletions,
+  activeSession,
+  backupDue,
+  lastFullBackupExportedAt,
   onToggleDailyRule,
-  onStartRoutine
+  onStartRoutine,
+  onResumeSession,
+  onFinishPartialSession,
+  onDiscardSession,
+  onExportFullBackup
 }) {
   const todayKey = getTodayKey();
   const todayCompleted = dailyRuleCompletions[todayKey] || [];
@@ -41,6 +49,13 @@ export default function Dashboard({
   const recommendedRoutine = template.routines.find(
     (routine) => routine.id === recommendation.routineId
   );
+  const activeRoutine = activeSession
+    ? activeSession.routineSnapshot ||
+      template.routines.find((routine) => routine.id === activeSession.routineId)
+    : null;
+  const activeProgress = activeSession
+    ? getSessionProgress(activeSession, activeRoutine)
+    : { completed: 0, total: 0, percent: 0 };
 
   return (
     <div className="screen-stack">
@@ -57,6 +72,60 @@ export default function Dashboard({
           <small>daily rules</small>
         </div>
       </section>
+
+      {activeSession ? (
+        <section className="panel session-resume-panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Unfinished session</p>
+              <h2>Unfinished session: {activeRoutine?.title || activeSession.routineId}</h2>
+              <p>
+                Started {formatDateTime(activeSession.startedAt)}. Progress is saved locally until
+                you resume, finish partial, or discard it.
+              </p>
+            </div>
+            <div className="status-pill">
+              {activeProgress.completed}/{activeProgress.total} tasks
+            </div>
+          </div>
+          <ProgressBar
+            percent={activeProgress.percent}
+            label={`${activeProgress.percent}% complete`}
+          />
+          <div className="session-actions">
+            <button className="button primary" type="button" onClick={onResumeSession}>
+              Resume
+            </button>
+            <button className="button ghost" type="button" onClick={onFinishPartialSession}>
+              Finish partial
+            </button>
+            <button className="button danger-ghost" type="button" onClick={onDiscardSession}>
+              Discard
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {backupDue ? (
+        <section className="panel backup-reminder-panel">
+          <div>
+            <p className="eyebrow">Local backup</p>
+            <h2>Backup Reminder</h2>
+            <p>
+              Your data is stored only on this device/browser. Export a backup occasionally so you
+              do not lose your routines and history.
+            </p>
+            {lastFullBackupExportedAt ? (
+              <p className="muted">Last full backup: {formatDateTime(lastFullBackupExportedAt)}</p>
+            ) : (
+              <p className="muted">No full backup has been exported yet.</p>
+            )}
+          </div>
+          <button className="button primary" type="button" onClick={onExportFullBackup}>
+            Export full backup now
+          </button>
+        </section>
+      ) : null}
 
       <div className="dashboard-grid">
         <section className="panel">
