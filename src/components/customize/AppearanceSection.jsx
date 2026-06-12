@@ -27,9 +27,9 @@ export default function AppearanceSection({
       <div className="section-heading">
         <div>
           <p className="eyebrow">Appearance</p>
-          <h2>Simple Theme Settings</h2>
+          <h2>Template Appearance</h2>
           <p>
-            Keep the interface calm while adjusting density. Expanded app color controls live in
+            Keep template density and legacy accent settings here. Full app color controls live in
             Settings.
           </p>
         </div>
@@ -37,8 +37,10 @@ export default function AppearanceSection({
 
       <div className="form-grid customize-card">
         <label className="field-label" htmlFor="accent-color">
-          Accent color
-          <span className="field-help">Used for active tabs, primary buttons, and status accents.</span>
+          Template accent
+          <span className="field-help">
+            Kept for template compatibility; Settings controls the full app color palette.
+          </span>
           <select
             id="accent-color"
             value={appearance.accentColor}
