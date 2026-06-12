@@ -49,6 +49,9 @@ export default function Dashboard({
   const recommendedRoutine = template.routines.find(
     (routine) => routine.id === recommendation.routineId
   );
+  const mostRecentSession = [...history].sort(
+    (a, b) => new Date(b.finishedAt) - new Date(a.finishedAt)
+  )[0];
   const activeRoutine = activeSession
     ? activeSession.routineSnapshot ||
       template.routines.find((routine) => routine.id === activeSession.routineId)
@@ -228,6 +231,14 @@ export default function Dashboard({
             <div className="metric-card">
               <span>Total completed sessions</span>
               <strong>{history.length}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Most recent session</span>
+              <strong>
+                {mostRecentSession
+                  ? `${mostRecentSession.routineTitle} - ${formatRelativeDays(mostRecentSession.finishedAt)}`
+                  : "Not yet"}
+              </strong>
             </div>
           </div>
         </section>

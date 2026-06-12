@@ -10,6 +10,7 @@ import Systems from "./components/Systems.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import HelpGuide from "./components/HelpGuide.jsx";
 import Onboarding from "./components/Onboarding.jsx";
+import { templateGallery } from "./data/templateGallery.js";
 import {
   createHistoryEntry,
   createSession,
@@ -114,6 +115,27 @@ export default function App() {
     }));
     setSelectedRoutineId("weekly-reset");
     setCurrentView("customize");
+  }
+
+  function useGalleryTemplate(galleryItem) {
+    requestConfirmation({
+      title: `Use ${galleryItem.name}?`,
+      message:
+        "This creates a new editable custom template from the protected gallery preset. Existing templates and history are kept.",
+      confirmLabel: "Use template",
+      onConfirm: () => {
+        const customTemplate = duplicateTemplate(
+          galleryItem.template,
+          `${galleryItem.name} Copy`
+        );
+        setAppState((current) => ({
+          ...current,
+          templates: [...current.templates, customTemplate],
+          activeTemplateId: customTemplate.id
+        }));
+        setSelectedRoutineId(customTemplate.routines[0]?.id || "weekly-reset");
+      }
+    });
   }
 
   function resetCurrentTemplateToDefault() {
@@ -463,6 +485,8 @@ export default function App() {
         onImportTemplate={importTemplate}
         onExportFullBackup={exportFullBackup}
         onImportFullBackup={importFullBackup}
+        templateGallery={templateGallery}
+        onUseGalleryTemplate={useGalleryTemplate}
         onRequestConfirmation={requestConfirmation}
       />
     );
@@ -471,6 +495,7 @@ export default function App() {
       <History
         history={appState.history}
         routines={activeTemplate.routines}
+        template={activeTemplate}
         onDeleteEntry={deleteHistoryEntry}
       />
     );

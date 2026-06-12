@@ -7,10 +7,12 @@ import ProfileSection from "./customize/ProfileSection.jsx";
 import RoutinesSection from "./customize/RoutinesSection.jsx";
 import ScheduleSection from "./customize/ScheduleSection.jsx";
 import SystemsSection from "./customize/SystemsSection.jsx";
+import TemplateGallerySection from "./customize/TemplateGallerySection.jsx";
 import ZonesSection from "./customize/ZonesSection.jsx";
 
 const customizeSections = [
   { id: "overview", label: "Overview" },
+  { id: "gallery", label: "Gallery" },
   { id: "profile", label: "Profile" },
   { id: "zones", label: "Zones" },
   { id: "routines", label: "Routines" },
@@ -31,6 +33,8 @@ export default function Customize({
   onImportTemplate,
   onExportFullBackup,
   onImportFullBackup,
+  templateGallery,
+  onUseGalleryTemplate,
   onRequestConfirmation
 }) {
   const templateImportRef = useRef(null);
@@ -148,6 +152,10 @@ export default function Customize({
           onExportFullBackup={onExportFullBackup}
           onImportFullBackupClick={() => backupImportRef.current?.click()}
         />
+      ) : null}
+
+      {activeSection === "gallery" ? (
+        <TemplateGallerySection gallery={templateGallery} onUseTemplate={onUseGalleryTemplate} />
       ) : null}
 
       {activeSection === "profile" ? (

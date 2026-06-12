@@ -670,6 +670,96 @@ textarea {
   gap: 0.8rem;
 }
 
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.gallery-card,
+.insight-card {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 1rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.gallery-card {
+  align-content: space-between;
+}
+
+.gallery-meta,
+.insight-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1rem 0 0;
+}
+
+.gallery-meta div,
+.insight-list div {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  border-top: 1px solid rgba(207, 194, 174, 0.65);
+  padding-top: 0.55rem;
+}
+
+.gallery-meta dt,
+.insight-list span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.gallery-meta dd {
+  margin: 0;
+  color: var(--text-soft);
+  font-weight: 680;
+}
+
+.insight-list strong {
+  color: var(--text);
+  text-align: right;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.history-insight-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.insight-warning-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.insight-warning-list .warning-box {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0;
+}
+
+.metric-card small {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 620;
+}
+
 .quick-button {
   min-height: 96px;
   border: 1px solid var(--border);
@@ -1577,8 +1667,14 @@ textarea {
   }
 
   .quick-grid,
+  .gallery-grid,
+  .insight-grid,
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .history-insight-columns {
+    grid-template-columns: 1fr;
   }
 
   .detail-panel {
@@ -1654,6 +1750,9 @@ textarea {
   .last-grid,
   .stats-grid,
   .quick-grid,
+  .gallery-grid,
+  .insight-grid,
+  .history-insight-columns,
   .customize-info-grid,
   .customize-action-grid,
   .routine-picker,
@@ -1750,6 +1849,16 @@ textarea {
   .backup-reminder-panel .button,
   .backup-box .button {
     width: 100%;
+  }
+
+  .gallery-meta div,
+  .insight-list div {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+
+  .insight-list strong {
+    text-align: left;
   }
 
   .detail-list div {
