@@ -23,6 +23,17 @@ const lastCards = [
   { routineId: "guest-reset", label: "Last Guest Reset" }
 ];
 
+const mobileDailyRuleLabels = {
+  "No food trash overnight": "No food trash",
+  "Dishes returned to kitchen": "Dishes back",
+  "Clothes into laundry basket": "Laundry basket",
+  "Bathroom smell check": "Smell check"
+};
+
+function getMobileDailyRuleLabel(title) {
+  return mobileDailyRuleLabels[title] || title;
+}
+
 export default function Dashboard({
   template,
   history,
@@ -149,6 +160,9 @@ export default function Dashboard({
               <h2>Tiny Rules</h2>
             </div>
             <div className="daily-panel-actions">
+              <span className="daily-progress-count">
+                {dailyProgress.completed}/{dailyProgress.total}
+              </span>
               {dailyRulesComplete ? <span className="status-pill compact">Complete</span> : null}
               <span className="date-chip">{todayKey}</span>
             </div>
@@ -188,7 +202,12 @@ export default function Dashboard({
                     />
                     <span className="task-copy">
                       <span className="task-title-line">
-                        <strong>{rule.title}</strong>
+                        <strong>
+                          <span className="desktop-rule-label">{rule.title}</span>
+                          <span className="mobile-rule-label">
+                            {getMobileDailyRuleLabel(rule.title)}
+                          </span>
+                        </strong>
                         {rule.duration ? <span className="duration">{rule.duration}</span> : null}
                       </span>
                       {rule.detail ? <span className="task-detail">{rule.detail}</span> : null}
