@@ -1,17 +1,17 @@
-const CACHE_NAME = "clean30-app-shell-v1";
+const CACHE_NAME = "clean30-app-shell-v2";
 const BASE_PATH = "/clean30/";
 
 const APP_SHELL = [
   BASE_PATH,
   `${BASE_PATH}index.html`,
   `${BASE_PATH}manifest.webmanifest`,
-  `${BASE_PATH}icons/icon.svg`,
-  `${BASE_PATH}icons/favicon-32.png`,
-  `${BASE_PATH}icons/apple-touch-icon.png`,
-  `${BASE_PATH}icons/icon-192.png`,
-  `${BASE_PATH}icons/icon-512.png`,
-  `${BASE_PATH}icons/maskable-192.png`,
-  `${BASE_PATH}icons/maskable-512.png`
+  `${BASE_PATH}favicon.svg`,
+  `${BASE_PATH}icons/favicon-32-v2.png`,
+  `${BASE_PATH}icons/apple-touch-icon-v2.png`,
+  `${BASE_PATH}icons/icon-clean30-v2-192.png`,
+  `${BASE_PATH}icons/icon-clean30-v2-512.png`,
+  `${BASE_PATH}icons/maskable-clean30-v2-192.png`,
+  `${BASE_PATH}icons/maskable-clean30-v2-512.png`
 ];
 
 self.addEventListener("install", (event) => {
