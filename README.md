@@ -1,83 +1,86 @@
 # Clean30
 
-Clean30 is a local-only React + Vite cleaning routine app for running a practical apartment reset system. It helps track daily rules, start cleaning sessions, follow fixed routines, review history, and customize the cleaning system for a specific home.
+Clean30 is a local-first apartment cleaning routine PWA for daily habits, reset sessions, cleaning systems, customization, history, and backups.
 
-Live demo: https://thiepn.github.io/clean30/
+Live app: https://thiepn.github.io/clean30/
 
 ## Features
 
-- Dashboard with apartment status, daily rules, recommendations, quick starts, and maintenance memory.
-- Guided cleaning sessions with phase checklists, progress, notes, reset, cancel, and finish actions.
-- Built-in routines for Initial Reset, Weekly Reset, Minimal Reset, Daily Rules, Guest Reset, and Monthly Deep Clean.
-- Systems page for bottlenecks, priority order, zones, and practical cleaning principles.
-- History view with session stats, filters, details, notes, and delete confirmation.
-- Customize section with protected default template and editable custom templates.
-- Editors for profile, zones, routines, phases, tasks, daily rules, systems, schedule, and appearance.
-- Template JSON export/import for sharing cleaning systems.
-- Full backup export/import for moving or restoring all local app data.
-- Plain CSS design system with responsive desktop and mobile layouts.
+- Dashboard with Tiny Rules and practical next-action guidance.
+- Start cleaning sessions with saved progress, notes, partial finish, and discard flows.
+- Systems page for apartment zones, priority order, and cleaning principles.
+- Routines page for comparing, preparing, and copying checklists.
+- Customize page with Simple and Advanced modes.
+- History page for completed resets, Tiny Rules, and practical patterns.
+- Settings with backup, privacy, help, reminder, and reset tools.
+- PWA install support for phone home screens.
+- Local-only data storage in browser/PWA storage.
+- Full backup export/import for restoring or moving app data.
 
-## Local Setup
+## How To Use
+
+1. Open the app.
+2. Complete Tiny Rules from the Dashboard.
+3. Start a reset session when the apartment needs one.
+4. Review History to see what has been completed.
+5. Export a full backup regularly from Settings.
+
+## Mobile / PWA Install
+
+1. Open https://thiepn.github.io/clean30/ on your phone.
+2. Open the browser menu.
+3. Choose **Add to Home Screen** or **Install app**.
+4. Launch Clean30 from the home screen.
+
+The app shell is cached for offline use after a successful visit. Cleaning data remains local to that browser or installed PWA storage.
+
+## Local Development
 
 ```bash
 npm install
 npm run dev
+npm run build
+npm run preview
 ```
 
-Then open the local Vite URL shown in the terminal, usually:
-
-```text
-http://localhost:5173/
-```
-
-On Windows PowerShell, if `npm` is blocked by script execution policy, use:
+On Windows PowerShell, if `npm` is blocked by script execution policy, use `npm.cmd`:
 
 ```bash
 npm.cmd install
 npm.cmd run dev
+npm.cmd run build
 ```
 
-## Build
+## GitHub Pages
 
-```bash
-npm run build
-```
+The Vite app is configured for GitHub Pages at `/clean30/`. Deployment is handled by `.github/workflows/deploy.yml`, which installs dependencies, builds the app, and deploys the `dist/` folder to GitHub Pages.
 
-The production build is written to `dist/`.
+## Privacy Summary
 
-## GitHub Pages Deployment
+Clean30 has:
 
-The app is configured for GitHub Pages at:
+- no account
+- no cloud sync
+- no analytics
+- no ads
+- no server database
 
-```js
-base: "/clean30/"
-```
+Data is stored locally in browser/PWA storage. Clearing browser or app data may delete Clean30 data. Export full backups from Settings if you want to protect or move your data.
 
-Deployment is handled by `.github/workflows/deploy.yml`. On pushes to `main`, GitHub Actions installs dependencies, runs `npm run build`, uploads the `dist/` folder, and deploys it with GitHub Pages.
+## Template Sharing
 
-## Install on Android
+Template export/import is for sharing a cleaning system with friends or family. Template files include routines, Tiny Rules, systems, zones, schedule, profile labels, and appearance settings.
 
-Clean30 includes basic PWA support. On Android:
+Template exports do not include personal history, active sessions, or daily completion data. Full backups do include personal app data and should be treated as private.
 
-1. Open https://thiepn.github.io/clean30/ in Chrome.
-2. Open the browser menu.
-3. Tap **Add to Home screen** or **Install app**.
-4. Launch Clean30 from the home screen.
+## Current Status
 
-The app shell is cached for offline use after the first successful visit. Cleaning data still stays local to the browser/app storage on that device.
+Clean30 is a usable prototype / tester-ready v1.
 
-## Privacy
+## Known Limitations
 
-Clean30 has no backend, no authentication, and no cloud sync. All app data is stored locally in the browser using `localStorage`.
-
-This includes templates, daily rule completions, active session data, and history. Clearing browser storage or using a different browser/device may remove or hide that local data unless you export a backup first.
-
-## Sharing Templates
-
-Use **Customize -> Overview -> Export template JSON** to share only the cleaning system: profile, zones, routines, daily rules, systems, schedule, and appearance.
-
-Template exports do not include personal history or active sessions, so they are suitable for sharing with friends or family.
-
-To use someone else's template, open **Customize -> Overview -> Import template JSON**. Imported templates are added as new editable custom templates and do not overwrite history.
-
-For a complete personal backup, use **Export full backup** instead. Full backups include templates, history, daily rule completions, and active data.
+- Data is local to the current browser, device, or installed PWA.
+- Clearing browser/app data may delete Clean30 data unless you exported a backup.
+- There is no automatic cloud sync.
+- There are no notifications or reminders yet.
+- There is no app store release yet.
