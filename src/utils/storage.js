@@ -112,7 +112,16 @@ function normalizeHistory(value) {
         percent: Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0,
         notes: typeof entry.notes === "string" ? entry.notes : "",
         templateId: typeof entry.templateId === "string" ? entry.templateId : null,
-        templateName: typeof entry.templateName === "string" ? entry.templateName : ""
+        templateName: typeof entry.templateName === "string" ? entry.templateName : "",
+        kind: typeof entry.kind === "string" ? entry.kind : "session",
+        source: typeof entry.source === "string" ? entry.source : "session",
+        date: typeof entry.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date)
+          ? entry.date
+          : null,
+        completedAt: normalizeDateString(entry.completedAt),
+        estimatedDurationMinutes: Number.isFinite(Number(entry.estimatedDurationMinutes))
+          ? Math.max(0, Number(entry.estimatedDurationMinutes))
+          : null
       };
     });
 }

@@ -12,9 +12,11 @@ import HelpGuide from "./components/HelpGuide.jsx";
 import Onboarding from "./components/Onboarding.jsx";
 import { templateGallery } from "./data/templateGallery.js";
 import {
+  createDailyRulesHistoryEntry,
   createHistoryEntry,
   createSession,
-  getRoutineById
+  getRoutineById,
+  hasDailyRulesHistoryEntry
 } from "./utils/calculations.js";
 import { daysBetween, getTodayKey } from "./utils/dates.js";
 import {
@@ -391,11 +393,27 @@ export default function App() {
       const completed = new Set(current.dailyRuleCompletions[todayKey] || []);
       if (completed.has(ruleId)) completed.delete(ruleId);
       else completed.add(ruleId);
+      const completedRuleIds = [...completed];
+      const validDailyRuleIds = new Set(activeTemplate.dailyRules.map((rule) => rule.id));
+      const allDailyRulesComplete =
+        activeTemplate.dailyRules.length > 0 &&
+        activeTemplate.dailyRules.every((rule) => completed.has(rule.id));
+      const historyAlreadyLogged = hasDailyRulesHistoryEntry(current.history, todayKey);
+      const dailyHistoryEntry =
+        allDailyRulesComplete && !historyAlreadyLogged
+          ? createDailyRulesHistoryEntry({
+              dateKey: todayKey,
+              dailyRules: activeTemplate.dailyRules,
+              template: activeTemplate
+            })
+          : null;
+
       return markMeaningfulUse({
         ...current,
+        history: dailyHistoryEntry ? [dailyHistoryEntry, ...current.history] : current.history,
         dailyRuleCompletions: {
           ...current.dailyRuleCompletions,
-          [todayKey]: [...completed]
+          [todayKey]: completedRuleIds.filter((id) => validDailyRuleIds.has(id))
         }
       });
     });

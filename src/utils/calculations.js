@@ -73,6 +73,49 @@ export function createHistoryEntry(session, template) {
   };
 }
 
+function estimateDailyRuleMinutes(dailyRules) {
+  return (dailyRules || []).reduce((total, rule) => {
+    const match = String(rule.duration || "").match(/(\d+(?:\.\d+)?)/);
+    return total + (match ? Number(match[1]) : 0);
+  }, 0);
+}
+
+export function createDailyRulesHistoryEntry({ dateKey, dailyRules, template }) {
+  const completedAt = new Date().toISOString();
+  const totalTasks = dailyRules.length;
+  return {
+    id: `daily-rules-${dateKey}`,
+    kind: "daily-rules",
+    source: "daily-rules",
+    date: dateKey,
+    completedAt,
+    routineId: "daily-rules",
+    routineTitle: "Daily Rules",
+    templateId: template?.id || null,
+    templateName: template?.name || "",
+    startedAt: completedAt,
+    finishedAt: completedAt,
+    completedTasks: totalTasks,
+    totalTasks,
+    percent: totalTasks ? 100 : 0,
+    estimatedDurationMinutes: estimateDailyRuleMinutes(dailyRules),
+    notes: "Completed from Dashboard daily rules."
+  };
+}
+
+export function hasDailyRulesHistoryEntry(history, dateKey) {
+  return (history || []).some(
+    (entry) =>
+      entry?.id === `daily-rules-${dateKey}` ||
+      ((entry?.kind === "daily-rules" || entry?.source === "daily-rules") &&
+        entry?.date === dateKey)
+  );
+}
+
+export function isDailyRulesHistoryEntry(entry) {
+  return entry?.kind === "daily-rules" || entry?.source === "daily-rules";
+}
+
 export function getLastCompleted(history, routineId) {
   return history
     .filter((entry) => entry.routineId === routineId)
@@ -173,15 +216,17 @@ export function getRecommendedAction(status, dailyProgress, options = {}) {
 }
 
 export function getHistoryStats(history) {
-  const total = history.length;
+  const sessionEntries = history.filter((entry) => !isDailyRulesHistoryEntry(entry));
+  const total = sessionEntries.length;
   const average = total
-    ? Math.round(history.reduce((sum, entry) => sum + (entry.percent || 0), 0) / total)
+    ? Math.round(sessionEntries.reduce((sum, entry) => sum + (entry.percent || 0), 0) / total)
     : 0;
   return {
     total,
-    weekly: history.filter((entry) => entry.routineId === "weekly-reset").length,
-    minimal: history.filter((entry) => entry.routineId === "minimal-reset").length,
-    monthly: history.filter((entry) => entry.routineId === "monthly-deep-clean").length,
+    dailyRules: history.filter((entry) => isDailyRulesHistoryEntry(entry)).length,
+    weekly: sessionEntries.filter((entry) => entry.routineId === "weekly-reset").length,
+    minimal: sessionEntries.filter((entry) => entry.routineId === "minimal-reset").length,
+    monthly: sessionEntries.filter((entry) => entry.routineId === "monthly-deep-clean").length,
     average,
     daysSinceWeekly: daysBetween(getLastCompleted(history, "weekly-reset")),
     daysSinceMonthly: daysBetween(getLastCompleted(history, "monthly-deep-clean"))

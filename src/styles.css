@@ -460,6 +460,10 @@ textarea {
   align-items: start;
 }
 
+.dashboard-grid-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .system-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -627,15 +631,6 @@ textarea {
   color: var(--accent-strong);
 }
 
-.recommendation-muted {
-  border-color: var(--border);
-  background: var(--surface-strong);
-}
-
-.recommendation-muted h2 {
-  color: var(--text-soft);
-}
-
 .session-resume-panel {
   border-color: rgba(88, 116, 97, 0.38);
   background: #f7fbf4;
@@ -654,6 +649,12 @@ textarea {
   font-size: 0.86rem;
   font-weight: 720;
   white-space: nowrap;
+}
+
+.status-pill.compact {
+  min-height: 26px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
 }
 
 .backup-reminder-panel,
@@ -1052,6 +1053,41 @@ textarea {
 
 .task-list.daily {
   margin-top: 1rem;
+}
+
+.daily-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.daily-complete-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(86, 117, 92, 0.34);
+  border-radius: var(--radius-card);
+  background: var(--success-soft);
+  padding: 0.9rem 1rem;
+}
+
+.daily-complete-card strong {
+  display: block;
+  color: var(--accent-strong);
+  font-size: 1rem;
+}
+
+.daily-complete-card p {
+  margin-top: 0.15rem;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.daily-review-done {
+  margin-top: 0.75rem;
 }
 
 .task-row {
@@ -2015,8 +2051,9 @@ textarea {
   }
 
   .app-header {
-    align-items: flex-start;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
   }
 
   .header-target {
@@ -2025,9 +2062,18 @@ textarea {
   }
 
   .header-actions {
-    width: 100%;
-    align-items: flex-start;
-    justify-content: space-between;
+    display: contents;
+  }
+
+  .header-actions .help-button {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .header-target {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 
   .navigation {
@@ -2316,6 +2362,20 @@ textarea {
   .dashboard-daily-panel .task-list.daily {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.45rem;
+  }
+
+  .daily-complete-card {
+    display: grid;
+    gap: 0.7rem;
+    padding: 0.75rem;
+  }
+
+  .daily-complete-card .button {
+    width: 100%;
+  }
+
+  .daily-panel-actions {
+    justify-content: flex-start;
   }
 
   .dashboard-daily-panel .task-row {

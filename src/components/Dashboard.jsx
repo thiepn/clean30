@@ -30,7 +30,7 @@ export default function Dashboard({
   activeSession,
   backupDue,
   lastFullBackupExportedAt,
-  dismissedRecommendations,
+  dismissedRecommendations = {},
   onToggleDailyRule,
   onStartRoutine,
   onDismissRecommendation,
@@ -40,18 +40,21 @@ export default function Dashboard({
   onExportFullBackup
 }) {
   const [selectedQuickStart, setSelectedQuickStart] = useState("");
+  const [reviewDailyRules, setReviewDailyRules] = useState(false);
   const todayKey = getTodayKey();
   const todayCompleted = dailyRuleCompletions[todayKey] || [];
   const dailyRules = template.dailyRules;
+  const validTodayCompleted = dailyRules.filter((rule) => todayCompleted.includes(rule.id));
   const dailyProgress = {
-    completed: todayCompleted.length,
+    completed: validTodayCompleted.length,
     total: dailyRules.length,
-    percent: dailyRules.length ? Math.round((todayCompleted.length / dailyRules.length) * 100) : 0
+    percent: dailyRules.length ? Math.round((validTodayCompleted.length / dailyRules.length) * 100) : 0
   };
   const status = getDashboardStatus({ history, template, dailyProgress });
   const recommendation = getRecommendedAction(status, dailyProgress, { template });
   const dismissedToday = dismissedRecommendations[todayKey] || [];
   const showRecommendation = !dismissedToday.includes(recommendation.key);
+  const dailyRulesComplete = dailyProgress.total > 0 && dailyProgress.completed === dailyProgress.total;
   const recommendedRoutine = template.routines.find(
     (routine) => routine.id === recommendation.routineId
   );
@@ -136,40 +139,74 @@ export default function Dashboard({
         </section>
       ) : null}
 
-      <div className="dashboard-grid">
+      <div
+        className={showRecommendation ? "dashboard-grid" : "dashboard-grid dashboard-grid-single"}
+      >
         <section className="panel dashboard-daily-panel">
           <div className="section-heading">
             <div>
               <p className="eyebrow">Today</p>
               <h2>Tiny Rules</h2>
             </div>
-            <span className="date-chip">{todayKey}</span>
+            <div className="daily-panel-actions">
+              {dailyRulesComplete ? <span className="status-pill compact">Complete</span> : null}
+              <span className="date-chip">{todayKey}</span>
+            </div>
           </div>
           <ProgressBar
             percent={dailyProgress.percent}
             label={`${dailyProgress.completed}/${dailyProgress.total} complete`}
           />
-          <div className="task-list daily">
-            {dailyRules.map((rule) => (
-              <label
-                className={todayCompleted.includes(rule.id) ? "task-row checked" : "task-row"}
-                key={rule.id}
+          {dailyRulesComplete && !reviewDailyRules ? (
+            <div className="daily-complete-card">
+              <div>
+                <strong>Your daily baseline is handled.</strong>
+                <p>
+                  Small habits done for today. {dailyProgress.completed}/{dailyProgress.total} complete.
+                </p>
+              </div>
+              <button
+                className="button ghost small"
+                type="button"
+                onClick={() => setReviewDailyRules(true)}
               >
-                <input
-                  type="checkbox"
-                  checked={todayCompleted.includes(rule.id)}
-                  onChange={() => onToggleDailyRule(rule.id)}
-                />
-                <span className="task-copy">
-                  <span className="task-title-line">
-                    <strong>{rule.title}</strong>
-                    {rule.duration ? <span className="duration">{rule.duration}</span> : null}
-                  </span>
-                  {rule.detail ? <span className="task-detail">{rule.detail}</span> : null}
-                </span>
-              </label>
-            ))}
-          </div>
+                Review
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="task-list daily">
+                {dailyRules.map((rule) => (
+                  <label
+                    className={todayCompleted.includes(rule.id) ? "task-row checked" : "task-row"}
+                    key={rule.id}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={todayCompleted.includes(rule.id)}
+                      onChange={() => onToggleDailyRule(rule.id)}
+                    />
+                    <span className="task-copy">
+                      <span className="task-title-line">
+                        <strong>{rule.title}</strong>
+                        {rule.duration ? <span className="duration">{rule.duration}</span> : null}
+                      </span>
+                      {rule.detail ? <span className="task-detail">{rule.detail}</span> : null}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {dailyRulesComplete ? (
+                <button
+                  className="button ghost small daily-review-done"
+                  type="button"
+                  onClick={() => setReviewDailyRules(false)}
+                >
+                  Done reviewing
+                </button>
+              ) : null}
+            </>
+          )}
         </section>
 
         {showRecommendation ? (
@@ -195,13 +232,7 @@ export default function Dashboard({
               </button>
             ) : null}
           </section>
-        ) : (
-          <section className="panel action-panel dashboard-action-panel recommendation-muted">
-            <p className="eyebrow">Recommendation hidden</p>
-            <h2>Dashboard stays usable</h2>
-            <p>Recommendations can appear again tomorrow or when the status changes.</p>
-          </section>
-        )}
+        ) : null}
       </div>
 
       <section className="panel">

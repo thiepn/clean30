@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getHistoryStats } from "../utils/calculations.js";
+import { getHistoryStats, isDailyRulesHistoryEntry } from "../utils/calculations.js";
 import { formatDateTime, formatRelativeDays } from "../utils/dates.js";
 import { getHistoryInsights, getSessionDurationMinutes } from "../utils/historyInsights.js";
 import EmptyState from "./EmptyState.jsx";
@@ -39,7 +39,12 @@ export default function History({ history, routines, template, onDeleteEntry }) 
   }, [filter, history]);
 
   const selected = history.find((entry) => entry.id === selectedId);
-  const selectedDuration = selected ? getSessionDurationMinutes(selected) : null;
+  const selectedIsDailyRules = isDailyRulesHistoryEntry(selected);
+  const selectedDuration = selectedIsDailyRules
+    ? selected.estimatedDurationMinutes
+    : selected
+      ? getSessionDurationMinutes(selected)
+      : null;
 
   return (
     <div className="screen-stack">
@@ -66,6 +71,10 @@ export default function History({ history, routines, template, onDeleteEntry }) 
           <div className="metric-card">
             <span>Monthly deep cleans</span>
             <strong>{stats.monthly}</strong>
+          </div>
+          <div className="metric-card">
+            <span>Daily rules logged</span>
+            <strong>{stats.dailyRules}</strong>
           </div>
           <div className="metric-card">
             <span>Average completion</span>
@@ -227,7 +236,12 @@ export default function History({ history, routines, template, onDeleteEntry }) 
                     <dt>Routine</dt>
                     <dd>{selected.routineTitle}</dd>
                   </div>
-                  {selected.percent < 100 ? (
+                  {selectedIsDailyRules ? (
+                    <div>
+                      <dt>Status</dt>
+                      <dd>Daily rules complete</dd>
+                    </div>
+                  ) : selected.percent < 100 ? (
                     <div>
                       <dt>Status</dt>
                       <dd>Partial session</dd>

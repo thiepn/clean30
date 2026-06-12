@@ -1,4 +1,5 @@
 import { daysBetween, parseDate } from "./dates.js";
+import { isDailyRulesHistoryEntry } from "./calculations.js";
 
 export const importantRoutineIds = [
   "weekly-reset",
@@ -33,11 +34,12 @@ function titleForRoutine(routines, routineId, fallback = "Routine") {
 
 export function getHistoryInsights(history, routines, template) {
   const entries = Array.isArray(history) ? history : [];
+  const sessionEntries = entries.filter((entry) => !isDailyRulesHistoryEntry(entry));
   const now = new Date();
   const routineCounts = new Map();
   const routinePercents = new Map();
 
-  entries.forEach((entry) => {
+  sessionEntries.forEach((entry) => {
     if (!entry?.routineId) return;
     routineCounts.set(entry.routineId, (routineCounts.get(entry.routineId) || 0) + 1);
     if (!routinePercents.has(entry.routineId)) routinePercents.set(entry.routineId, []);
@@ -48,7 +50,11 @@ export function getHistoryInsights(history, routines, template) {
     .map(([routineId, count]) => ({
       routineId,
       count,
-      title: titleForRoutine(routines, routineId, entries.find((entry) => entry.routineId === routineId)?.routineTitle)
+      title: titleForRoutine(
+        routines,
+        routineId,
+        sessionEntries.find((entry) => entry.routineId === routineId)?.routineTitle
+      )
     }))
     .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))[0] || null;
 
@@ -64,31 +70,31 @@ export function getHistoryInsights(history, routines, template) {
   });
 
   const weeklyEntries = sortByFinishedAt(
-    entries.filter((entry) => entry.routineId === "weekly-reset" && validDate(entry.finishedAt))
+    sessionEntries.filter((entry) => entry.routineId === "weekly-reset" && validDate(entry.finishedAt))
   );
   const weeklyGaps = weeklyEntries
     .slice(1)
     .map((entry, index) => daysBetween(weeklyEntries[index].finishedAt, entry.finishedAt))
     .filter((value) => value !== null);
 
-  const recent7 = entries.filter((entry) => {
+  const recent7 = sessionEntries.filter((entry) => {
     const elapsed = daysBetween(entry.finishedAt, now);
     return elapsed !== null && elapsed <= 7;
   }).length;
 
-  const recent30 = entries.filter((entry) => {
+  const recent30 = sessionEntries.filter((entry) => {
     const elapsed = daysBetween(entry.finishedAt, now);
     return elapsed !== null && elapsed <= 30;
   }).length;
 
-  const averageCompletion = average(entries.map((entry) => Number(entry.percent) || 0));
+  const averageCompletion = average(sessionEntries.map((entry) => Number(entry.percent) || 0));
   const averageCompletionByRoutine = [...routinePercents.entries()]
     .map(([routineId, percents]) => ({
       routineId,
       title: titleForRoutine(
         routines,
         routineId,
-        entries.find((entry) => entry.routineId === routineId)?.routineTitle
+        sessionEntries.find((entry) => entry.routineId === routineId)?.routineTitle
       ),
       percent: average(percents) || 0
     }))
@@ -102,7 +108,7 @@ export function getHistoryInsights(history, routines, template) {
   const monthlyAge = daysBetween(monthlyLast?.finishedAt);
   const warnings = [];
 
-  if (entries.length && (weeklyAge === null || weeklyAge > weeklyThreshold)) {
+  if (sessionEntries.length && (weeklyAge === null || weeklyAge > weeklyThreshold)) {
     warnings.push({
       id: "weekly-overdue",
       message: "Weekly reset is overdue.",
@@ -113,7 +119,7 @@ export function getHistoryInsights(history, routines, template) {
     });
   }
 
-  if (entries.length && (monthlyAge === null || monthlyAge > monthlyThreshold)) {
+  if (sessionEntries.length && (monthlyAge === null || monthlyAge > monthlyThreshold)) {
     warnings.push({
       id: "monthly-due",
       message: "Monthly deep clean is due.",
