@@ -127,14 +127,67 @@ export function getDashboardStatus({ history, template, dailyProgress }) {
   const monthlyDate = getLastCompleted(history, "monthly-deep-clean");
   const weeklyDueAfter = Number(template.schedule.weeklyResetDueAfterDays) || 7;
   const monthlyInterval = Number(template.schedule.monthlyDeepCleanInterval) || 30;
+  const daysUntilWeekly = daysUntilWeekday(template.schedule.weeklyResetDay);
   const weeklyAge = daysBetween(weeklyDate);
   const monthlyAge = daysBetween(monthlyDate);
 
-  if (!weeklyDate || weeklyAge > weeklyDueAfter) {
+  if (!weeklyDate) {
+    if (daysUntilWeekly === 0) {
+      return {
+        status: "Weekly reset due today",
+        key: "weekly-today",
+        kind: "weekly",
+        tone: "warning",
+        explanation: "Today is the weekly reset day. Start only if it fits your day."
+      };
+    }
+
+    if (daysUntilWeekly === 1) {
+      return {
+        status: "Weekly reset tomorrow",
+        key: "weekly-tomorrow",
+        kind: "weekly",
+        tone: "amber",
+        explanation: "The weekly reset day is tomorrow. Keep today light and practical."
+      };
+    }
+
     return {
-      status: "Weekly reset due",
+      status: "Ready to start",
+      key: "ready-to-start",
+      kind: "ready",
+      tone: "stable",
+      explanation: "No reset history yet. Use Tiny Rules or start a reset when you are ready."
+    };
+  }
+
+  if (weeklyAge > weeklyDueAfter) {
+    if (daysUntilWeekly === 0) {
+      return {
+        status: "Weekly reset due today",
+        key: "weekly-today",
+        kind: "weekly",
+        tone: "warning",
+        explanation: "Today is the weekly reset day. Use the reset if the apartment needs it."
+      };
+    }
+
+    if (daysUntilWeekly === 1) {
+      return {
+        status: "Weekly reset tomorrow",
+        key: "weekly-tomorrow",
+        kind: "weekly",
+        tone: "amber",
+        explanation: "The weekly reset day is tomorrow. Keep today light unless there is drift."
+      };
+    }
+
+    return {
+      status: "Weekly reset overdue",
+      key: "weekly-overdue",
+      kind: "weekly",
       tone: "warning",
-      explanation: `The weekly anchor has not been completed in the last ${weeklyDueAfter} days.`
+      explanation: `The weekly anchor was last completed ${weeklyAge} days ago.`
     };
   }
 
@@ -143,6 +196,19 @@ export function getDashboardStatus({ history, template, dailyProgress }) {
       status: "Monthly deep clean due",
       tone: "amber",
       explanation: `Monthly maintenance is due after ${monthlyInterval} days.`
+    };
+  }
+
+  if (weeklyAge !== null && weeklyAge <= weeklyDueAfter) {
+    return {
+      status: "Weekly reset handled",
+      key: "weekly-handled",
+      kind: "weekly",
+      tone: dailyProgress.completed < dailyProgress.total ? "stable" : "success",
+      explanation:
+        dailyProgress.completed < dailyProgress.total
+          ? "The weekly anchor is in good shape. Finish Tiny Rules to maintain it."
+          : "The weekly anchor is current. Keep the bottlenecks clear."
     };
   }
 
@@ -164,7 +230,7 @@ export function getDashboardStatus({ history, template, dailyProgress }) {
 export function getRecommendedAction(status, dailyProgress, options = {}) {
   const daysUntilWeekly = daysUntilWeekday(options.template?.schedule?.weeklyResetDay, options.date);
 
-  if (status.status === "Weekly reset due") {
+  if (status.kind === "weekly" && status.key !== "weekly-handled") {
     if (daysUntilWeekly === 1) {
       return {
         key: "weekly-reset-upcoming",
@@ -172,6 +238,15 @@ export function getRecommendedAction(status, dailyProgress, options = {}) {
         routineId: null,
         detail:
           "Your weekly reset day is tomorrow. Keep today light unless the apartment needs attention."
+      };
+    }
+
+    if (status.key === "weekly-today" || status.key === "weekly-overdue") {
+      return {
+        key: status.key === "weekly-today" ? "weekly-reset-today" : "weekly-reset-overdue",
+        label: "Start Weekly Reset",
+        routineId: "weekly-reset",
+        detail: "Use the laundry cycle as the anchor and clear the bottlenecks first."
       };
     }
 
@@ -183,12 +258,14 @@ export function getRecommendedAction(status, dailyProgress, options = {}) {
         detail: `Your weekly reset day is in ${daysUntilWeekly} days. Keep today light unless the apartment needs attention.`
       };
     }
+  }
 
+  if (status.key === "ready-to-start") {
     return {
-      key: "weekly-reset-due",
-      label: "Start Weekly Reset",
-      routineId: "weekly-reset",
-      detail: "Use the laundry cycle as the anchor and clear the bottlenecks first."
+      key: "ready-to-start",
+      label: "Start small",
+      routineId: null,
+      detail: "Begin with Tiny Rules or choose a reset when the apartment needs one."
     };
   }
   if (status.status === "Monthly deep clean due") {

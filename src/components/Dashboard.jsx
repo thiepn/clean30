@@ -79,6 +79,11 @@ export default function Dashboard({
   const activeProgress = activeSession
     ? getSessionProgress(activeSession, activeRoutine)
     : { completed: 0, total: 0, percent: 0 };
+  const selectedQuickStartRoutine = template.routines.find(
+    (routine) => routine.id === selectedQuickStart
+  );
+  const hasMaintenanceMemory = history.length > 0;
+  const principleReminder = template.systems.apartmentLaws[0] || "Start with bottlenecks first.";
 
   return (
     <div className="screen-stack">
@@ -260,11 +265,7 @@ export default function Dashboard({
             <p className="eyebrow">Quick start</p>
             <h2>Fixed Sequences</h2>
           </div>
-          {selectedQuickStart ? (
-            <span className="pill">
-              {template.routines.find((routine) => routine.id === selectedQuickStart)?.title}
-            </span>
-          ) : null}
+          {selectedQuickStartRoutine ? <span className="pill">{selectedQuickStartRoutine.title}</span> : null}
         </div>
         <div className="quick-grid quick-start-grid">
           {quickStarts
@@ -275,6 +276,7 @@ export default function Dashboard({
                 className={
                   selectedQuickStart === routine.id ? "quick-button selected" : "quick-button"
                 }
+                aria-pressed={selectedQuickStart === routine.id}
                 type="button"
                 key={routine.id}
                 onClick={() => setSelectedQuickStart(routine.id)}
@@ -291,8 +293,8 @@ export default function Dashboard({
             disabled={!selectedQuickStart}
             onClick={() => selectedQuickStart && onStartRoutine(selectedQuickStart)}
           >
-            <strong>Start</strong>
-            <span>{selectedQuickStart ? "Start selected" : "Select a routine first"}</span>
+            <strong>{selectedQuickStart ? "Start selected" : "Select first"}</strong>
+            <span>{selectedQuickStartRoutine?.title || "Choose a routine first"}</span>
           </button>
         </div>
       </section>
@@ -301,36 +303,55 @@ export default function Dashboard({
         <section className="panel dashboard-laws-panel">
           <p className="eyebrow">Permanent principles</p>
           <h2>Apartment Laws</h2>
-          <ol className="law-list">
+          <div className="principle-reminder">
+            <span>Principle reminder</span>
+            <strong>{principleReminder}</strong>
+          </div>
+          <ol className="law-list desktop-laws-list">
             {template.systems.apartmentLaws.map((law) => (
               <li key={law}>{law}</li>
             ))}
           </ol>
+          <details className="mobile-laws-detail">
+            <summary>Show all principles</summary>
+            <ol className="law-list">
+              {template.systems.apartmentLaws.map((law) => (
+                <li key={law}>{law}</li>
+              ))}
+            </ol>
+          </details>
         </section>
 
         <section className="panel dashboard-memory-panel">
           <p className="eyebrow">Last completed</p>
           <h2>Maintenance Memory</h2>
-          <div className="last-grid maintenance-grid">
-            {lastCards.map((item) => (
-              <div className="metric-card" key={item.routineId}>
-                <span>{item.label}</span>
-                <strong>{formatRelativeDays(getLastCompleted(history, item.routineId))}</strong>
+          {hasMaintenanceMemory ? (
+            <div className="last-grid maintenance-grid">
+              {lastCards.map((item) => (
+                <div className="metric-card" key={item.routineId}>
+                  <span>{item.label}</span>
+                  <strong>{formatRelativeDays(getLastCompleted(history, item.routineId))}</strong>
+                </div>
+              ))}
+              <div className="metric-card">
+                <span>Total completed sessions</span>
+                <strong>{history.length}</strong>
               </div>
-            ))}
-            <div className="metric-card">
-              <span>Total completed sessions</span>
-              <strong>{history.length}</strong>
+              <div className="metric-card">
+                <span>Most recent session</span>
+                <strong>
+                  {mostRecentSession
+                    ? `${mostRecentSession.routineTitle} - ${formatRelativeDays(mostRecentSession.finishedAt)}`
+                    : "Not yet"}
+                </strong>
+              </div>
             </div>
-            <div className="metric-card">
-              <span>Most recent session</span>
-              <strong>
-                {mostRecentSession
-                  ? `${mostRecentSession.routineTitle} - ${formatRelativeDays(mostRecentSession.finishedAt)}`
-                  : "Not yet"}
-              </strong>
+          ) : (
+            <div className="memory-empty-card">
+              <strong>No completed resets yet.</strong>
+              <p>Finish Tiny Rules or a reset to start building maintenance memory.</p>
             </div>
-          </div>
+          )}
         </section>
       </div>
     </div>

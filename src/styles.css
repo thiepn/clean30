@@ -34,6 +34,8 @@
   --space-4: 1rem;
   --space-5: 1.35rem;
   --space-6: 1.75rem;
+  --mobile-nav-height: 62px;
+  --mobile-bottom-gap: 18px;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
@@ -75,6 +77,12 @@ input,
 select,
 textarea {
   letter-spacing: 0;
+}
+
+img,
+svg,
+canvas {
+  max-width: 100%;
 }
 
 button:disabled,
@@ -370,6 +378,7 @@ textarea {
 
 .app-main {
   min-height: 60vh;
+  max-width: 100%;
 }
 
 .screen-stack {
@@ -964,6 +973,39 @@ textarea {
 
 .callout.small {
   font-size: 0.92rem;
+}
+
+.principle-reminder,
+.memory-empty-card {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.9rem;
+  border: 1px solid rgba(88, 116, 97, 0.24);
+  border-radius: var(--radius-card);
+  background: var(--accent-soft);
+  padding: 0.85rem 0.95rem;
+}
+
+.principle-reminder span,
+.memory-empty-card p {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.principle-reminder strong,
+.memory-empty-card strong {
+  color: var(--accent-strong);
+  line-height: 1.35;
+}
+
+.mobile-laws-detail {
+  display: none;
+}
+
+.mobile-laws-detail summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 730;
 }
 
 .last-grid,
@@ -2047,13 +2089,19 @@ textarea {
 
 @media (max-width: 680px) {
   body {
-    padding-bottom: 126px;
+    padding-bottom: 0;
   }
 
   .app-shell {
     width: min(100% - 20px, 540px);
     padding-top: 18px;
-    padding-bottom: 24px;
+    padding-bottom: 0;
+  }
+
+  .app-main {
+    padding-bottom: calc(
+      var(--mobile-nav-height) + env(safe-area-inset-bottom) + var(--mobile-bottom-gap)
+    );
   }
 
   .app-header {
@@ -2084,9 +2132,10 @@ textarea {
 
   .navigation {
     position: fixed;
-    inset: auto 10px 10px;
+    inset: auto 10px calc(10px + env(safe-area-inset-bottom));
     grid-template-columns: repeat(4, minmax(0, 1fr));
     margin: 0;
+    padding: 0.3rem;
     border-radius: var(--radius-card);
   }
 
@@ -2096,10 +2145,11 @@ textarea {
 
   .mobile-navigation {
     display: grid;
+    min-height: var(--mobile-nav-height);
   }
 
   .nav-item {
-    min-height: 42px;
+    min-height: 40px;
     padding: 0.35rem 0.2rem;
     font-size: 0.72rem;
   }
@@ -2283,14 +2333,14 @@ textarea {
   }
 
   .screen-stack {
-    gap: 12px;
+    gap: 10px;
   }
 
   .panel,
   .routine-card,
   .phase,
   .empty-state {
-    padding: 0.85rem;
+    padding: 0.78rem;
   }
 
   .panel h2,
@@ -2349,10 +2399,6 @@ textarea {
   .session-resume-panel p:not(.eyebrow),
   .active-session-panel .muted {
     font-size: 0.9rem;
-  }
-
-  .dashboard-grid .dashboard-action-panel {
-    order: -1;
   }
 
   .backup-reminder-panel {
@@ -2438,17 +2484,32 @@ textarea {
     min-height: 46px;
     gap: 0.5rem;
     padding: 0.48rem 0.55rem;
+    cursor: pointer;
     box-shadow: none;
-  }
-
-  .dashboard-daily-panel .task-detail {
-    display: none;
   }
 
   .dashboard-daily-panel .task-row input {
     width: 21px;
     height: 21px;
     margin: 0;
+  }
+
+  .dashboard-daily-panel .task-row.checked {
+    border-color: rgba(86, 117, 92, 0.54);
+    background: #edf5eb;
+  }
+
+  .dashboard-daily-panel .task-row.checked .task-title-line strong {
+    color: var(--accent-strong);
+  }
+
+  .dashboard-daily-panel .task-row.checked .duration {
+    border-color: rgba(86, 117, 92, 0.28);
+    background: rgba(255, 253, 248, 0.72);
+  }
+
+  .dashboard-daily-panel .task-detail {
+    display: none;
   }
 
   .dashboard-daily-panel .task-title-line {
@@ -2540,6 +2601,27 @@ textarea {
   .dashboard-laws-panel .law-list li {
     margin: 0.35rem 0;
     font-size: 0.9rem;
+  }
+
+  .dashboard-laws-panel .principle-reminder,
+  .memory-empty-card {
+    margin-top: 0.55rem;
+    padding: 0.65rem;
+  }
+
+  .desktop-laws-list {
+    display: none;
+  }
+
+  .mobile-laws-detail {
+    display: block;
+    margin-top: 0.55rem;
+    border-top: 1px solid rgba(207, 194, 174, 0.65);
+    padding-top: 0.55rem;
+  }
+
+  .mobile-laws-detail .law-list {
+    margin-top: 0.5rem;
   }
 
   .routine-picker {
@@ -2661,6 +2743,22 @@ textarea {
 
   .phase-summary::marker {
     color: var(--accent-strong);
+  }
+
+  .phase-summary,
+  .system-info-summary,
+  .guide-detail summary,
+  .disclosure-summary {
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .system-info-summary strong {
+    font-size: 1rem;
+  }
+
+  .guide-detail {
+    padding: 0.7rem;
   }
 
   .phase-header.visually-nested {
