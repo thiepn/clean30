@@ -1,13 +1,19 @@
 import { useEffect, useRef } from "react";
 
-const focusableSelector =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+function focusElement(element) {
+  try {
+    element?.focus?.({ preventScroll: true });
+  } catch {
+    // Some mobile browsers can reject programmatic focus during tap handling.
+  }
+}
 
-function getFocusableElements(container) {
-  if (!container) return [];
-  return [...container.querySelectorAll(focusableSelector)].filter(
-    (element) => !element.disabled && element.getAttribute("aria-hidden") !== "true"
-  );
+function scheduleFocus(callback) {
+  if (typeof window.requestAnimationFrame === "function") {
+    window.requestAnimationFrame(callback);
+    return;
+  }
+  window.setTimeout(callback, 0);
 }
 
 export default function ConfirmDialog({ title, message, confirmLabel = "Confirm", onConfirm, onCancel }) {
@@ -17,44 +23,18 @@ export default function ConfirmDialog({ title, message, confirmLabel = "Confirm"
   useEffect(() => {
     if (!title) return undefined;
 
-    const previousFocus = document.activeElement;
-    const focusTarget = cancelButtonRef.current || dialogRef.current;
-    focusTarget?.focus();
+    scheduleFocus(() => {
+      focusElement(cancelButtonRef.current || dialogRef.current);
+    });
 
     function handleKeyDown(event) {
       if (event.key === "Escape") {
         onCancel();
-        return;
-      }
-
-      if (event.key !== "Tab") return;
-
-      const focusableElements = getFocusableElements(dialogRef.current);
-      if (focusableElements.length === 0) {
-        event.preventDefault();
-        dialogRef.current?.focus();
-        return;
-      }
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      if (previousFocus && typeof previousFocus.focus === "function") {
-        previousFocus.focus();
-      }
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onCancel, title]);
 
   if (!title) return null;

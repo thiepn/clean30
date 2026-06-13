@@ -8,12 +8,17 @@ export const STORAGE_KEYS = {
   history: "clean30_history"
 };
 
-function canUseStorage() {
+function getStorage() {
   try {
-    return typeof window !== "undefined" && Boolean(window.localStorage);
+    if (typeof window === "undefined") return null;
+    return window.localStorage || null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function canUseStorage() {
+  return Boolean(getStorage());
 }
 
 function isPlainObject(value) {
@@ -21,9 +26,10 @@ function isPlainObject(value) {
 }
 
 function readJson(key, fallback) {
-  if (!canUseStorage()) return fallback;
+  const storage = getStorage();
+  if (!storage) return fallback;
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = storage.getItem(key);
     if (!raw) return fallback;
     return JSON.parse(raw);
   } catch {
@@ -32,12 +38,23 @@ function readJson(key, fallback) {
 }
 
 function writeJson(key, value) {
-  if (!canUseStorage()) return false;
+  const storage = getStorage();
+  if (!storage) return false;
   try {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    storage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
     console.warn(`Clean30 could not save local data for ${key}.`, error);
+    return false;
+  }
+}
+
+function hasStoredValue(key) {
+  const storage = getStorage();
+  if (!storage) return false;
+  try {
+    return Boolean(storage.getItem(key));
+  } catch {
     return false;
   }
 }
@@ -224,10 +241,10 @@ function createLegacyState() {
   }
 
   const hasLegacyData =
-    window.localStorage.getItem(STORAGE_KEYS.settings) ||
-    window.localStorage.getItem(STORAGE_KEYS.dailyRules) ||
-    window.localStorage.getItem(STORAGE_KEYS.activeSession) ||
-    window.localStorage.getItem(STORAGE_KEYS.history);
+    hasStoredValue(STORAGE_KEYS.settings) ||
+    hasStoredValue(STORAGE_KEYS.dailyRules) ||
+    hasStoredValue(STORAGE_KEYS.activeSession) ||
+    hasStoredValue(STORAGE_KEYS.history);
 
   if (!hasLegacyData) {
     return {
@@ -275,8 +292,7 @@ function createLegacyState() {
 }
 
 export function normalizeAppState(value) {
-  const fallback = createLegacyState();
-  if (!isPlainObject(value)) return fallback;
+  if (!isPlainObject(value)) return createLegacyState();
 
   const defaultTemplate = createDefaultTemplate();
   const savedTemplates = Array.isArray(value.templates) ? value.templates : [];
@@ -309,7 +325,7 @@ export function normalizeAppState(value) {
 export function loadAppState() {
   const saved = readJson(STORAGE_KEYS.appState, null);
   const state = saved ? normalizeAppState(saved) : createLegacyState();
-  if (canUseStorage() && !window.localStorage.getItem(STORAGE_KEYS.appState)) {
+  if (canUseStorage() && !hasStoredValue(STORAGE_KEYS.appState)) {
     saveAppState(state);
   }
   return state;

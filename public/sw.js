@@ -1,4 +1,4 @@
-const CACHE_NAME = "clean30-app-shell-v3";
+const CACHE_NAME = "clean30-app-shell-v4";
 const BASE_PATH = "/clean30/";
 
 const STATIC_SHELL = [
@@ -15,8 +15,14 @@ const STATIC_SHELL = [
 ];
 
 function findBuiltAssets(html) {
-  const assetMatches = html.matchAll(/["'](\/clean30\/assets\/[^"']+\.(?:css|js))["']/g);
-  return [...new Set([...assetMatches].map((match) => match[1]))];
+  const assets = new Set();
+  const assetPattern = /["'](\/clean30\/assets\/[^"']+\.(?:css|js))["']/g;
+  let match = assetPattern.exec(html);
+  while (match) {
+    assets.add(match[1]);
+    match = assetPattern.exec(html);
+  }
+  return [...assets];
 }
 
 async function cacheUrl(cache, url) {
@@ -71,8 +77,10 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(`${BASE_PATH}index.html`, copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(`${BASE_PATH}index.html`, copy));
+          }
           return response;
         })
         .catch(() => caches.match(`${BASE_PATH}index.html`))
