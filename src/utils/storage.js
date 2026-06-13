@@ -332,7 +332,7 @@ export function loadAppState() {
 }
 
 export function saveAppState(state) {
-  return writeJson(STORAGE_KEYS.appState, normalizeAppState(state));
+  writeJson(STORAGE_KEYS.appState, normalizeAppState(state));
 }
 
 export function createFullBackup(state) {

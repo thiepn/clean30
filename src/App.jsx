@@ -70,7 +70,9 @@ export default function App() {
     );
   }, [appState.activeTemplateId, appState.templates]);
 
-  useEffect(() => saveAppState(appState), [appState]);
+  useEffect(() => {
+    saveAppState(appState);
+  }, [appState]);
 
   useEffect(() => {
     if (!activeTemplate?.routines.some((routine) => routine.id === selectedRoutineId)) {

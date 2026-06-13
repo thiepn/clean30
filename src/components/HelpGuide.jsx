@@ -78,7 +78,7 @@ export default function HelpGuide({ open, onClose }) {
   const closeButtonRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) return;
 
     scheduleFocus(() => {
       focusElement(closeButtonRef.current || dialogRef.current);

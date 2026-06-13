@@ -21,7 +21,7 @@ export default function ConfirmDialog({ title, message, confirmLabel = "Confirm"
   const cancelButtonRef = useRef(null);
 
   useEffect(() => {
-    if (!title) return undefined;
+    if (!title) return;
 
     scheduleFocus(() => {
       focusElement(cancelButtonRef.current || dialogRef.current);

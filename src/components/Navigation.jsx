@@ -29,7 +29,7 @@ export default function Navigation({ currentView, onNavigate }) {
   const moreActive = moreItems.some((item) => item.id === currentView);
 
   useEffect(() => {
-    if (!moreOpen) return undefined;
+    if (!moreOpen) return;
 
     function handleKeyDown(event) {
       if (event.key === "Escape") setMoreOpen(false);
