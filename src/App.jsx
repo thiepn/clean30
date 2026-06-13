@@ -367,11 +367,47 @@ export default function App() {
   }
 
   function finishSession() {
-    if (!appState.activeSession) return;
+    const activeSession = appState.activeSession;
+    if (!activeSession) return;
     const sessionTemplate =
-      appState.templates.find((template) => template.id === appState.activeSession.templateId) ||
+      appState.templates.find((template) => template.id === activeSession.templateId) ||
       activeTemplate;
-    const entry = createHistoryEntry(appState.activeSession, sessionTemplate);
+
+    if (activeSession.routineId === "daily-rules") {
+      const todayKey = getTodayKey();
+      const dailyRules = sessionTemplate.dailyRules || [];
+      const validDailyRuleIds = new Set(dailyRules.map((rule) => rule.id));
+      const completedRuleIds = [
+        ...new Set((activeSession.completedTaskIds || []).filter((id) => validDailyRuleIds.has(id)))
+      ];
+      const completedSet = new Set(completedRuleIds);
+      const allDailyRulesComplete =
+        dailyRules.length > 0 && dailyRules.every((rule) => completedSet.has(rule.id));
+      const dailyHistoryEntry =
+        allDailyRulesComplete && !hasDailyRulesHistoryEntry(appState.history, todayKey)
+          ? createDailyRulesHistoryEntry({
+              dateKey: todayKey,
+              dailyRules,
+              template: sessionTemplate
+            })
+          : null;
+
+      setAppState((current) =>
+        markMeaningfulUse({
+          ...current,
+          history: dailyHistoryEntry ? [dailyHistoryEntry, ...current.history] : current.history,
+          activeSession: null,
+          dailyRuleCompletions: {
+            ...current.dailyRuleCompletions,
+            [todayKey]: completedRuleIds
+          }
+        })
+      );
+      setCompletionSummary(dailyHistoryEntry);
+      return;
+    }
+
+    const entry = createHistoryEntry(activeSession, sessionTemplate);
 
     setAppState((current) => {
       const next = {
@@ -379,13 +415,6 @@ export default function App() {
         history: [entry, ...current.history],
         activeSession: null
       };
-
-      if (current.activeSession?.routineId === "daily-rules") {
-        next.dailyRuleCompletions = {
-          ...current.dailyRuleCompletions,
-          [getTodayKey()]: current.activeSession.completedTaskIds || []
-        };
-      }
 
       return markMeaningfulUse(next);
     });

@@ -1,9 +1,19 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { weekdayOptions } from "../utils/dates.js";
 
 const steps = ["Welcome", "Choose setup", "Basic profile", "Finish"];
+const focusableSelector =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+function getFocusableElements(container) {
+  if (!container) return [];
+  return [...container.querySelectorAll(focusableSelector)].filter(
+    (element) => !element.disabled && element.getAttribute("aria-hidden") !== "true"
+  );
+}
 
 export default function Onboarding({ template, onComplete }) {
+  const dialogRef = useRef(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [setupMode, setSetupMode] = useState("default");
   const [appDisplayName, setAppDisplayName] = useState(template.profile.appDisplayName);
@@ -13,6 +23,43 @@ export default function Onboarding({ template, onComplete }) {
 
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === steps.length - 1;
+
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const focusableElements = getFocusableElements(dialogRef.current);
+    const focusTarget = focusableElements[0] || dialogRef.current;
+    focusTarget?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key !== "Tab") return;
+
+      const currentFocusableElements = getFocusableElements(dialogRef.current);
+      if (currentFocusableElements.length === 0) {
+        event.preventDefault();
+        dialogRef.current?.focus();
+        return;
+      }
+
+      const firstElement = currentFocusableElements[0];
+      const lastElement = currentFocusableElements[currentFocusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (previousFocus && typeof previousFocus.focus === "function") {
+        previousFocus.focus();
+      }
+    };
+  }, [stepIndex]);
 
   function finish() {
     onComplete({
@@ -35,6 +82,8 @@ export default function Onboarding({ template, onComplete }) {
         aria-modal="true"
         className="dialog onboarding-dialog"
         role="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <div className="onboarding-progress" aria-label="Onboarding progress">
           {steps.map((step, index) => (

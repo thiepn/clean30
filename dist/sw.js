@@ -1,7 +1,7 @@
-const CACHE_NAME = "clean30-app-shell-v2";
+const CACHE_NAME = "clean30-app-shell-v3";
 const BASE_PATH = "/clean30/";
 
-const APP_SHELL = [
+const STATIC_SHELL = [
   BASE_PATH,
   `${BASE_PATH}index.html`,
   `${BASE_PATH}manifest.webmanifest`,
@@ -14,10 +14,37 @@ const APP_SHELL = [
   `${BASE_PATH}icons/maskable-clean30-v2-512.png`
 ];
 
+function findBuiltAssets(html) {
+  const assetMatches = html.matchAll(/["'](\/clean30\/assets\/[^"']+\.(?:css|js))["']/g);
+  return [...new Set([...assetMatches].map((match) => match[1]))];
+}
+
+async function cacheUrl(cache, url) {
+  try {
+    await cache.add(url);
+  } catch {
+    // One missing optional asset should not prevent the service worker from installing.
+  }
+}
+
+async function cacheAppShell() {
+  const cache = await caches.open(CACHE_NAME);
+  await Promise.all(STATIC_SHELL.map((url) => cacheUrl(cache, url)));
+
+  try {
+    const response = await fetch(`${BASE_PATH}index.html`, { cache: "no-cache" });
+    if (!response.ok) return;
+    const responseForCache = response.clone();
+    const html = await response.text();
+    await cache.put(`${BASE_PATH}index.html`, responseForCache);
+    await Promise.all(findBuiltAssets(html).map((url) => cacheUrl(cache, url)));
+  } catch {
+    // Offline fallback remains whatever shell was already cached.
+  }
+}
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
+  event.waitUntil(cacheAppShell());
   self.skipWaiting();
 });
 
@@ -49,6 +76,28 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => caches.match(`${BASE_PATH}index.html`))
+    );
+    return;
+  }
+
+  if (url.pathname.startsWith(`${BASE_PATH}assets/`)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const networkFetch = fetch(request).then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        });
+
+        if (cached) {
+          networkFetch.catch(() => undefined);
+          return cached;
+        }
+
+        return networkFetch;
+      })
     );
     return;
   }

@@ -9,7 +9,11 @@ export const STORAGE_KEYS = {
 };
 
 function canUseStorage() {
-  return typeof window !== "undefined" && Boolean(window.localStorage);
+  try {
+    return typeof window !== "undefined" && Boolean(window.localStorage);
+  } catch {
+    return false;
+  }
 }
 
 function isPlainObject(value) {
@@ -28,8 +32,14 @@ function readJson(key, fallback) {
 }
 
 function writeJson(key, value) {
-  if (!canUseStorage()) return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+  if (!canUseStorage()) return false;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.warn(`Clean30 could not save local data for ${key}.`, error);
+    return false;
+  }
 }
 
 function uniqueStrings(value) {
@@ -306,7 +316,7 @@ export function loadAppState() {
 }
 
 export function saveAppState(state) {
-  writeJson(STORAGE_KEYS.appState, normalizeAppState(state));
+  return writeJson(STORAGE_KEYS.appState, normalizeAppState(state));
 }
 
 export function createFullBackup(state) {

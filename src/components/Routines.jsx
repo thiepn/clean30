@@ -116,12 +116,16 @@ export default function Routines({ routines, history, template, onStartRoutine }
   }, [selectedRoutineId]);
 
   async function copyChecklist() {
-    if (!selectedRoutine || !navigator.clipboard) {
+    if (!selectedRoutine || !navigator.clipboard?.writeText) {
       setCopyMessage("Clipboard copy is not available in this browser.");
       return;
     }
-    await navigator.clipboard.writeText(createChecklistText(selectedRoutine));
-    setCopyMessage("Checklist copied.");
+    try {
+      await navigator.clipboard.writeText(createChecklistText(selectedRoutine));
+      setCopyMessage("Checklist copied.");
+    } catch {
+      setCopyMessage("Could not copy checklist. Check browser clipboard permissions.");
+    }
   }
 
   if (!selectedRoutine) {
