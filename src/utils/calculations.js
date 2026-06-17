@@ -20,6 +20,9 @@ export function createSession(routine, template) {
     routineId: routine.id,
     templateId: template.id,
     startedAt: now,
+    paused: false,
+    pausedAt: null,
+    totalPausedMs: 0,
     completedTaskIds: [],
     notes: "",
     routineSnapshot: cloneDeep(routine)
@@ -38,10 +41,63 @@ export function getSessionProgress(session, routine) {
   return { completed, total, percent };
 }
 
+function parseDateMs(value) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
+}
+
+export function getSessionElapsedMs(session, now = new Date()) {
+  if (!session?.startedAt) return 0;
+  const started = parseDateMs(session.startedAt);
+  if (started === null) return 0;
+  const nowMs = now instanceof Date ? now.getTime() : parseDateMs(now);
+  const pausedAt = session.paused ? parseDateMs(session.pausedAt) : null;
+  const end = pausedAt ?? nowMs;
+  const pausedTotal = Number.isFinite(Number(session.totalPausedMs))
+    ? Math.max(0, Number(session.totalPausedMs))
+    : 0;
+  if (!Number.isFinite(end) || end < started) return 0;
+  return Math.max(0, end - started - pausedTotal);
+}
+
+export function formatElapsedTime(ms) {
+  const totalSeconds = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}
+
+export function formatRoutineDuration(routine) {
+  if (routine?.estimatedTime) return routine.estimatedTime;
+  const minutes = Number(routine?.estimatedMinutes);
+  if (!Number.isFinite(minutes) || minutes <= 0) return "No estimate";
+  return `${Math.round(minutes)} min`;
+}
+
+export function getLastRoutineFinishedAt(history, routineId) {
+  return (history || [])
+    .filter((entry) => entry?.routineId === routineId && !isDailyRulesHistoryEntry(entry))
+    .filter((entry) => !Number.isNaN(new Date(entry.finishedAt).getTime()))
+    .sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0]?.finishedAt || null;
+}
+
+export function getLastRoutineDoneLabel(history, routineId) {
+  const finishedAt = getLastRoutineFinishedAt(history, routineId);
+  if (!finishedAt) return "Not done yet";
+  const elapsed = daysBetween(finishedAt);
+  if (elapsed === null) return "Not done yet";
+  if (elapsed === 0) return "Last done today";
+  if (elapsed === 1) return "Last done yesterday";
+  return `Last done ${elapsed} days ago`;
+}
+
 export function createHistoryEntry(session, template) {
   const finishedAt = new Date().toISOString();
   const routine = session.routineSnapshot;
   const progress = getSessionProgress(session, routine);
+  const elapsedMs = getSessionElapsedMs(session, new Date(finishedAt));
   return {
     id: `history-${Date.now()}`,
     routineId: session.routineId,
@@ -53,7 +109,9 @@ export function createHistoryEntry(session, template) {
     completedTasks: progress.completed,
     totalTasks: progress.total,
     percent: progress.percent,
-    notes: session.notes || ""
+    notes: session.notes || "",
+    elapsedMs,
+    estimatedDurationMinutes: Math.max(0, Math.round(elapsedMs / 60000))
   };
 }
 

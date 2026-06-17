@@ -369,6 +369,9 @@ function normalizeHistory(value) {
           ? entry.date
           : null,
         completedAt: normalizeDateString(entry.completedAt),
+        elapsedMs: Number.isFinite(Number(entry.elapsedMs))
+          ? Math.max(0, Number(entry.elapsedMs))
+          : null,
         estimatedDurationMinutes: Number.isFinite(Number(entry.estimatedDurationMinutes))
           ? Math.max(0, Number(entry.estimatedDurationMinutes))
           : null
@@ -383,15 +386,16 @@ function findRoutine(templates, templateId, routineId) {
 
 function normalizeActiveSession(value, templates, activeTemplateId) {
   if (!isPlainObject(value)) return null;
-  if (
-    typeof value.id !== "string" ||
-    typeof value.routineId !== "string" ||
-    typeof value.startedAt !== "string"
-  ) {
+  if (typeof value.id !== "string" || typeof value.routineId !== "string") {
     return null;
   }
 
   const templateId = typeof value.templateId === "string" ? value.templateId : activeTemplateId;
+  const startedAt =
+    normalizeDateString(value.startedAt) ||
+    normalizeDateString(value.createdAt) ||
+    new Date().toISOString();
+  const paused = Boolean(value.paused);
   const snapshotSource = isPlainObject(value.routineSnapshot)
     ? value.routineSnapshot
     : findRoutine(templates, templateId, value.routineId);
@@ -400,7 +404,12 @@ function normalizeActiveSession(value, templates, activeTemplateId) {
     id: value.id,
     routineId: value.routineId,
     templateId,
-    startedAt: value.startedAt,
+    startedAt,
+    paused,
+    pausedAt: paused ? normalizeDateString(value.pausedAt) || startedAt : null,
+    totalPausedMs: Number.isFinite(Number(value.totalPausedMs))
+      ? Math.max(0, Number(value.totalPausedMs))
+      : 0,
     completedTaskIds: uniqueStrings(value.completedTaskIds),
     notes: typeof value.notes === "string" ? value.notes : "",
     routineSnapshot: snapshotSource ? normalizeRoutine(snapshotSource) : null

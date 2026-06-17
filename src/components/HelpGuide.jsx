@@ -23,7 +23,8 @@ const guideSections = [
       "Start with Today.",
       "Check off tasks, add one-off tasks, or pull tasks from a routine.",
       "Completed tasks move below active tasks.",
-      "Start or continue cleaning routines from Dashboard.",
+      "Start, continue, pause, or finish cleaning routines from Dashboard.",
+      "An unfinished session appears near the top with progress and elapsed time.",
       "Use Edit when you want to change what appears each day."
     ]
   },
@@ -42,6 +43,7 @@ const guideSections = [
       "Today defaults live inside the routine editor.",
       "Weekday-specific defaults are optional.",
       "Routines can be edited from Dashboard or Routines.",
+      "Routine edits include duration, duplicate, archive, and optional color labels.",
       "App details and schedule are also in the editor.",
       "Appearance is changed from Settings."
     ]

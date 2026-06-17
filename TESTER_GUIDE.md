@@ -11,8 +11,8 @@ Recommended device: phone. Desktop testing is also useful.
 ## What To Test
 
 - First launch and onboarding.
-- Dashboard: Today tasks, routine starting, active sessions, and mini calendar.
-- Routines: can you inspect and edit routine checklists without friction?
+- Dashboard: Today tasks, routine starting, active-session resume card, timer, pause/resume, and mini calendar.
+- Routines: can you inspect routine checklists, understand last-done badges, and find edit/add controls without friction?
 - History: are Today entries and reset sessions understandable?
 - Settings: do appearance, backup, privacy, help, install, onboarding, and reset tools make sense?
 - PWA install: can you add it to your phone home screen?
@@ -23,6 +23,8 @@ Recommended device: phone. Desktop testing is also useful.
 - Could you tell what to do from Dashboard?
 - Did Today tasks make sense?
 - Was starting, pausing, finishing, or discarding a session clear?
+- Did the completion summary and View History action make sense after finishing?
+- Did duplicate/archive/color labels make routines easier to manage without feeling busy?
 - Was the mini calendar useful without being distracting?
 - Was the editor easy enough to find and use?
 - Did backup/privacy make sense?

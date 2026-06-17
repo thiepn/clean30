@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { getRoutineTotalTasks } from "../utils/calculations.js";
+import {
+  formatRoutineDuration,
+  getLastRoutineDoneLabel,
+  getRoutineTotalTasks
+} from "../utils/calculations.js";
 import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
 
-export default function Routines({ routines, onEditRoutines, onAddRoutine }) {
+export default function Routines({ routines, history = [], onEditRoutines, onAddRoutine }) {
+  const [showArchived, setShowArchived] = useState(false);
   const referenceRoutines = useMemo(
-    () => routines.filter((routine) => routine.id !== "daily-rules"),
-    [routines]
+    () =>
+      routines.filter(
+        (routine) => routine.id !== "daily-rules" && (showArchived || !routine.archived)
+      ),
+    [routines, showArchived]
   );
   const [selectedRoutineId, setSelectedRoutineId] = useState(referenceRoutines[0]?.id || "");
   const selectedRoutine =
@@ -32,10 +40,29 @@ export default function Routines({ routines, onEditRoutines, onAddRoutine }) {
 
   if (!selectedRoutine) {
     return (
-      <EmptyState
-        title="No reset routines"
-        message="Today tasks live on Dashboard. Add reusable routines from the editor."
-      />
+      <div className="screen-stack">
+        <section className="panel">
+          <div className="section-heading compact-heading">
+            <h2>Routines</h2>
+            <div className="card-actions compact-actions">
+              <button className="button edit-action small" type="button" onClick={onAddRoutine}>
+                Add
+              </button>
+              <button
+                className={showArchived ? "button edit-action small" : "button ghost small"}
+                type="button"
+                onClick={() => setShowArchived((current) => !current)}
+              >
+                Show archived
+              </button>
+            </div>
+          </div>
+        </section>
+        <EmptyState
+          title={showArchived ? "No routines" : "No active routines"}
+          message="Today tasks live on Dashboard. Add reusable routines from the editor."
+        />
+      </div>
     );
   }
 
@@ -49,6 +76,13 @@ export default function Routines({ routines, onEditRoutines, onAddRoutine }) {
             <h2>Routines</h2>
           </div>
           <div className="card-actions compact-actions">
+            <button
+              className={showArchived ? "button edit-action small" : "button ghost small"}
+              type="button"
+              onClick={() => setShowArchived((current) => !current)}
+            >
+              {showArchived ? "Hide archived" : "Show archived"}
+            </button>
             <button className="button edit-action small" type="button" onClick={onEditRoutines}>
               Edit
             </button>
@@ -61,16 +95,23 @@ export default function Routines({ routines, onEditRoutines, onAddRoutine }) {
           {routineSummaries.map((item) => (
             <button
               className={
-                selectedRoutine.id === item.routine.id
-                  ? "routine-library-card active"
-                  : "routine-library-card"
+                [
+                  "routine-library-card",
+                  selectedRoutine.id === item.routine.id ? "active" : "",
+                  item.routine.archived ? "archived" : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ")
               }
               key={item.routine.id}
               type="button"
               onClick={() => setSelectedRoutineId(item.routine.id)}
             >
+              <span className={`routine-color-dot color-${item.routine.colorLabel || "none"}`} aria-hidden="true" />
               <strong>{item.routine.title}</strong>
-              <span>{item.routine.estimatedTime || "No estimate"}</span>
+              <span>{formatRoutineDuration(item.routine)}</span>
+              <small>{getLastRoutineDoneLabel(history, item.routine.id)}</small>
+              {item.routine.archived ? <small className="archive-label">Archived</small> : null}
             </button>
           ))}
         </div>
@@ -84,9 +125,11 @@ export default function Routines({ routines, onEditRoutines, onAddRoutine }) {
         </div>
 
         <div className="routine-meta-strip" aria-label="Routine summary">
-          <span>{selectedRoutine.estimatedTime || "No estimate"}</span>
+          <span>{formatRoutineDuration(selectedRoutine)}</span>
           <span>{selectedSummary?.taskCount || 0} tasks</span>
           <span>{selectedRoutine.phases.length} phases</span>
+          <span>{getLastRoutineDoneLabel(history, selectedRoutine.id)}</span>
+          {selectedRoutine.archived ? <span>Archived</span> : null}
         </div>
       </section>
 

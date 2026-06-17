@@ -33,8 +33,14 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Edit defaults opens the internal editor focused on Today defaults.
 - [ ] Routine picker and selected routine summary appear in Dashboard.
 - [ ] Starting a routine keeps the user on Dashboard.
+- [ ] Starting a different routine with an active session asks before replacing it.
+- [ ] Dashboard shows a compact resume card when a session is active.
 - [ ] Active session checklist works and persists after refresh.
+- [ ] Active session timer persists after refresh without constant storage writes.
+- [ ] Pause and resume keep elapsed time reasonable.
+- [ ] Completed active-session phases collapse and remain expandable.
 - [ ] Finish, partial finish, reset, and discard still work.
+- [ ] Finishing a routine shows a compact completion summary with View History and Close.
 - [ ] Mini calendar renders.
 - [ ] Calendar marks days with session or Today activity.
 - [ ] Selecting a calendar day shows details.
@@ -45,6 +51,8 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Edit/Add button opens the internal editor.
 - [ ] Add routine opens the editor in routine-add mode.
 - [ ] Selecting a routine shows summary and checklist reference.
+- [ ] Routine cards show duration, last-done state, and subtle color labels.
+- [ ] Show archived reveals archived routines.
 - [ ] Checklist phases are collapsed by default.
 - [ ] No copy or preparation UI appears.
 
@@ -55,6 +63,11 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] No duplicate-before-edit requirement appears.
 - [ ] Today defaults live inside the Routines editor area.
 - [ ] Routines can be added and edited.
+- [ ] Routine duration validates as 1-600 minutes.
+- [ ] Routines can be duplicated with independent IDs.
+- [ ] Routines can be archived and unarchived.
+- [ ] Active-session routine cannot be archived or deleted.
+- [ ] Optional routine color labels persist.
 - [ ] Schedule can be edited.
 - [ ] App details can be edited.
 - [ ] Appearance is not duplicated inside the editor.

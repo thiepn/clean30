@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getRoutineTotalTasks } from "../../utils/calculations.js";
 import { createPhase, createRoutine, createTask, moveItem } from "../../utils/routineUtils.js";
-import { priorityOptions } from "../../utils/templateUtils.js";
+import { createId, priorityOptions, routineColorOptions } from "../../utils/templateUtils.js";
 import DailyRulesSection from "./DailyRulesSection.jsx";
 
 function normalizeName(value) {
@@ -40,6 +40,48 @@ function getPhaseTitleError(phase, phases) {
   return hasDuplicateName(phase.title, siblings) ? "Phase name already exists." : "";
 }
 
+function getRoutineMinutes(routine) {
+  const value = Number(routine?.estimatedMinutes);
+  if (Number.isFinite(value) && value > 0) return Math.round(value);
+  const match = String(routine?.estimatedTime || "").match(/(\d+)/);
+  return match ? Math.max(1, Math.min(600, Number(match[1]))) : 30;
+}
+
+function getDurationError(value) {
+  if (String(value).trim() === "") return "Duration is required.";
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "Use a number of minutes.";
+  if (numeric < 1) return "Use at least 1 minute.";
+  if (numeric > 600) return "Use 600 minutes or less.";
+  return "";
+}
+
+function duplicateTask(task) {
+  return {
+    ...task,
+    id: createId("task")
+  };
+}
+
+function duplicatePhase(phase) {
+  return {
+    ...phase,
+    id: createId("phase"),
+    tasks: phase.tasks.map(duplicateTask)
+  };
+}
+
+function createRoutineDuplicate(routine, siblingNames) {
+  const title = makeUniqueName(`${routine.title} Copy`, siblingNames, "Routine Copy");
+  return {
+    ...routine,
+    id: createId("routine"),
+    title,
+    archived: false,
+    phases: routine.phases.map(duplicatePhase)
+  };
+}
+
 export default function RoutinesSection({
   routines,
   todayDefaults = [],
@@ -57,6 +99,7 @@ export default function RoutinesSection({
 }) {
   const autoAddHandled = useRef(false);
   const [editorTab, setEditorTab] = useState(initialEditorTab);
+  const [durationDraft, setDurationDraft] = useState("");
   const visibleRoutines = useMemo(
     () => routines.filter((routine) => routine.id !== "daily-rules"),
     [routines]
@@ -73,6 +116,7 @@ export default function RoutinesSection({
     ? selectedRoutine.phases.findIndex((phase) => phase.id === selectedPhase.id)
     : -1;
   const routineTitleError = getRoutineTitleError(selectedRoutine, visibleRoutines);
+  const routineDurationError = selectedRoutine ? getDurationError(durationDraft) : "";
   const phaseTitleError =
     selectedRoutine && selectedPhase
       ? getPhaseTitleError(selectedPhase, selectedRoutine.phases)
@@ -99,6 +143,14 @@ export default function RoutinesSection({
     setEditorTab(initialEditorTab);
   }, [initialEditorTab]);
 
+  useEffect(() => {
+    if (!selectedRoutine) {
+      setDurationDraft("");
+      return;
+    }
+    setDurationDraft(String(getRoutineMinutes(selectedRoutine)));
+  }, [selectedRoutine?.id, selectedRoutine?.estimatedMinutes]);
+
   function editSelectedRoutine(mutator) {
     if (!selectedRoutine) return;
     onEditTemplate((draft) => {
@@ -124,6 +176,66 @@ export default function RoutinesSection({
   function updateRoutine(field, value) {
     editSelectedRoutine((routine) => {
       routine[field] = value;
+    });
+  }
+
+  function updateRoutineDuration(value) {
+    setDurationDraft(value);
+    if (getDurationError(value)) return;
+    const minutes = Math.round(Number(value));
+    editSelectedRoutine((routine) => {
+      routine.estimatedMinutes = minutes;
+      routine.estimatedTime = `${minutes} min`;
+    });
+  }
+
+  function normalizeRoutineDuration() {
+    if (!selectedRoutine) return;
+    if (getDurationError(durationDraft)) {
+      setDurationDraft(String(getRoutineMinutes(selectedRoutine)));
+    }
+  }
+
+  function duplicateRoutine(routine) {
+    if (!routine || !canEdit) return;
+    const siblingNames = visibleRoutines.map((item) => item.title);
+    const duplicate = createRoutineDuplicate(routine, siblingNames);
+    onEditTemplate((draft) => {
+      const index = draft.routines.findIndex((item) => item.id === routine.id);
+      draft.routines.splice(index + 1, 0, duplicate);
+    });
+    onSelectRoutine(duplicate.id);
+    setSelectedPhaseId(duplicate.phases[0]?.id || "");
+  }
+
+  function archiveRoutine(routine) {
+    if (!routine || !canEdit) return;
+    if (activeSession?.routineId === routine.id) {
+      onConfirmEdit({
+        title: "Routine is in use",
+        message: `"${routine.title}" is used by the active session. Finish or discard that session before archiving this routine.`,
+        confirmLabel: "Keep routine",
+        edit: () => {}
+      });
+      return;
+    }
+
+    onConfirmEdit({
+      title: "Archive routine?",
+      message: `"${routine.title}" will be hidden from Dashboard and the main Routines list. History is kept.`,
+      confirmLabel: "Archive routine",
+      edit: (draft) => {
+        const item = draft.routines.find((candidate) => candidate.id === routine.id);
+        if (item) item.archived = true;
+      }
+    });
+  }
+
+  function unarchiveRoutine(routine) {
+    if (!routine || !canEdit) return;
+    onEditTemplate((draft) => {
+      const item = draft.routines.find((candidate) => candidate.id === routine.id);
+      if (item) item.archived = false;
     });
   }
 
@@ -331,7 +443,9 @@ export default function RoutinesSection({
                 >
                   <strong>{routine.title}</strong>
                   <span>
+                    <span className={`routine-color-dot color-${routine.colorLabel || "none"}`} aria-hidden="true" />
                     {routine.estimatedTime || "No estimate"} / {getRoutineTotalTasks(routine)} tasks
+                    {routine.archived ? " / Archived" : ""}
                   </span>
                 </button>
                 <div className="row-actions">
@@ -351,6 +465,33 @@ export default function RoutinesSection({
                   >
                     Move down
                   </button>
+                  <button
+                    className="button small ghost"
+                    type="button"
+                    disabled={!canEdit}
+                    onClick={() => duplicateRoutine(routine)}
+                  >
+                    Duplicate
+                  </button>
+                  {routine.archived ? (
+                    <button
+                      className="button small ghost"
+                      type="button"
+                      disabled={!canEdit}
+                      onClick={() => unarchiveRoutine(routine)}
+                    >
+                      Unarchive
+                    </button>
+                  ) : (
+                    <button
+                      className="button small ghost"
+                      type="button"
+                      disabled={!canEdit}
+                      onClick={() => archiveRoutine(routine)}
+                    >
+                      Archive
+                    </button>
+                  )}
                   <button
                     className="button small danger-ghost"
                     type="button"
@@ -377,7 +518,10 @@ export default function RoutinesSection({
               <h2>{selectedRoutine.title}</h2>
               <p>Routine details explain why and when this checklist should be used.</p>
             </div>
-            <span className="task-count">{getRoutineTotalTasks(selectedRoutine)} tasks</span>
+            <span className="task-count">
+              {selectedRoutine.archived ? "Archived / " : ""}
+              {getRoutineTotalTasks(selectedRoutine)} tasks
+            </span>
           </div>
 
           <div className="form-grid customize-card routine-detail-card">
@@ -394,13 +538,35 @@ export default function RoutinesSection({
               {routineTitleError ? <span className="validation-message">{routineTitleError}</span> : null}
             </label>
             <label className="field-label" htmlFor="routine-time">
-              Estimated time
+              Duration (minutes)
               <input
                 id="routine-time"
-                value={selectedRoutine.estimatedTime}
+                type="number"
+                min="1"
+                max="600"
+                step="1"
+                value={durationDraft}
                 disabled={!canEdit}
-                onChange={(event) => updateRoutine("estimatedTime", event.target.value)}
+                onChange={(event) => updateRoutineDuration(event.target.value)}
+                onBlur={normalizeRoutineDuration}
+                aria-invalid={Boolean(routineDurationError)}
               />
+              {routineDurationError ? <span className="validation-message">{routineDurationError}</span> : null}
+            </label>
+            <label className="field-label" htmlFor="routine-color">
+              Color label
+              <select
+                id="routine-color"
+                value={selectedRoutine.colorLabel || "none"}
+                disabled={!canEdit}
+                onChange={(event) => updateRoutine("colorLabel", event.target.value)}
+              >
+                {routineColorOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option === "none" ? "None" : option}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="field-label field-span" htmlFor="routine-purpose">
               Purpose

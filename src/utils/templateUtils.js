@@ -1,6 +1,19 @@
 import { clean30DefaultTemplate } from "../data/defaultTemplate.js";
 
 export const priorityOptions = ["normal", "important", "critical", "optional"];
+export const routineColorOptions = [
+  "none",
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "teal",
+  "blue",
+  "purple",
+  "pink",
+  "brown",
+  "gray"
+];
 export const accentOptions = [
   "red",
   "orange",
@@ -42,6 +55,50 @@ function numberInRange(value, fallback, min, max) {
 
 function normalizePriority(value) {
   return priorityOptions.includes(value) ? value : "normal";
+}
+
+function parseEstimatedMinutes(value, fallback = 30) {
+  const raw = typeof value === "string" ? value.toLowerCase() : "";
+  const hourRange = raw.match(/(\d+(?:\.\d+)?)\s*(?:[-–]\s*(\d+(?:\.\d+)?))?\s*(?:hours?|hrs?|h)\b/);
+  if (hourRange) {
+    const first = Number(hourRange[1]);
+    const second = Number(hourRange[2] || hourRange[1]);
+    if (Number.isFinite(first) && Number.isFinite(second)) {
+      return Math.round(((first + second) / 2) * 60);
+    }
+  }
+
+  const minuteRange = raw.match(/(\d+(?:\.\d+)?)\s*(?:[-–]\s*(\d+(?:\.\d+)?))?\s*(?:minutes?|mins?|m)\b/);
+  if (minuteRange) {
+    const first = Number(minuteRange[1]);
+    const second = Number(minuteRange[2] || minuteRange[1]);
+    if (Number.isFinite(first) && Number.isFinite(second)) {
+      return Math.round((first + second) / 2);
+    }
+  }
+
+  const firstNumber = raw.match(/(\d+(?:\.\d+)?)/);
+  if (firstNumber) {
+    const parsed = Number(firstNumber[1]);
+    if (Number.isFinite(parsed)) return Math.round(parsed);
+  }
+
+  return fallback;
+}
+
+function normalizeRoutineMinutes(saved) {
+  const hasDirect =
+    saved.estimatedMinutes !== null &&
+    saved.estimatedMinutes !== undefined &&
+    saved.estimatedMinutes !== "";
+  const direct = hasDirect ? Number(saved.estimatedMinutes) : NaN;
+  const fallback = parseEstimatedMinutes(saved.estimatedTime, 30);
+  const value = Number.isFinite(direct) ? direct : fallback;
+  return Math.round(Math.min(600, Math.max(1, value)));
+}
+
+function normalizeRoutineColor(value) {
+  return routineColorOptions.includes(value) ? value : "none";
 }
 
 function normalizeTemplateAccent(value, fallback = "green") {
@@ -96,10 +153,14 @@ export function normalizePhase(phase, fallbackTitle = "New phase") {
 export function normalizeRoutine(routine, fallbackTitle = "New routine") {
   const saved = isPlainObject(routine) ? routine : {};
   const phases = Array.isArray(saved.phases) ? saved.phases : [];
+  const estimatedMinutes = normalizeRoutineMinutes(saved);
   return {
     id: text(saved.id) || createId("routine"),
     title: text(saved.title, fallbackTitle) || fallbackTitle,
-    estimatedTime: text(saved.estimatedTime),
+    estimatedTime: text(saved.estimatedTime) || `${estimatedMinutes} min`,
+    estimatedMinutes,
+    archived: Boolean(saved.archived),
+    colorLabel: normalizeRoutineColor(saved.colorLabel),
     purpose: text(saved.purpose),
     whenToUse: text(saved.whenToUse),
     message: text(saved.message),

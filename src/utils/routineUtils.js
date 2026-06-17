@@ -12,7 +12,10 @@ export function createRoutine() {
   return normalizeRoutine({
     id: createId("routine"),
     title: "New Routine",
-    estimatedTime: "",
+    estimatedTime: "30 min",
+    estimatedMinutes: 30,
+    archived: false,
+    colorLabel: "none",
     purpose: "",
     whenToUse: "",
     phases: [

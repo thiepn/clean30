@@ -1,4 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  formatElapsedTime,
+  getRoutineById,
+  getSessionElapsedMs,
+  getSessionProgress
+} from "../utils/calculations.js";
 import { formatDate, getTodayKey } from "../utils/dates.js";
 import StartSession from "./StartSession.jsx";
 
@@ -93,11 +99,16 @@ export default function Dashboard({
   onResetSession,
   onFinishSession,
   onCancelSession,
+  onPauseSession,
+  onResumeSession,
   onUpdateNotes,
+  onViewHistory,
+  onClearCompletionSummary,
   onEditToday,
   onEditRoutines,
   onAddRoutine
 }) {
+  const sessionAnchorRef = useRef(null);
   const [taskText, setTaskText] = useState("");
   const [expandedTaskId, setExpandedTaskId] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
@@ -105,6 +116,7 @@ export default function Dashboard({
   const [routineSourceId, setRoutineSourceId] = useState("");
   const [selectedRoutineTaskIds, setSelectedRoutineTaskIds] = useState([]);
   const [customTagText, setCustomTagText] = useState("");
+  const [timerNow, setTimerNow] = useState(Date.now());
   const todayKey = getTodayKey();
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const displayTasks = useMemo(
@@ -112,7 +124,7 @@ export default function Dashboard({
     [todayTasks]
   );
   const routineOptions = useMemo(
-    () => template.routines.filter((routine) => routine.id !== "daily-rules"),
+    () => template.routines.filter((routine) => routine.id !== "daily-rules" && !routine.archived),
     [template.routines]
   );
   const selectedRoutineForImport =
@@ -136,6 +148,23 @@ export default function Dashboard({
   );
   const calendarCells = useMemo(() => buildMonthCells(new Date()), []);
   const selectedActivity = activityByDate[selectedDate] || { sessions: [], todayCompleted: 0 };
+  const activeRoutine = useMemo(
+    () =>
+      activeSession
+        ? activeSession.routineSnapshot || getRoutineById(template.routines, activeSession.routineId)
+        : null,
+    [activeSession, template.routines]
+  );
+  const activeProgress = activeSession ? getSessionProgress(activeSession, activeRoutine) : null;
+  const activeElapsed = activeSession ? getSessionElapsedMs(activeSession, new Date(timerNow)) : 0;
+
+  useEffect(() => {
+    if (!activeSession || activeSession.paused) return;
+    const intervalId = window.setInterval(() => {
+      setTimerNow(Date.now());
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [activeSession?.id, activeSession?.paused]);
 
   function submitTask(event) {
     event.preventDefault();
@@ -176,8 +205,44 @@ export default function Dashboard({
     if (!routineSourceId && routineOptions[0]) setRoutineSourceId(routineOptions[0].id);
   }
 
+  function scrollToSession() {
+    sessionAnchorRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }
+
+  function resumeAndScroll() {
+    if (activeSession?.paused) onResumeSession?.();
+    scrollToSession();
+  }
+
   return (
     <div className="screen-stack">
+      {activeSession && activeRoutine ? (
+        <section className="panel session-resume-panel">
+          <div className="section-heading compact-heading">
+            <div>
+              <p className="eyebrow">Unfinished session</p>
+              <h2>{activeRoutine.title}</h2>
+              <p>
+                {activeProgress.completed}/{activeProgress.total} tasks complete. Elapsed{" "}
+                {formatElapsedTime(activeElapsed)}.
+              </p>
+            </div>
+            <span className="status-pill compact">{activeSession.paused ? "Paused" : "Active"}</span>
+          </div>
+          <div className="card-actions compact-actions">
+            <button className="button primary small" type="button" onClick={resumeAndScroll}>
+              {activeSession.paused ? "Resume" : "Continue"}
+            </button>
+            <button className="button ghost small" type="button" onClick={onFinishSession}>
+              Finish partial
+            </button>
+            <button className="button danger-ghost small" type="button" onClick={onCancelSession}>
+              Discard
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="panel today-panel">
         <div className="section-heading compact-heading">
           <h2>Today</h2>
@@ -454,22 +519,29 @@ export default function Dashboard({
 
       </section>
 
-      <StartSession
-        routines={template.routines}
-        selectedRoutineId={selectedRoutineId}
-        onSelectRoutine={onSelectRoutine}
-        activeSession={activeSession}
-        completionSummary={completionSummary}
-        onStartSession={onStartRoutine}
-        onToggleTask={onToggleTask}
-        onCompletePhase={onCompletePhase}
-        onResetSession={onResetSession}
-        onFinishSession={onFinishSession}
-        onCancelSession={onCancelSession}
-        onUpdateNotes={onUpdateNotes}
-        onEditRoutines={onEditRoutines}
-        onAddRoutine={onAddRoutine}
-      />
+      <div ref={sessionAnchorRef}>
+        <StartSession
+          routines={template.routines}
+          history={history}
+          selectedRoutineId={selectedRoutineId}
+          onSelectRoutine={onSelectRoutine}
+          activeSession={activeSession}
+          completionSummary={completionSummary}
+          onStartSession={onStartRoutine}
+          onToggleTask={onToggleTask}
+          onCompletePhase={onCompletePhase}
+          onResetSession={onResetSession}
+          onFinishSession={onFinishSession}
+          onCancelSession={onCancelSession}
+          onPauseSession={onPauseSession}
+          onResumeSession={onResumeSession}
+          onUpdateNotes={onUpdateNotes}
+          onViewHistory={onViewHistory}
+          onClearCompletionSummary={onClearCompletionSummary}
+          onEditRoutines={onEditRoutines}
+          onAddRoutine={onAddRoutine}
+        />
+      </div>
 
       <section className="panel dashboard-calendar-panel">
         <div className="section-heading compact-heading">

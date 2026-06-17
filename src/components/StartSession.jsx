@@ -1,5 +1,13 @@
-import { useMemo } from "react";
-import { getRoutineById, getRoutineTotalTasks, getSessionProgress } from "../utils/calculations.js";
+import { useEffect, useMemo, useState } from "react";
+import {
+  formatElapsedTime,
+  formatRoutineDuration,
+  getLastRoutineDoneLabel,
+  getRoutineById,
+  getRoutineTotalTasks,
+  getSessionElapsedMs,
+  getSessionProgress
+} from "../utils/calculations.js";
 import { formatDateTime } from "../utils/dates.js";
 import Checklist from "./Checklist.jsx";
 import ProgressBar from "./ProgressBar.jsx";
@@ -14,6 +22,7 @@ const startRoutineOrder = [
 
 export default function StartSession({
   routines,
+  history = [],
   selectedRoutineId,
   onSelectRoutine,
   activeSession,
@@ -24,15 +33,26 @@ export default function StartSession({
   onResetSession,
   onFinishSession,
   onCancelSession,
+  onPauseSession,
+  onResumeSession,
   onUpdateNotes,
+  onViewHistory,
+  onClearCompletionSummary,
   onEditRoutines,
   onAddRoutine
 }) {
+  const [timerNow, setTimerNow] = useState(Date.now());
   const startRoutines = useMemo(
-    () =>
-      startRoutineOrder
+    () => {
+      const activeRoutines = routines.filter(
+        (routine) => routine.id !== "daily-rules" && !routine.archived
+      );
+      const ordered = startRoutineOrder
         .map((routineId) => getRoutineById(routines, routineId))
-        .filter(Boolean),
+        .filter((routine) => routine && !routine.archived);
+      const orderedIds = new Set(ordered.map((routine) => routine.id));
+      return [...ordered, ...activeRoutines.filter((routine) => !orderedIds.has(routine.id))];
+    },
     [routines]
   );
   const selectedRoutine = useMemo(
@@ -40,23 +60,44 @@ export default function StartSession({
     [startRoutines, selectedRoutineId]
   );
 
+  useEffect(() => {
+    if (!activeSession || activeSession.paused) return;
+    setTimerNow(Date.now());
+    const intervalId = window.setInterval(() => {
+      setTimerNow(Date.now());
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [activeSession?.id, activeSession?.paused]);
+
   if (activeSession) {
     const routine =
-      activeSession.routineSnapshot || getRoutineById(routines, activeSession.routineId);
+      activeSession.routineSnapshot ||
+      getRoutineById(routines, activeSession.routineId) || {
+        id: activeSession.routineId,
+        title: "Routine",
+        estimatedTime: "",
+        estimatedMinutes: 30,
+        phases: []
+      };
     const progress = getSessionProgress(activeSession, routine);
+    const elapsed = getSessionElapsedMs(activeSession, new Date(timerNow));
 
     return (
       <div className="screen-stack">
         <section className="panel active-session-panel">
           <div className="session-topline">
             <div>
+              <p className="eyebrow">Active session</p>
               <h2>{routine.title}</h2>
               <p className="muted">
-                Saved locally. Finish, reset, or discard it before starting another routine.
+                {activeSession.paused
+                  ? "Paused locally. Resume when you are ready, or finish partial to save progress."
+                  : "Saved locally. Continue, pause, finish partial, or discard before starting another routine."}
               </p>
             </div>
             <div className="session-meta">
-              <span>{routine.estimatedTime}</span>
+              <span className="status-pill compact">{activeSession.paused ? "Paused" : "Active"}</span>
+              <span>{formatRoutineDuration(routine)}</span>
               <span>Started {formatDateTime(activeSession.startedAt)}</span>
             </div>
           </div>
@@ -72,15 +113,24 @@ export default function StartSession({
               </strong>
             </div>
             <div className="metric-card">
-              <span>Complete</span>
-              <strong>{progress.percent}%</strong>
+              <span>Elapsed</span>
+              <strong>{formatElapsedTime(elapsed)}</strong>
             </div>
             <div className="metric-card">
-              <span>Estimated time</span>
-              <strong>{routine.estimatedTime || "Not set"}</strong>
+              <span>Status</span>
+              <strong>{activeSession.paused ? "Paused" : "Cleaning"}</strong>
             </div>
           </div>
           <div className="session-actions">
+            {activeSession.paused ? (
+              <button className="button primary" type="button" onClick={onResumeSession}>
+                Resume
+              </button>
+            ) : (
+              <button className="button ghost" type="button" onClick={onPauseSession}>
+                Pause
+              </button>
+            )}
             <button className="button ghost" type="button" onClick={onResetSession}>
               Reset
             </button>
@@ -120,13 +170,33 @@ export default function StartSession({
   return (
     <div className="screen-stack">
       {completionSummary ? (
-        <section className="panel completion-panel">
-          <p className="eyebrow">Completed</p>
-          <h2>{completionSummary.routineTitle}</h2>
-          <p>
-            Finished at {formatDateTime(completionSummary.finishedAt)} with{" "}
-            {completionSummary.percent}% complete.
-          </p>
+        <section className="panel completion-panel completion-summary-panel">
+          <div>
+            <p className="eyebrow">Saved to History</p>
+            <h2>{completionSummary.routineTitle}</h2>
+            <p>
+              {completionSummary.completedTasks}/{completionSummary.totalTasks} tasks complete,{" "}
+              {completionSummary.percent}% total.
+            </p>
+          </div>
+          <div className="completion-summary-meta">
+            <span>Finished {formatDateTime(completionSummary.finishedAt)}</span>
+            {Number.isFinite(Number(completionSummary.elapsedMs)) ? (
+              <span>Elapsed {formatElapsedTime(Number(completionSummary.elapsedMs))}</span>
+            ) : Number.isFinite(Number(completionSummary.estimatedDurationMinutes)) ? (
+              <span>
+                Elapsed {formatElapsedTime(Number(completionSummary.estimatedDurationMinutes) * 60000)}
+              </span>
+            ) : null}
+          </div>
+          <div className="card-actions compact-actions">
+            <button className="button primary small" type="button" onClick={onViewHistory}>
+              View History
+            </button>
+            <button className="button ghost small" type="button" onClick={onClearCompletionSummary}>
+              Close
+            </button>
+          </div>
         </section>
       ) : null}
 
@@ -150,8 +220,10 @@ export default function StartSession({
               type="button"
               onClick={() => onSelectRoutine(routine.id)}
             >
+              <span className={`routine-color-dot color-${routine.colorLabel || "none"}`} aria-hidden="true" />
               <strong>{routine.title}</strong>
-              <span>{routine.estimatedTime}</span>
+              <span>{formatRoutineDuration(routine)}</span>
+              <small>{getLastRoutineDoneLabel(history, routine.id)}</small>
             </button>
           ))}
         </div>
@@ -168,15 +240,15 @@ export default function StartSession({
           <div className="start-summary-grid">
             <div className="metric-card">
               <span>Duration</span>
-              <strong>{selectedRoutine.estimatedTime || "Not set"}</strong>
+              <strong>{formatRoutineDuration(selectedRoutine)}</strong>
             </div>
             <div className="metric-card">
-              <span>Phases</span>
-              <strong>{selectedRoutine.phases.length}</strong>
+              <span>Tasks</span>
+              <strong>{getRoutineTotalTasks(selectedRoutine)}</strong>
             </div>
             <div className="metric-card">
-              <span>Selected</span>
-              <strong>Ready</strong>
+              <span>Last done</span>
+              <strong>{getLastRoutineDoneLabel(history, selectedRoutine.id).replace("Last done ", "")}</strong>
             </div>
           </div>
           <div className="card-actions start-summary-actions">

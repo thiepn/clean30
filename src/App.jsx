@@ -348,10 +348,21 @@ export default function App() {
     setSelectedRoutineId(routineId);
 
     if (appState.activeSession) {
+      if (appState.activeSession.routineId === routineId) {
+        setCompletionSummary(null);
+        setCurrentView("dashboard");
+        return;
+      }
+
+      const hasProgress =
+        (appState.activeSession.completedTaskIds || []).length > 0 ||
+        Boolean(appState.activeSession.notes?.trim());
       requestConfirmation({
         title: "Replace active session?",
-        message: "This will discard the current active session and start the selected routine.",
-        confirmLabel: "Replace",
+        message: hasProgress
+          ? "An unfinished session already has progress. Replacing it will discard your current progress without saving it to History."
+          : "An unfinished session already exists. Replacing it will discard that session without saving it to History.",
+        confirmLabel: "Replace session",
         onConfirm: () => {
           setAppState((current) => ({
             ...current,
@@ -370,6 +381,38 @@ export default function App() {
     }));
     setCompletionSummary(null);
     setCurrentView("dashboard");
+  }
+
+  function pauseSession() {
+    setAppState((current) => {
+      if (!current.activeSession || current.activeSession.paused) return current;
+      return {
+        ...current,
+        activeSession: {
+          ...current.activeSession,
+          paused: true,
+          pausedAt: new Date().toISOString()
+        }
+      };
+    });
+  }
+
+  function resumeSession() {
+    setAppState((current) => {
+      const session = current.activeSession;
+      if (!session || !session.paused) return current;
+      const pausedAt = new Date(session.pausedAt);
+      const pausedMs = Number.isNaN(pausedAt.getTime()) ? 0 : Math.max(0, Date.now() - pausedAt.getTime());
+      return {
+        ...current,
+        activeSession: {
+          ...session,
+          paused: false,
+          pausedAt: null,
+          totalPausedMs: Math.max(0, Number(session.totalPausedMs) || 0) + pausedMs
+        }
+      };
+    });
   }
 
   function toggleTask(taskId) {
@@ -445,6 +488,19 @@ export default function App() {
   function finishSession() {
     const activeSession = appState.activeSession;
     if (!activeSession) return;
+    const pausedAt = new Date(activeSession.pausedAt);
+    const settledPausedMs =
+      activeSession.paused && !Number.isNaN(pausedAt.getTime())
+        ? Math.max(0, Date.now() - pausedAt.getTime())
+        : 0;
+    const sessionForHistory = activeSession.paused
+      ? {
+          ...activeSession,
+          paused: false,
+          pausedAt: null,
+          totalPausedMs: Math.max(0, Number(activeSession.totalPausedMs) || 0) + settledPausedMs
+        }
+      : activeSession;
     const sessionTemplate =
       appState.templates.find((template) => template.id === activeSession.templateId) ||
       activeTemplate;
@@ -479,11 +535,11 @@ export default function App() {
           }
         })
       );
-      setCompletionSummary(dailyHistoryEntry);
+      setCompletionSummary(null);
       return;
     }
 
-    const entry = createHistoryEntry(activeSession, sessionTemplate);
+    const entry = createHistoryEntry(sessionForHistory, sessionTemplate);
 
     setAppState((current) => {
       const next = {
@@ -495,6 +551,16 @@ export default function App() {
       return markMeaningfulUse(next);
     });
     setCompletionSummary(entry);
+  }
+
+  function viewCompletionHistory() {
+    setCompletionSummary(null);
+    setCurrentView("history");
+  }
+
+  function clearCompletionSummary() {
+    setCompletionSummary(null);
+    setCurrentView("dashboard");
   }
 
   function getTemplateFromState(state) {
@@ -909,6 +975,7 @@ export default function App() {
     content = (
       <Routines
         routines={activeTemplate.routines}
+        history={appState.history}
         onEditRoutines={() => openInternalEditor("routines", "routines")}
         onAddRoutine={() => openInternalEditor("routines", "routines", "add-routine")}
       />
@@ -970,7 +1037,11 @@ export default function App() {
         onResetSession={resetSession}
         onFinishSession={finishSession}
         onCancelSession={cancelSession}
+        onPauseSession={pauseSession}
+        onResumeSession={resumeSession}
         onUpdateNotes={updateSessionNotes}
+        onViewHistory={viewCompletionHistory}
+        onClearCompletionSummary={clearCompletionSummary}
         onEditToday={() => openInternalEditor("routines", "dashboard", "today")}
         onEditRoutines={() => openInternalEditor("routines", "dashboard")}
         onAddRoutine={() => openInternalEditor("routines", "dashboard", "add-routine")}

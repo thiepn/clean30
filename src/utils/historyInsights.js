@@ -144,6 +144,8 @@ export function getHistoryInsights(history, routines, template) {
 }
 
 export function getSessionDurationMinutes(entry) {
+  const savedDuration = Number(entry?.estimatedDurationMinutes);
+  if (Number.isFinite(savedDuration)) return Math.max(0, Math.round(savedDuration));
   const started = validDate(entry?.startedAt);
   const finished = validDate(entry?.finishedAt);
   if (!started || !finished || finished < started) return null;

@@ -10,8 +10,9 @@ Live app: https://thiepn.github.io/clean30/
 - Dashboard with Today tasks, routine/session controls, and a compact mini calendar.
 - Today tasks reset by date, can start from editable defaults, support notes/tags, and can pull tasks from routines.
 - Optional weekday-specific Today defaults and a Start Today empty preference.
-- Reusable cleaning routines with saved session progress, notes, partial finish, reset, and discard flows.
-- Routines reference library with collapsed phase checklists and Edit/Add entry points.
+- Reusable cleaning routines with editable duration, optional color labels, duplicate/archive controls, and last-done badges.
+- Active cleaning sessions with saved progress, notes, elapsed timer, pause/resume, partial finish, reset, and discard flows.
+- Routines reference library with collapsed phase checklists, archived-routine toggle, and Edit/Add entry points.
 - History for completed sessions and Today task logs.
 - Settings for appearance, backups, privacy, help, install, onboarding, and reset tools.
 - 12 accent colors and 12 calm background colors.
@@ -23,8 +24,8 @@ Live app: https://thiepn.github.io/clean30/
 
 1. Open Dashboard.
 2. Check off Today tasks or add a one-off task.
-3. Start or resume a cleaning routine when needed.
-4. Use Routines to inspect or edit reusable cleaning plans.
+3. Start, pause, resume, or finish a cleaning routine when needed.
+4. Use Routines to inspect reusable cleaning plans, then Edit to change, duplicate, archive, or color-label them.
 5. Review History to see what has been completed.
 6. Export a full backup regularly from Settings.
 
