@@ -13,6 +13,10 @@ function displayShortDate(dateKey) {
   }).format(dateFromKey(dateKey));
 }
 
+function countLabel(count, singular, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 function buildMonthCells(referenceDate) {
   const year = referenceDate.getFullYear();
   const month = referenceDate.getMonth();
@@ -101,7 +105,7 @@ export default function Dashboard({
       <section className="panel today-panel">
         <div className="section-heading compact-heading">
           <h2>Today</h2>
-          <button className="button ghost small" type="button" onClick={onEditToday}>
+          <button className="button edit-action small" type="button" onClick={onEditToday}>
             Edit
           </button>
         </div>
@@ -220,10 +224,8 @@ export default function Dashboard({
           {selectedActivity.sessions.length || selectedActivity.todayCompleted ? (
             <>
               <strong>
-                {selectedActivity.sessions.length} session
-                {selectedActivity.sessions.length === 1 ? "" : "s"} /{" "}
-                {selectedActivity.todayCompleted} Today task
-                {selectedActivity.todayCompleted === 1 ? "" : "s"}
+                {countLabel(selectedActivity.sessions.length, "routine")} /{" "}
+                {countLabel(selectedActivity.todayCompleted, "Today task")}
               </strong>
               {selectedActivity.sessions.length ? (
                 <ul className="system-list compact">
@@ -234,7 +236,7 @@ export default function Dashboard({
               ) : null}
             </>
           ) : (
-            <p>No activity for this day.</p>
+            <p>No activity.</p>
           )}
         </div>
       </section>

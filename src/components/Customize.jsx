@@ -66,6 +66,7 @@ export default function Customize({
   initialSection = "routines",
   entryIntent = null,
   onBack,
+  activeSession,
   backLabel = "Back"
 }) {
   const templateImportRef = useRef(null);
@@ -180,6 +181,7 @@ export default function Customize({
         onSelectRoutine={setSelectedRoutineId}
         onEditTemplate={editTemplate}
         onConfirmEdit={confirmTemplateEdit}
+        activeSession={activeSession}
         autoAddRoutine={entryIntent === "add-routine"}
         initialEditorTab={entryIntent === "today" ? "today" : "routines"}
       />

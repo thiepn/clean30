@@ -72,6 +72,7 @@ export default function App() {
   const [completionSummary, setCompletionSummary] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   const [editorContext, setEditorContext] = useState({
     origin: "dashboard",
     section: "routines",
@@ -89,6 +90,15 @@ export default function App() {
   useEffect(() => {
     saveAppState(appState);
   }, [appState]);
+
+  useEffect(() => {
+    function handleUpdateAvailable() {
+      setUpdateAvailable(true);
+    }
+
+    window.addEventListener("clean30:updateAvailable", handleUpdateAvailable);
+    return () => window.removeEventListener("clean30:updateAvailable", handleUpdateAvailable);
+  }, []);
 
   useEffect(() => {
     if (!activeTemplate?.routines.some((routine) => routine.id === selectedRoutineId)) {
@@ -734,6 +744,7 @@ export default function App() {
         initialSection={editorContext.section}
         entryIntent={editorContext.intent}
         onBack={closeInternalEditor}
+        activeSession={appState.activeSession}
         backLabel={
           editorContext.origin === "settings"
             ? "Back to Settings"
@@ -830,6 +841,26 @@ export default function App() {
         onConfirm={confirmCurrentAction}
         onCancel={closeConfirmation}
       />
+      {updateAvailable ? (
+        <div className="update-toast" role="status">
+          <span>Update available</span>
+          <button
+            className="button primary small"
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("clean30:applyUpdate"))}
+          >
+            Reload
+          </button>
+          <button
+            className="icon-button small"
+            type="button"
+            aria-label="Dismiss update prompt"
+            onClick={() => setUpdateAvailable(false)}
+          >
+            X
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }

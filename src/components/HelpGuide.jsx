@@ -23,7 +23,7 @@ const guideSections = [
       "Start with Today.",
       "Check off default tasks or add one-off tasks.",
       "Start or continue cleaning routines from Dashboard.",
-      "Use Edit defaults only when you want to change what appears each day."
+      "Use Edit when you want to change what appears each day."
     ]
   },
   {

@@ -4,6 +4,42 @@ import { createPhase, createRoutine, createTask, moveItem } from "../../utils/ro
 import { priorityOptions } from "../../utils/templateUtils.js";
 import DailyRulesSection from "./DailyRulesSection.jsx";
 
+function normalizeName(value) {
+  return (value || "").trim().toLowerCase();
+}
+
+function hasDuplicateName(current, allNames) {
+  const name = normalizeName(current);
+  return Boolean(name) && allNames.some((item) => normalizeName(item) === name);
+}
+
+function makeUniqueName(value, siblingNames, fallback) {
+  const base = value.trim() || fallback;
+  if (!hasDuplicateName(base, siblingNames)) return base;
+
+  let suffix = 2;
+  let next = `${base} ${suffix}`;
+  while (hasDuplicateName(next, siblingNames)) {
+    suffix += 1;
+    next = `${base} ${suffix}`;
+  }
+  return next;
+}
+
+function getRoutineTitleError(routine, routines) {
+  if (!routine) return "";
+  if (!routine.title.trim()) return "Routine name is required.";
+  const siblings = routines.filter((item) => item.id !== routine.id).map((item) => item.title);
+  return hasDuplicateName(routine.title, siblings) ? "Routine name already exists." : "";
+}
+
+function getPhaseTitleError(phase, phases) {
+  if (!phase) return "";
+  if (!phase.title.trim()) return "Phase name is required.";
+  const siblings = phases.filter((item) => item.id !== phase.id).map((item) => item.title);
+  return hasDuplicateName(phase.title, siblings) ? "Phase name already exists." : "";
+}
+
 export default function RoutinesSection({
   routines,
   todayDefaults = [],
@@ -13,6 +49,7 @@ export default function RoutinesSection({
   onSelectRoutine,
   onEditTemplate,
   onConfirmEdit,
+  activeSession,
   autoAddRoutine = false,
   initialEditorTab = "routines"
 }) {
@@ -33,6 +70,11 @@ export default function RoutinesSection({
   const selectedPhaseIndex = selectedPhase
     ? selectedRoutine.phases.findIndex((phase) => phase.id === selectedPhase.id)
     : -1;
+  const routineTitleError = getRoutineTitleError(selectedRoutine, visibleRoutines);
+  const phaseTitleError =
+    selectedRoutine && selectedPhase
+      ? getPhaseTitleError(selectedPhase, selectedRoutine.phases)
+      : "";
 
   useEffect(() => {
     if (!selectedRoutine) {
@@ -99,6 +141,16 @@ export default function RoutinesSection({
   }
 
   function deleteRoutine(routine, index) {
+    if (activeSession?.routineId === routine.id) {
+      onConfirmEdit({
+        title: "Routine is in use",
+        message: `"${routine.title}" is used by the active session. Finish or discard that session before deleting this routine.`,
+        confirmLabel: "Keep routine",
+        edit: () => {}
+      });
+      return;
+    }
+
     const originalIndex = routines.findIndex((item) => item.id === routine.id);
     const fallback = visibleRoutines[index + 1] || visibleRoutines[index - 1] || null;
     onConfirmEdit({
@@ -124,6 +176,37 @@ export default function RoutinesSection({
     editSelectedRoutine((routine) => {
       routine.phases[phaseIndex].title = value;
     });
+  }
+
+  function normalizeRoutineTitle() {
+    if (!selectedRoutine) return;
+    const title = makeUniqueName(
+      selectedRoutine.title,
+      visibleRoutines.filter((routine) => routine.id !== selectedRoutine.id).map((routine) => routine.title),
+      "New routine"
+    );
+    if (title !== selectedRoutine.title) updateRoutine("title", title);
+  }
+
+  function normalizePhaseTitle(phaseIndex) {
+    if (!selectedRoutine) return;
+    const phase = selectedRoutine.phases[phaseIndex];
+    if (!phase) return;
+    const title = makeUniqueName(
+      phase.title,
+      selectedRoutine.phases
+        .filter((item) => item.id !== phase.id)
+        .map((item) => item.title),
+      "New phase"
+    );
+    if (title !== phase.title) updatePhase(phaseIndex, title);
+  }
+
+  function normalizeTaskTitle(phaseIndex, taskIndex) {
+    const task = selectedRoutine?.phases?.[phaseIndex]?.tasks?.[taskIndex];
+    if (!task) return;
+    const title = task.title.trim() || "New task";
+    if (title !== task.title) updateTask(phaseIndex, taskIndex, "title", title);
   }
 
   function movePhase(phaseIndex, direction) {
@@ -190,8 +273,8 @@ export default function RoutinesSection({
             <p>Today defaults start each day. Routines are reusable cleaning sessions.</p>
           </div>
           {editorTab === "routines" ? (
-            <button className="button primary" type="button" disabled={!canEdit} onClick={addRoutine}>
-              Add routine
+            <button className="button edit-action small" type="button" disabled={!canEdit} onClick={addRoutine}>
+              Add
             </button>
           ) : null}
         </div>
@@ -226,8 +309,9 @@ export default function RoutinesSection({
       {editorTab === "routines" ? (
         <>
       <section className="panel">
-        <div className="editor-list">
-          {visibleRoutines.map((routine, index) => {
+        {visibleRoutines.length ? (
+          <div className="editor-list">
+            {visibleRoutines.map((routine, index) => {
             const canDelete = canEdit && visibleRoutines.length > 1;
             return (
               <div
@@ -274,8 +358,11 @@ export default function RoutinesSection({
                 </div>
               </div>
             );
-          })}
-        </div>
+            })}
+          </div>
+        ) : (
+          <p className="muted compact-empty">No routines yet. Use Add to create one.</p>
+        )}
       </section>
 
       {selectedRoutine ? (
@@ -297,7 +384,10 @@ export default function RoutinesSection({
                 value={selectedRoutine.title}
                 disabled={!canEdit}
                 onChange={(event) => updateRoutine("title", event.target.value)}
+                onBlur={normalizeRoutineTitle}
+                aria-invalid={Boolean(routineTitleError)}
               />
+              {routineTitleError ? <span className="validation-message">{routineTitleError}</span> : null}
             </label>
             <label className="field-label" htmlFor="routine-time">
               Estimated time
@@ -347,12 +437,12 @@ export default function RoutinesSection({
               <p>Phases group tasks into a practical cleaning order.</p>
             </div>
             <button
-              className="button ghost"
+              className="button edit-action small"
               type="button"
               disabled={!canEdit}
               onClick={addPhase}
             >
-              Add phase
+              Add
             </button>
           </div>
 
@@ -414,7 +504,10 @@ export default function RoutinesSection({
                       value={selectedPhase.title}
                       disabled={!canEdit}
                       onChange={(event) => updatePhase(selectedPhaseIndex, event.target.value)}
+                      onBlur={() => normalizePhaseTitle(selectedPhaseIndex)}
+                      aria-invalid={Boolean(phaseTitleError)}
                     />
+                    {phaseTitleError ? <span className="validation-message">{phaseTitleError}</span> : null}
                   </label>
                 </div>
                 <span className="task-count">{selectedPhase.tasks.length} tasks</span>
@@ -437,7 +530,12 @@ export default function RoutinesSection({
                           onChange={(event) =>
                             updateTask(selectedPhaseIndex, taskIndex, "title", event.target.value)
                           }
+                          onBlur={() => normalizeTaskTitle(selectedPhaseIndex, taskIndex)}
+                          aria-invalid={!task.title.trim()}
                         />
+                        {!task.title.trim() ? (
+                          <span className="validation-message">Task name is required.</span>
+                        ) : null}
                       </label>
                       <label className="field-label" htmlFor={`task-duration-${task.id}`}>
                         Duration
@@ -523,12 +621,12 @@ export default function RoutinesSection({
               </div>
 
               <button
-                className="button ghost"
+                className="button edit-action small"
                 type="button"
                 disabled={!canEdit}
                 onClick={() => addTask(selectedPhaseIndex)}
               >
-                Add task
+                Add
               </button>
             </section>
           ) : (

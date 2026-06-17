@@ -1156,6 +1156,18 @@ textarea {
   background: var(--selected-bg);
 }
 
+.button.edit-action {
+  border-color: var(--selected-border);
+  background: var(--accent-panel);
+  color: var(--accent-text);
+  box-shadow: none;
+}
+
+.button.edit-action:hover {
+  border-color: var(--selected-border-strong);
+  background: var(--selected-bg);
+}
+
 .button.wide {
   width: 100%;
 }
@@ -1422,6 +1434,18 @@ textarea {
   display: block;
   padding: 0;
   overflow: hidden;
+}
+
+.compact-detail {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+.compact-detail > p,
+.compact-detail > .settings-actions,
+.compact-detail > .button {
+  margin: 1rem;
 }
 
 .settings-danger-detail > p,
@@ -2966,6 +2990,90 @@ details[open] > .phase-summary .phase-chevron::before {
   margin-top: 0.9rem;
   color: var(--accent-text);
   font-weight: 700;
+}
+
+.validation-message {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 680;
+  line-height: 1.35;
+}
+
+[aria-invalid="true"] {
+  border-color: rgba(152, 82, 74, 0.66);
+  background: #fff8f7;
+}
+
+.update-toast {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--selected-border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 0.55rem;
+}
+
+.update-toast span {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 720;
+}
+
+.crash-shell {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+  background: var(--bg);
+}
+
+.crash-card {
+  width: min(620px, 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: clamp(1rem, 3vw, 1.6rem);
+}
+
+.crash-card h1 {
+  margin: 0.2rem 0 0.65rem;
+  font-size: clamp(1.65rem, 4vw, 2.35rem);
+}
+
+.crash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.crash-details {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.8rem;
+}
+
+.crash-details summary {
+  cursor: pointer;
+  color: var(--text-soft);
+  font-weight: 720;
+}
+
+.crash-details pre {
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: var(--text-soft);
+  font-size: 0.78rem;
 }
 
 .readonly-notice {
@@ -5048,6 +5156,11 @@ details[open] > .phase-summary .phase-chevron::before {
     bottom: 0;
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 0;
+  }
+
+  .update-toast {
+    right: 0.75rem;
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 0.75rem);
   }
 
   .today-panel .section-heading {

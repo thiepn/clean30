@@ -198,19 +198,28 @@ export default function Settings({
         {message ? <p className="form-message">{message}</p> : null}
       </section>
 
-      <section className="panel settings-card">
-        <p className="eyebrow">Privacy</p>
-        <h2>Local Only</h2>
+      <details className="panel settings-card compact-detail">
+        <summary className="simple-summary">
+          <span>
+            <strong>Privacy</strong>
+            <small>Local-only data and no account.</small>
+          </span>
+          <span className="button ghost small">Open</span>
+        </summary>
         <p>
           Clean30 has no account, no cloud sync, no analytics, and no ads. Your data stays on this
           device unless you export a backup.
         </p>
-      </section>
+      </details>
 
-      <section className="panel settings-card">
-        <p className="eyebrow">Help</p>
-        <h2>{template.profile.appDisplayName}</h2>
-        <p>Open the short guide or restart onboarding.</p>
+      <details className="panel settings-card compact-detail">
+        <summary className="simple-summary">
+          <span>
+            <strong>Help / onboarding</strong>
+            <small>Guide and first-run walkthrough.</small>
+          </span>
+          <span className="button ghost small">Open</span>
+        </summary>
         <div className="settings-actions">
           <button className="button ghost" type="button" onClick={onOpenHelp}>
             Open help guide
@@ -219,16 +228,21 @@ export default function Settings({
             Restart onboarding
           </button>
         </div>
-      </section>
+      </details>
 
-      <section className="panel settings-card">
-        <p className="eyebrow">Install & Device</p>
-        <h2>Local PWA</h2>
-        <p>Clean30 can be installed from your browser. Reload the app to pick up the latest deployed version.</p>
+      <details className="panel settings-card compact-detail">
+        <summary className="simple-summary">
+          <span>
+            <strong>Install</strong>
+            <small>PWA install and app reload.</small>
+          </span>
+          <span className="button ghost small">Open</span>
+        </summary>
+        <p>Install Clean30 from your browser. Reload to pick up the latest deployed version.</p>
         <button className="button ghost" type="button" onClick={() => window.location.reload()}>
           Reload app
         </button>
-      </section>
+      </details>
 
       <details className="panel danger-zone settings-danger-detail">
         <summary className="simple-summary">

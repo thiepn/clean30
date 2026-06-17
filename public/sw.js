@@ -1,4 +1,4 @@
-const CACHE_NAME = "clean30-app-shell-v4";
+const CACHE_NAME = "clean30-app-shell-v5";
 const BASE_PATH = "/clean30/";
 
 const STATIC_SHELL = [
@@ -51,7 +51,6 @@ async function cacheAppShell() {
 
 self.addEventListener("install", (event) => {
   event.waitUntil(cacheAppShell());
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -63,6 +62,12 @@ self.addEventListener("activate", (event) => {
       )
   );
   self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {

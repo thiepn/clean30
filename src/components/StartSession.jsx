@@ -52,8 +52,7 @@ export default function StartSession({
             <div>
               <h2>{routine.title}</h2>
               <p className="muted">
-                This unfinished session is saved locally. Finish it, discard it, or reset it before
-                starting another routine.
+                Saved locally. Finish, reset, or discard it before starting another routine.
               </p>
             </div>
             <div className="session-meta">
@@ -83,13 +82,13 @@ export default function StartSession({
           </div>
           <div className="session-actions">
             <button className="button ghost" type="button" onClick={onResetSession}>
-              Reset session
+              Reset
             </button>
             <button className="button danger-ghost" type="button" onClick={onCancelSession}>
-              Discard session
+              Discard
             </button>
             <button className="button primary" type="button" onClick={onFinishSession}>
-              Finish session
+              Finish partial
             </button>
           </div>
         </section>
@@ -135,10 +134,10 @@ export default function StartSession({
         <div className="section-heading compact-heading">
           <h2>Choose a routine</h2>
           <div className="card-actions compact-actions">
-            <button className="button ghost small" type="button" onClick={onEditRoutines}>
+            <button className="button edit-action small" type="button" onClick={onEditRoutines}>
               Edit
             </button>
-            <button className="button ghost small" type="button" onClick={onAddRoutine}>
+            <button className="button edit-action small" type="button" onClick={onAddRoutine}>
               Add
             </button>
           </div>

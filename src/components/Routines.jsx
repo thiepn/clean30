@@ -49,10 +49,10 @@ export default function Routines({ routines, onEditRoutines, onAddRoutine }) {
             <h2>Routines</h2>
           </div>
           <div className="card-actions compact-actions">
-            <button className="button ghost small" type="button" onClick={onEditRoutines}>
+            <button className="button edit-action small" type="button" onClick={onEditRoutines}>
               Edit
             </button>
-            <button className="button ghost small" type="button" onClick={onAddRoutine}>
+            <button className="button edit-action small" type="button" onClick={onAddRoutine}>
               Add
             </button>
           </div>
