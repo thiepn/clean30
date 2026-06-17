@@ -14,8 +14,8 @@ export default function Layout({
   return (
     <div
       className={shellClass}
-      data-accent={appAppearance?.accentColor || "forest"}
-      data-background={appAppearance?.backgroundColor || "soft-blue"}
+      data-accent={appAppearance?.accentColor || "green"}
+      data-background={appAppearance?.backgroundColor || "cream"}
     >
       <header className="app-header">
         <div>

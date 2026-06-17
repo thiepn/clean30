@@ -12,18 +12,6 @@ const startRoutineOrder = [
   "monthly-deep-clean"
 ];
 
-const routinePurposeLabels = {
-  "initial-reset": "Full baseline reset",
-  "weekly-reset": "Main weekly routine",
-  "minimal-reset": "Fast maintenance reset",
-  "guest-reset": "Guest-ready cleanup",
-  "monthly-deep-clean": "Deeper maintenance"
-};
-
-function getStartPurposeLabel(routine) {
-  return routinePurposeLabels[routine.id] || "Cleaning reset";
-}
-
 export default function StartSession({
   routines,
   selectedRoutineId,
@@ -62,9 +50,7 @@ export default function StartSession({
         <section className="panel active-session-panel">
           <div className="session-topline">
             <div>
-              <p className="eyebrow">Active session</p>
               <h2>{routine.title}</h2>
-              <p>{routine.purpose}</p>
               <p className="muted">
                 This unfinished session is saved locally. Finish it, discard it, or reset it before
                 starting another routine.
@@ -146,20 +132,17 @@ export default function StartSession({
       ) : null}
 
       <section className="panel">
-        <div className="section-heading">
-          <div>
-              <p className="eyebrow">Cleaning routine</p>
-              <h2>Choose a routine</h2>
-            </div>
-            <div className="card-actions compact-actions">
-              <button className="button ghost small" type="button" onClick={onEditRoutines}>
-                Edit routines
-              </button>
-              <button className="button ghost small" type="button" onClick={onAddRoutine}>
-                Add routine
-              </button>
-            </div>
+        <div className="section-heading compact-heading">
+          <h2>Choose a routine</h2>
+          <div className="card-actions compact-actions">
+            <button className="button ghost small" type="button" onClick={onEditRoutines}>
+              Edit
+            </button>
+            <button className="button ghost small" type="button" onClick={onAddRoutine}>
+              Add
+            </button>
           </div>
+        </div>
         <div className="routine-picker">
           {startRoutines.map((routine) => (
             <button
@@ -170,7 +153,6 @@ export default function StartSession({
             >
               <strong>{routine.title}</strong>
               <span>{routine.estimatedTime}</span>
-              <small>{getStartPurposeLabel(routine)}</small>
             </button>
           ))}
         </div>
@@ -178,11 +160,9 @@ export default function StartSession({
 
       {selectedRoutine ? (
         <section className="panel start-routine-summary">
-          <div className="section-heading">
+          <div className="section-heading compact-heading">
             <div>
-              <p className="eyebrow">Selected reset</p>
               <h2>{selectedRoutine.title}</h2>
-              <p>{selectedRoutine.purpose}</p>
             </div>
             <span className="task-count">{getRoutineTotalTasks(selectedRoutine)} tasks</span>
           </div>
@@ -196,11 +176,10 @@ export default function StartSession({
               <strong>{selectedRoutine.phases.length}</strong>
             </div>
             <div className="metric-card">
-              <span>Use case</span>
-              <strong>{getStartPurposeLabel(selectedRoutine)}</strong>
+              <span>Selected</span>
+              <strong>Ready</strong>
             </div>
           </div>
-          {selectedRoutine.whenToUse ? <p className="muted">{selectedRoutine.whenToUse}</p> : null}
           <div className="card-actions start-summary-actions">
             <button
               className="button primary"
@@ -210,10 +189,6 @@ export default function StartSession({
               Start {selectedRoutine.title}
             </button>
           </div>
-          <p className="muted start-reference-note">
-            Routine details are available in the Routines tab. Editing opens the cleaning-plan
-            editor.
-          </p>
         </section>
       ) : null}
     </div>

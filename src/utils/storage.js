@@ -226,52 +226,67 @@ function normalizeTodayTasksByDate(value, template, dailyRuleCompletions, dashbo
 function normalizeAppSettings(value) {
   const interval = Number(value?.backupReminderIntervalDays);
   const accentAliases = {
-    green: "forest",
-    blue: "ocean",
-    brown: "copper",
+    forest: "green",
+    emerald: "green",
+    ocean: "cyan",
+    indigo: "blue",
+    violet: "purple",
+    plum: "purple",
+    rose: "pink",
+    crimson: "red",
+    copper: "brown",
     slate: "charcoal",
     gray: "charcoal"
   };
   const backgroundAliases = {
-    "pale-green": "sage"
+    "soft-blue": "sky-blue",
+    sky: "sky-blue",
+    "cool-gray": "light-gray",
+    "warm-cream": "cream",
+    "soft-mint": "mint",
+    sage: "green",
+    "pale-green": "green",
+    lilac: "lavender",
+    blush: "pink",
+    "pale-yellow": "yellow"
   };
-  const rawAccentColor = typeof value?.accentColor === "string" ? value.accentColor : "forest";
+  const rawAccentColor = typeof value?.accentColor === "string" ? value.accentColor : "green";
   const rawBackgroundColor =
-    typeof value?.backgroundColor === "string" ? value.backgroundColor : "soft-blue";
+    typeof value?.backgroundColor === "string" ? value.backgroundColor : "cream";
   const accentColor = accentAliases[rawAccentColor] || rawAccentColor;
   const backgroundColor = backgroundAliases[rawBackgroundColor] || rawBackgroundColor;
   const accentOptions = [
-    "forest",
-    "emerald",
+    "red",
+    "orange",
+    "amber",
+    "green",
     "teal",
-    "ocean",
+    "cyan",
+    "blue",
     "navy",
-    "indigo",
-    "violet",
-    "plum",
-    "rose",
-    "crimson",
-    "copper",
+    "purple",
+    "pink",
+    "brown",
     "charcoal"
   ];
   const backgroundOptions = [
-    "soft-blue",
-    "sky",
-    "cool-gray",
-    "warm-cream",
-    "sand",
-    "soft-mint",
-    "sage",
-    "lavender",
-    "lilac",
-    "blush",
+    "white",
+    "light-gray",
+    "cream",
+    "yellow",
     "peach",
-    "pale-yellow"
+    "pink",
+    "lavender",
+    "sky-blue",
+    "mint",
+    "green",
+    "sand",
+    "slate"
   ];
   return {
     backupReminderIntervalDays: [0, 14, 30, 60].includes(interval) ? interval : 30,
-    accentColor: accentOptions.includes(accentColor) ? accentColor : "forest",
-    backgroundColor: backgroundOptions.includes(backgroundColor) ? backgroundColor : "soft-blue"
+    accentColor: accentOptions.includes(accentColor) ? accentColor : "green",
+    backgroundColor: backgroundOptions.includes(backgroundColor) ? backgroundColor : "cream"
   };
 }
 

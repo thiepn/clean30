@@ -1,7 +1,20 @@
 import { clean30DefaultTemplate } from "../data/defaultTemplate.js";
 
 export const priorityOptions = ["normal", "important", "critical", "optional"];
-export const accentOptions = ["green", "blue", "brown", "gray"];
+export const accentOptions = [
+  "red",
+  "orange",
+  "amber",
+  "green",
+  "teal",
+  "cyan",
+  "blue",
+  "navy",
+  "purple",
+  "pink",
+  "brown",
+  "charcoal"
+];
 export const densityOptions = ["comfortable", "compact"];
 
 export function cloneDeep(value) {
@@ -28,6 +41,24 @@ function numberInRange(value, fallback, min, max) {
 
 function normalizePriority(value) {
   return priorityOptions.includes(value) ? value : "normal";
+}
+
+function normalizeTemplateAccent(value, fallback = "green") {
+  const aliases = {
+    forest: "green",
+    emerald: "green",
+    ocean: "cyan",
+    indigo: "blue",
+    violet: "purple",
+    plum: "purple",
+    rose: "pink",
+    crimson: "red",
+    copper: "brown",
+    slate: "charcoal",
+    gray: "charcoal"
+  };
+  const normalized = aliases[value] || value;
+  return accentOptions.includes(normalized) ? normalized : fallback;
 }
 
 export function normalizeTask(task, fallbackTitle = "New task") {
@@ -209,9 +240,10 @@ export function normalizeTemplate(template, options = {}) {
       )
     },
     appearance: {
-      accentColor: accentOptions.includes(appearance.accentColor)
-        ? appearance.accentColor
-        : fallback.appearance?.accentColor || "green",
+      accentColor: normalizeTemplateAccent(
+        appearance.accentColor,
+        normalizeTemplateAccent(fallback.appearance?.accentColor)
+      ),
       density: densityOptions.includes(appearance.density)
         ? appearance.density
         : fallback.appearance?.density || "comfortable"

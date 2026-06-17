@@ -2,33 +2,33 @@ import { useRef, useState } from "react";
 import { formatDateTime } from "../utils/dates.js";
 
 const accentOptions = [
-  { id: "forest", label: "Forest" },
-  { id: "emerald", label: "Emerald" },
+  { id: "red", label: "Red" },
+  { id: "orange", label: "Orange" },
+  { id: "amber", label: "Amber" },
+  { id: "green", label: "Green" },
   { id: "teal", label: "Teal" },
-  { id: "ocean", label: "Ocean" },
+  { id: "cyan", label: "Cyan" },
+  { id: "blue", label: "Blue" },
   { id: "navy", label: "Navy" },
-  { id: "indigo", label: "Indigo" },
-  { id: "violet", label: "Violet" },
-  { id: "plum", label: "Plum" },
-  { id: "rose", label: "Rose" },
-  { id: "crimson", label: "Crimson" },
-  { id: "copper", label: "Copper" },
+  { id: "purple", label: "Purple" },
+  { id: "pink", label: "Pink" },
+  { id: "brown", label: "Brown" },
   { id: "charcoal", label: "Charcoal" }
 ];
 
 const backgroundOptions = [
-  { id: "soft-blue", label: "Soft blue" },
-  { id: "sky", label: "Sky" },
-  { id: "cool-gray", label: "Cool gray" },
-  { id: "warm-cream", label: "Warm cream" },
-  { id: "sand", label: "Sand" },
-  { id: "soft-mint", label: "Soft mint" },
-  { id: "sage", label: "Sage" },
-  { id: "lavender", label: "Lavender" },
-  { id: "lilac", label: "Lilac" },
-  { id: "blush", label: "Blush" },
+  { id: "white", label: "White" },
+  { id: "light-gray", label: "Light gray" },
+  { id: "cream", label: "Cream" },
+  { id: "yellow", label: "Yellow" },
   { id: "peach", label: "Peach" },
-  { id: "pale-yellow", label: "Pale yellow" }
+  { id: "pink", label: "Pink" },
+  { id: "lavender", label: "Lavender" },
+  { id: "sky-blue", label: "Sky blue" },
+  { id: "mint", label: "Mint" },
+  { id: "green", label: "Green" },
+  { id: "sand", label: "Sand" },
+  { id: "slate", label: "Slate" }
 ];
 
 export default function Settings({
@@ -73,16 +73,13 @@ export default function Settings({
       <section className="panel">
         <div className="section-heading compact-heading">
           <div>
-            <p className="eyebrow">App</p>
             <h2>Settings</h2>
-            <p>App-level backup, privacy, help, and maintenance controls.</p>
           </div>
         </div>
       </section>
 
       <section className="panel settings-card">
         <div>
-          <p className="eyebrow">App details</p>
           <h2>{template.name}</h2>
           <p>{template.profile.goalText}</p>
         </div>
@@ -98,9 +95,7 @@ export default function Settings({
 
       <section className="panel settings-card">
         <div>
-          <p className="eyebrow">Appearance</p>
           <h2>App Colors</h2>
-          <p>Choose app-level accent and background colors. Preferences are stored locally.</p>
         </div>
         <div className="appearance-setting-group">
           <p className="field-label">Accent color</p>

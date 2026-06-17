@@ -1,36 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { getLastCompleted, getRoutineTotalTasks } from "../utils/calculations.js";
-import { formatRelativeDays } from "../utils/dates.js";
+import { getRoutineTotalTasks } from "../utils/calculations.js";
 import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
 
-function inferComplexity(taskCount) {
-  if (taskCount <= 8) return "light";
-  if (taskCount <= 18) return "balanced";
-  return "detailed";
-}
-
-const routinePurposeLabels = {
-  "initial-reset": "Foundation reset",
-  "weekly-reset": "Main weekly routine",
-  "minimal-reset": "Fast maintenance reset",
-  "guest-reset": "Guest-ready cleanup",
-  "monthly-deep-clean": "Deeper maintenance"
-};
-
-function getRoutinePurposeLabel(routine) {
-  return routinePurposeLabels[routine.id] || "Reference routine";
-}
-
-function averageCompletion(history, routineId) {
-  const entries = history.filter((entry) => entry.routineId === routineId);
-  if (!entries.length) return null;
-  return Math.round(
-    entries.reduce((sum, entry) => sum + (Number(entry.percent) || 0), 0) / entries.length
-  );
-}
-
-export default function Routines({ routines, history, onEditRoutines, onAddRoutine }) {
+export default function Routines({ routines, onEditRoutines, onAddRoutine }) {
   const referenceRoutines = useMemo(
     () => routines.filter((routine) => routine.id !== "daily-rules"),
     [routines]
@@ -47,13 +20,10 @@ export default function Routines({ routines, history, onEditRoutines, onAddRouti
         const taskCount = getRoutineTotalTasks(routine);
         return {
           routine,
-          taskCount,
-          complexity: inferComplexity(taskCount),
-          lastCompleted: getLastCompleted(history, routine.id),
-          average: averageCompletion(history, routine.id)
+          taskCount
         };
       }),
-    [history, referenceRoutines]
+    [referenceRoutines]
   );
 
   useEffect(() => {
@@ -74,18 +44,16 @@ export default function Routines({ routines, history, onEditRoutines, onAddRouti
   return (
     <div className="screen-stack">
       <section className="panel">
-        <div className="section-heading">
+        <div className="section-heading compact-heading">
           <div>
-            <p className="eyebrow">Routine library</p>
-            <h2>Reference Checklists</h2>
-            <p>Use this tab to inspect what is inside each reset routine.</p>
+            <h2>Routines</h2>
           </div>
           <div className="card-actions compact-actions">
             <button className="button ghost small" type="button" onClick={onEditRoutines}>
-              Edit/Add
+              Edit
             </button>
             <button className="button ghost small" type="button" onClick={onAddRoutine}>
-              Add routine
+              Add
             </button>
           </div>
         </div>
@@ -103,17 +71,6 @@ export default function Routines({ routines, history, onEditRoutines, onAddRouti
             >
               <strong>{item.routine.title}</strong>
               <span>{item.routine.estimatedTime || "No estimate"}</span>
-              <small>
-                {item.taskCount} tasks / {item.complexity}
-              </small>
-              <small>{getRoutinePurposeLabel(item.routine)}</small>
-              <small>
-                {item.lastCompleted || item.average !== null
-                  ? `${item.lastCompleted ? `Last: ${formatRelativeDays(item.lastCompleted)}` : ""}${
-                      item.lastCompleted && item.average !== null ? " / " : ""
-                    }${item.average !== null ? `Avg: ${item.average}%` : ""}`
-                  : "No completions yet"}
-              </small>
             </button>
           ))}
         </div>
@@ -122,9 +79,7 @@ export default function Routines({ routines, history, onEditRoutines, onAddRouti
       <section className="panel routine-reference-panel">
         <div className="section-heading routine-guide-heading">
           <div>
-            <p className="eyebrow">Routine reference</p>
             <h2>{selectedRoutine.title}</h2>
-            <p>{selectedRoutine.purpose}</p>
           </div>
         </div>
 
@@ -132,37 +87,13 @@ export default function Routines({ routines, history, onEditRoutines, onAddRouti
           <span>{selectedRoutine.estimatedTime || "No estimate"}</span>
           <span>{selectedSummary?.taskCount || 0} tasks</span>
           <span>{selectedRoutine.phases.length} phases</span>
-          <span>{selectedSummary?.complexity}</span>
-          {selectedSummary?.lastCompleted || selectedSummary?.average !== null ? (
-            <>
-              {selectedSummary.lastCompleted ? (
-                <span>Last: {formatRelativeDays(selectedSummary.lastCompleted)}</span>
-              ) : null}
-              {selectedSummary.average !== null ? <span>Avg: {selectedSummary.average}%</span> : null}
-            </>
-          ) : (
-            <span>No completions yet</span>
-          )}
         </div>
-
-        {selectedRoutine.whenToUse ? (
-          <div className="routine-guide-block">
-            <p className="eyebrow">When to use</p>
-            <p>{selectedRoutine.whenToUse}</p>
-          </div>
-        ) : null}
-
-        {selectedRoutine.message ? <p className="callout small">{selectedRoutine.message}</p> : null}
       </section>
 
       <section className="panel checklist-reference-panel">
         <div className="section-heading compact-heading">
           <div>
-            <p className="eyebrow">Checklist reference</p>
-            <h2>{selectedRoutine.title}</h2>
-            <p>
-              {selectedRoutine.phases.length} phases / {selectedSummary?.taskCount || 0} tasks
-            </p>
+            <h2>Checklist</h2>
           </div>
         </div>
         <Checklist

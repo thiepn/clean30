@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { formatDate, getTodayKey } from "../utils/dates.js";
-import ProgressBar from "./ProgressBar.jsx";
 import StartSession from "./StartSession.jsx";
 
 function dateFromKey(dateKey) {
@@ -82,10 +81,6 @@ export default function Dashboard({
   const [taskText, setTaskText] = useState("");
   const todayKey = getTodayKey();
   const [selectedDate, setSelectedDate] = useState(todayKey);
-  const completedCount = todayTasks.filter((task) => task.completed).length;
-  const progressPercent = todayTasks.length
-    ? Math.round((completedCount / todayTasks.length) * 100)
-    : 0;
   const activityByDate = useMemo(
     () => buildActivityByDate(history, todayTasksByDate),
     [history, todayTasksByDate]
@@ -104,27 +99,12 @@ export default function Dashboard({
   return (
     <div className="screen-stack">
       <section className="panel today-panel">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Dashboard</p>
-            <h2>Today</h2>
-            <p>Tasks for today. Check them off or add your own.</p>
-          </div>
-          <div className="daily-panel-actions">
-            {todayTasks.length ? (
-              <span className="daily-progress-count">
-                {completedCount}/{todayTasks.length}
-              </span>
-            ) : null}
-            <button className="button ghost small" type="button" onClick={onEditToday}>
-              Edit defaults
-            </button>
-          </div>
+        <div className="section-heading compact-heading">
+          <h2>Today</h2>
+          <button className="button ghost small" type="button" onClick={onEditToday}>
+            Edit
+          </button>
         </div>
-
-        {todayTasks.length ? (
-          <ProgressBar percent={progressPercent} label={`${completedCount} of ${todayTasks.length} done`} />
-        ) : null}
 
         <form className="dashboard-todo-form" onSubmit={submitTask}>
           <input
@@ -150,7 +130,6 @@ export default function Dashboard({
                 <span className="task-copy">
                   <span className="task-title-line">
                     <strong>{task.text}</strong>
-                    <span className="duration">{task.source === "custom" ? "Today" : "Default"}</span>
                   </span>
                 </span>
                 {task.source === "custom" ? (
@@ -171,12 +150,12 @@ export default function Dashboard({
             ))}
           </div>
         ) : (
-          <p className="muted">No tasks for today. Add one when needed.</p>
+          <p className="muted compact-empty">No tasks yet.</p>
         )}
 
         {todayTasks.length ? (
-          <button className="button ghost small" type="button" onClick={onResetTodayTasks}>
-            Reset today
+          <button className="button text-button small" type="button" onClick={onResetTodayTasks}>
+            Refresh from defaults
           </button>
         ) : null}
       </section>
@@ -199,12 +178,8 @@ export default function Dashboard({
       />
 
       <section className="panel dashboard-calendar-panel">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Month</p>
-            <h2>Mini Calendar</h2>
-            <p>Days are marked when Today tasks or cleaning sessions have activity.</p>
-          </div>
+        <div className="section-heading compact-heading">
+          <h2>Mini Calendar</h2>
           <span className="status-pill compact">{formatDate(new Date())}</span>
         </div>
 

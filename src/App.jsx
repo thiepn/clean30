@@ -612,32 +612,32 @@ export default function App() {
   function updateAppAppearance(field, value) {
     const allowedValues = {
       accentColor: [
-        "forest",
-        "emerald",
+        "red",
+        "orange",
+        "amber",
+        "green",
         "teal",
-        "ocean",
+        "cyan",
+        "blue",
         "navy",
-        "indigo",
-        "violet",
-        "plum",
-        "rose",
-        "crimson",
-        "copper",
+        "purple",
+        "pink",
+        "brown",
         "charcoal"
       ],
       backgroundColor: [
-        "soft-blue",
-        "sky",
-        "cool-gray",
-        "warm-cream",
-        "sand",
-        "soft-mint",
-        "sage",
-        "lavender",
-        "lilac",
-        "blush",
+        "white",
+        "light-gray",
+        "cream",
+        "yellow",
         "peach",
-        "pale-yellow"
+        "pink",
+        "lavender",
+        "sky-blue",
+        "mint",
+        "green",
+        "sand",
+        "slate"
       ]
     };
     if (!allowedValues[field]?.includes(value)) return;
@@ -747,7 +747,6 @@ export default function App() {
     content = (
       <Routines
         routines={activeTemplate.routines}
-        history={appState.history}
         onEditRoutines={() => openInternalEditor("routines", "routines")}
         onAddRoutine={() => openInternalEditor("routines", "routines", "add-routine")}
       />
