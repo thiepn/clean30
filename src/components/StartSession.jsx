@@ -81,6 +81,8 @@ export default function StartSession({
       };
     const progress = getSessionProgress(activeSession, routine);
     const elapsed = getSessionElapsedMs(activeSession, new Date(timerNow));
+    const finishLabel =
+      progress.total > 0 && progress.completed === progress.total ? "Finish" : "Finish partial";
 
     return (
       <div className="screen-stack">
@@ -91,8 +93,8 @@ export default function StartSession({
               <h2>{routine.title}</h2>
               <p className="muted">
                 {activeSession.paused
-                  ? "Paused locally. Resume when you are ready, or finish partial to save progress."
-                  : "Saved locally. Continue, pause, finish partial, or discard before starting another routine."}
+                  ? `Paused locally. Resume when you are ready, or ${finishLabel.toLowerCase()} to save progress.`
+                  : `Saved locally. Continue, pause, ${finishLabel.toLowerCase()}, or discard before starting another routine.`}
               </p>
             </div>
             <div className="session-meta">
@@ -138,7 +140,7 @@ export default function StartSession({
               Discard
             </button>
             <button className="button primary" type="button" onClick={onFinishSession}>
-              Finish partial
+              {finishLabel}
             </button>
           </div>
         </section>
@@ -202,7 +204,7 @@ export default function StartSession({
 
       <section className="panel">
         <div className="section-heading compact-heading">
-          <h2>Choose a routine</h2>
+          <h2>Quick Start</h2>
           <div className="card-actions compact-actions">
             <button className="button edit-action small" type="button" onClick={onEditRoutines}>
               Edit

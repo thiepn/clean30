@@ -157,6 +157,10 @@ export default function Dashboard({
   );
   const activeProgress = activeSession ? getSessionProgress(activeSession, activeRoutine) : null;
   const activeElapsed = activeSession ? getSessionElapsedMs(activeSession, new Date(timerNow)) : 0;
+  const activeFinishLabel =
+    activeProgress && activeProgress.total > 0 && activeProgress.completed === activeProgress.total
+      ? "Finish"
+      : "Finish partial";
 
   useEffect(() => {
     if (!activeSession || activeSession.paused) return;
@@ -234,7 +238,7 @@ export default function Dashboard({
               {activeSession.paused ? "Resume" : "Continue"}
             </button>
             <button className="button ghost small" type="button" onClick={onFinishSession}>
-              Finish partial
+              {activeFinishLabel}
             </button>
             <button className="button danger-ghost small" type="button" onClick={onCancelSession}>
               Discard
@@ -545,7 +549,7 @@ export default function Dashboard({
 
       <section className="panel dashboard-calendar-panel">
         <div className="section-heading compact-heading">
-          <h2>Mini Calendar</h2>
+          <h2>Calendar</h2>
           <span className="status-pill compact">{formatDate(new Date())}</span>
         </div>
 

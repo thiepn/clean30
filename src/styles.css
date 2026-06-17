@@ -2156,7 +2156,13 @@ details[open] > .phase-summary .phase-chevron::before {
 }
 
 .today-panel .section-heading {
+  justify-content: space-between;
   margin-bottom: 0.25rem;
+}
+
+.today-panel .section-heading h2 {
+  margin-right: auto;
+  text-align: left;
 }
 
 .dashboard-todo-form {
@@ -3296,6 +3302,52 @@ details[open] > .phase-summary .phase-chevron::before {
   margin-top: 1rem;
 }
 
+.compact-routine-detail {
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.compact-routine-detail .textarea-small {
+  min-height: 68px;
+}
+
+.routine-actions-detail {
+  display: block;
+  margin-top: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  overflow: hidden;
+}
+
+.routine-description-detail {
+  margin-top: 0.75rem;
+}
+
+.routine-description-detail[open] .simple-summary {
+  border-bottom: 1px solid rgba(207, 194, 174, 0.65);
+}
+
+.compact-description-fields {
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.75rem;
+}
+
+.compact-description-fields .textarea-small {
+  min-height: 68px;
+}
+
+.routine-actions-detail[open] .simple-summary {
+  border-bottom: 1px solid rgba(207, 194, 174, 0.65);
+}
+
+.routine-secondary-actions {
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0.75rem;
+}
+
 .readonly-field {
   display: grid;
   gap: 0.2rem;
@@ -3729,6 +3781,11 @@ details[open] > .phase-summary .phase-chevron::before {
   margin-top: 1rem;
 }
 
+.compact-routine-list,
+.compact-phase-list {
+  gap: 0.45rem;
+}
+
 .editor-list.nested {
   margin: 1rem 0;
 }
@@ -3756,7 +3813,16 @@ details[open] > .phase-summary .phase-chevron::before {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.8rem;
-  align-items: end;
+  align-items: center;
+}
+
+.routine-editor-row {
+  padding: 0.62rem 0.7rem;
+}
+
+.routine-editor-row.archived {
+  border-style: dashed;
+  opacity: 0.84;
 }
 
 .editor-row-main {
@@ -3810,6 +3876,10 @@ details[open] > .phase-summary .phase-chevron::before {
   font-weight: 620;
 }
 
+.routine-editor-row .editor-select {
+  gap: 0.05rem;
+}
+
 .editor-card {
   display: grid;
   gap: 0.9rem;
@@ -3823,6 +3893,53 @@ details[open] > .phase-summary .phase-chevron::before {
 .editor-card.task-editor {
   background: var(--surface);
   border-color: rgba(207, 194, 174, 0.72);
+}
+
+.advanced-phase-detail {
+  padding: 0.78rem;
+}
+
+.compact-task-editor-list {
+  gap: 0.55rem;
+}
+
+.compact-task-editor-list .task-editor {
+  gap: 0.65rem;
+  padding: 0.7rem;
+}
+
+.compact-task-summary {
+  align-items: center;
+  padding: 0.7rem;
+}
+
+.compact-task-summary .task-editor-title {
+  min-width: 0;
+}
+
+.compact-task-summary .task-editor-title > span:last-child {
+  min-width: 0;
+}
+
+.compact-task-summary strong,
+.compact-task-summary small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.compact-task-summary small {
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 620;
+}
+
+.compact-task-editor-list .compact-disclosure {
+  padding: 0;
+}
+
+.compact-task-editor-list .compact-disclosure > .form-grid {
+  margin-top: 0;
 }
 
 .editor-card-header {
@@ -3889,6 +4006,16 @@ details[open] > .phase-summary .phase-chevron::before {
   justify-content: flex-end;
   gap: 0.5rem;
   min-width: 0;
+}
+
+.compact-row-actions {
+  gap: 0.35rem;
+}
+
+.compact-row-actions .icon-button.small {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
 }
 
 .row-actions .button {
@@ -5505,6 +5632,70 @@ details[open] > .phase-summary .phase-chevron::before {
   .today-panel .section-heading {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+  }
+
+  .routine-editor-row,
+  .compact-phase-list .editor-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+  }
+
+  .routine-editor-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.35rem;
+  }
+
+  .routine-editor-toolbar .button {
+    width: auto;
+    min-height: 34px;
+    padding: 0.4rem 0.58rem;
+  }
+
+  .routine-editor-row {
+    padding: 0.52rem 0.6rem;
+  }
+
+  .routine-editor-row .editor-select span {
+    font-size: 0.78rem;
+  }
+
+  .compact-routine-detail {
+    padding: 0.68rem;
+  }
+
+  .routine-description-detail .simple-summary,
+  .routine-actions-detail .simple-summary {
+    padding: 0.65rem;
+  }
+
+  .routine-secondary-actions {
+    flex-direction: row;
+    gap: 0.4rem;
+    padding: 0.65rem;
+  }
+
+  .routine-secondary-actions .button {
+    width: auto;
+    flex: 1 1 92px;
+  }
+
+  .advanced-phase-detail {
+    padding: 0.65rem;
+  }
+
+  .compact-task-editor-list .task-editor {
+    padding: 0.62rem;
+  }
+
+  .compact-task-editor-list .compact-disclosure {
+    padding: 0;
+  }
+
+  .compact-task-summary {
+    padding: 0.58rem;
   }
 
   .today-secondary-actions {

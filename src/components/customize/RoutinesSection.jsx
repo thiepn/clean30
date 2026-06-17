@@ -100,9 +100,15 @@ export default function RoutinesSection({
   const autoAddHandled = useRef(false);
   const [editorTab, setEditorTab] = useState(initialEditorTab);
   const [durationDraft, setDurationDraft] = useState("");
+  const [routineReorderMode, setRoutineReorderMode] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [phaseEditorOpen, setPhaseEditorOpen] = useState(false);
   const visibleRoutines = useMemo(
-    () => routines.filter((routine) => routine.id !== "daily-rules"),
-    [routines]
+    () =>
+      routines.filter(
+        (routine) => routine.id !== "daily-rules" && (showArchived || !routine.archived)
+      ),
+    [routines, showArchived]
   );
   const [selectedPhaseId, setSelectedPhaseId] = useState(selectedRoutine?.phases[0]?.id || "");
   const selectedPhase = useMemo(() => {
@@ -125,6 +131,7 @@ export default function RoutinesSection({
   useEffect(() => {
     if (!selectedRoutine) {
       setSelectedPhaseId("");
+      setPhaseEditorOpen(false);
       return;
     }
     if (!selectedPhase && selectedRoutine.phases[0]) {
@@ -151,6 +158,12 @@ export default function RoutinesSection({
     setDurationDraft(String(getRoutineMinutes(selectedRoutine)));
   }, [selectedRoutine?.id, selectedRoutine?.estimatedMinutes]);
 
+  useEffect(() => {
+    if (selectedRoutine?.archived) {
+      setShowArchived(true);
+    }
+  }, [selectedRoutine?.archived]);
+
   function editSelectedRoutine(mutator) {
     if (!selectedRoutine) return;
     onEditTemplate((draft) => {
@@ -166,11 +179,13 @@ export default function RoutinesSection({
     });
     onSelectRoutine(routine.id);
     setSelectedPhaseId(routine.phases[0]?.id || "");
+    setPhaseEditorOpen(true);
   }
 
   function selectRoutine(routine) {
     onSelectRoutine(routine.id);
     setSelectedPhaseId(routine.phases[0]?.id || "");
+    setPhaseEditorOpen(false);
   }
 
   function updateRoutine(field, value) {
@@ -254,7 +269,7 @@ export default function RoutinesSection({
     });
   }
 
-  function deleteRoutine(routine, index) {
+  function deleteRoutine(routine, index = visibleRoutines.findIndex((item) => item.id === routine?.id)) {
     if (activeSession?.routineId === routine.id) {
       onConfirmEdit({
         title: "Routine is in use",
@@ -284,6 +299,7 @@ export default function RoutinesSection({
       routine.phases.push(phase);
     });
     setSelectedPhaseId(phase.id);
+    setPhaseEditorOpen(true);
   }
 
   function updatePhase(phaseIndex, value) {
@@ -383,13 +399,30 @@ export default function RoutinesSection({
         <div className="section-heading">
           <div>
             <p className="eyebrow">Routines</p>
-            <h2>Today Defaults And Routines</h2>
-            <p>Today defaults start each day. Routines are reusable cleaning sessions.</p>
+            <h2>Routines</h2>
+            <p>Edit reusable cleaning sessions. Today defaults are in the tab beside them.</p>
           </div>
           {editorTab === "routines" ? (
-            <button className="button edit-action small" type="button" disabled={!canEdit} onClick={addRoutine}>
-              Add
-            </button>
+            <div className="card-actions compact-actions routine-editor-toolbar">
+              <button
+                className={routineReorderMode ? "button edit-action small" : "button ghost small"}
+                type="button"
+                disabled={!canEdit || visibleRoutines.length < 2}
+                onClick={() => setRoutineReorderMode((current) => !current)}
+              >
+                Reorder
+              </button>
+              <button
+                className={showArchived ? "button edit-action small" : "button ghost small"}
+                type="button"
+                onClick={() => setShowArchived((current) => !current)}
+              >
+                {showArchived ? "Hide archived" : "Show archived"}
+              </button>
+              <button className="button edit-action small" type="button" disabled={!canEdit} onClick={addRoutine}>
+                Add
+              </button>
+            </div>
           ) : null}
         </div>
 
@@ -426,13 +459,19 @@ export default function RoutinesSection({
         <>
       <section className="panel">
         {visibleRoutines.length ? (
-          <div className="editor-list">
+          <div className="editor-list compact-routine-list">
             {visibleRoutines.map((routine, index) => {
-            const canDelete = canEdit && visibleRoutines.length > 1;
             return (
               <div
                 className={
-                  selectedRoutineId === routine.id ? "editor-row active" : "editor-row"
+                  [
+                    "editor-row",
+                    "routine-editor-row",
+                    selectedRoutineId === routine.id ? "active" : "",
+                    routine.archived ? "archived" : ""
+                  ]
+                    .filter(Boolean)
+                    .join(" ")
                 }
                 key={routine.id}
               >
@@ -448,59 +487,28 @@ export default function RoutinesSection({
                     {routine.archived ? " / Archived" : ""}
                   </span>
                 </button>
-                <div className="row-actions">
-                  <button
-                    className="button small ghost"
-                    type="button"
-                    disabled={!canEdit || index === 0}
-                    onClick={() => moveRoutine(index, -1)}
-                  >
-                    Move up
-                  </button>
-                  <button
-                    className="button small ghost"
-                    type="button"
-                    disabled={!canEdit || index === visibleRoutines.length - 1}
-                    onClick={() => moveRoutine(index, 1)}
-                  >
-                    Move down
-                  </button>
-                  <button
-                    className="button small ghost"
-                    type="button"
-                    disabled={!canEdit}
-                    onClick={() => duplicateRoutine(routine)}
-                  >
-                    Duplicate
-                  </button>
-                  {routine.archived ? (
+                {routineReorderMode ? (
+                  <div className="row-actions compact-row-actions">
                     <button
-                      className="button small ghost"
+                      className="icon-button small"
                       type="button"
-                      disabled={!canEdit}
-                      onClick={() => unarchiveRoutine(routine)}
+                      aria-label={`Move ${routine.title} up`}
+                      disabled={!canEdit || index === 0}
+                      onClick={() => moveRoutine(index, -1)}
                     >
-                      Unarchive
+                      ^
                     </button>
-                  ) : (
                     <button
-                      className="button small ghost"
+                      className="icon-button small"
                       type="button"
-                      disabled={!canEdit}
-                      onClick={() => archiveRoutine(routine)}
+                      aria-label={`Move ${routine.title} down`}
+                      disabled={!canEdit || index === visibleRoutines.length - 1}
+                      onClick={() => moveRoutine(index, 1)}
                     >
-                      Archive
+                      v
                     </button>
-                  )}
-                  <button
-                    className="button small danger-ghost"
-                    type="button"
-                    disabled={!canDelete}
-                    onClick={() => deleteRoutine(routine, index)}
-                  >
-                    Delete
-                  </button>
-                </div>
+                  </div>
+                ) : null}
               </div>
             );
             })}
@@ -524,7 +532,7 @@ export default function RoutinesSection({
             </span>
           </div>
 
-          <div className="form-grid customize-card routine-detail-card">
+          <div className="form-grid customize-card routine-detail-card compact-routine-detail">
             <label className="field-label" htmlFor="routine-title">
               Routine title
               <input
@@ -568,37 +576,49 @@ export default function RoutinesSection({
                 ))}
               </select>
             </label>
-            <label className="field-label field-span" htmlFor="routine-purpose">
-              Purpose
-              <textarea
-                id="routine-purpose"
-                className="textarea-small"
-                value={selectedRoutine.purpose}
-                disabled={!canEdit}
-                onChange={(event) => updateRoutine("purpose", event.target.value)}
-              />
-            </label>
-            <label className="field-label field-span" htmlFor="routine-when">
-              When to use
-              <textarea
-                id="routine-when"
-                className="textarea-small"
-                value={selectedRoutine.whenToUse}
-                disabled={!canEdit}
-                onChange={(event) => updateRoutine("whenToUse", event.target.value)}
-              />
-            </label>
-            <label className="field-label field-span" htmlFor="routine-message">
-              Routine message
-              <textarea
-                id="routine-message"
-                className="textarea-small"
-                value={selectedRoutine.message}
-                disabled={!canEdit}
-                onChange={(event) => updateRoutine("message", event.target.value)}
-              />
-            </label>
           </div>
+
+          <details className="simple-detail routine-description-detail">
+            <summary className="simple-summary">
+              <span>
+                <strong>Description and usage</strong>
+                <small>Purpose, when to use it, and an optional routine message.</small>
+              </span>
+              <span className="button ghost small">Edit</span>
+            </summary>
+            <div className="form-grid compact-description-fields">
+              <label className="field-label field-span" htmlFor="routine-purpose">
+                Purpose
+                <textarea
+                  id="routine-purpose"
+                  className="textarea-small"
+                  value={selectedRoutine.purpose}
+                  disabled={!canEdit}
+                  onChange={(event) => updateRoutine("purpose", event.target.value)}
+                />
+              </label>
+              <label className="field-label field-span" htmlFor="routine-when">
+                When to use
+                <textarea
+                  id="routine-when"
+                  className="textarea-small"
+                  value={selectedRoutine.whenToUse}
+                  disabled={!canEdit}
+                  onChange={(event) => updateRoutine("whenToUse", event.target.value)}
+                />
+              </label>
+              <label className="field-label field-span" htmlFor="routine-message">
+                Routine message
+                <textarea
+                  id="routine-message"
+                  className="textarea-small"
+                  value={selectedRoutine.message}
+                  disabled={!canEdit}
+                  onChange={(event) => updateRoutine("message", event.target.value)}
+                />
+              </label>
+            </div>
+          </details>
 
           <div className="section-heading editor-heading">
             <div>
@@ -616,7 +636,55 @@ export default function RoutinesSection({
             </button>
           </div>
 
-          <div className="editor-list phase-picker-list">
+          <details className="simple-summary-card routine-actions-detail">
+            <summary className="simple-summary">
+              <span>
+                <span className="eyebrow">Secondary</span>
+                <strong>More actions</strong>
+                <small>Duplicate, archive, or delete this routine.</small>
+              </span>
+              <span className="button ghost small">Actions</span>
+            </summary>
+            <div className="row-actions routine-secondary-actions">
+              <button
+                className="button small ghost"
+                type="button"
+                disabled={!canEdit}
+                onClick={() => duplicateRoutine(selectedRoutine)}
+              >
+                Duplicate
+              </button>
+              {selectedRoutine.archived ? (
+                <button
+                  className="button small ghost"
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => unarchiveRoutine(selectedRoutine)}
+                >
+                  Unarchive
+                </button>
+              ) : (
+                <button
+                  className="button small ghost"
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => archiveRoutine(selectedRoutine)}
+                >
+                  Archive
+                </button>
+              )}
+              <button
+                className="button small danger-ghost"
+                type="button"
+                disabled={!canEdit || visibleRoutines.length <= 1}
+                onClick={() => deleteRoutine(selectedRoutine)}
+              >
+                Delete
+              </button>
+            </div>
+          </details>
+
+          <div className="editor-list phase-picker-list compact-phase-list">
             {selectedRoutine.phases.map((phase, phaseIndex) => (
               <div
                 className={selectedPhase?.id === phase.id ? "editor-row active" : "editor-row"}
@@ -625,44 +693,62 @@ export default function RoutinesSection({
                 <button
                   className="editor-select"
                   type="button"
-                  onClick={() => setSelectedPhaseId(phase.id)}
+                  onClick={() => {
+                    setSelectedPhaseId(phase.id);
+                    setPhaseEditorOpen(true);
+                  }}
                 >
                   <strong>{phase.title || `Phase ${phaseIndex + 1}`}</strong>
                   <span>{phase.tasks.length} tasks</span>
                 </button>
-                <div className="row-actions">
+                <div className="row-actions compact-row-actions">
                   <button
-                    className="button small ghost"
+                    className="button text-button small"
                     type="button"
+                    onClick={() => {
+                      setSelectedPhaseId(phase.id);
+                      setPhaseEditorOpen((current) =>
+                        selectedPhase?.id === phase.id ? !current : true
+                      );
+                    }}
+                  >
+                    {selectedPhase?.id === phase.id && phaseEditorOpen ? "Close" : "Edit"}
+                  </button>
+                  <button
+                    className="icon-button small"
+                    type="button"
+                    aria-label={`Move ${phase.title} up`}
                     disabled={!canEdit || phaseIndex === 0}
                     onClick={() => movePhase(phaseIndex, -1)}
                   >
-                    Move up
+                    ^
                   </button>
                   <button
-                    className="button small ghost"
+                    className="icon-button small"
                     type="button"
+                    aria-label={`Move ${phase.title} down`}
                     disabled={
                       !canEdit || phaseIndex === selectedRoutine.phases.length - 1
                     }
                     onClick={() => movePhase(phaseIndex, 1)}
                   >
-                    Move down
+                    v
                   </button>
                   <button
-                    className="button small danger-ghost"
+                    className="icon-button small danger-icon"
                     type="button"
+                    aria-label={`Delete ${phase.title}`}
                     disabled={!canEdit}
                     onClick={() => deletePhase(phase, phaseIndex)}
                   >
-                    Delete
+                    X
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {selectedPhase && selectedPhaseIndex >= 0 ? (
+          {selectedPhase && selectedPhaseIndex >= 0 && phaseEditorOpen ? (
             <section className="editor-card phase-editor advanced-phase-detail">
               <div className="editor-card-header">
                 <div className="editor-row-main">
@@ -683,13 +769,21 @@ export default function RoutinesSection({
                 <span className="task-count">{selectedPhase.tasks.length} tasks</span>
               </div>
 
-              <div className="editor-list nested">
+              <div className="editor-list nested compact-task-editor-list">
                 {selectedPhase.tasks.map((task, taskIndex) => (
-                  <div className="editor-card task-editor" key={task.id}>
-                    <div className="task-editor-title">
-                      <span className="editor-index subtle">{taskIndex + 1}</span>
-                      <strong>Task {taskIndex + 1}</strong>
-                    </div>
+                  <details className="editor-card task-editor compact-disclosure" key={task.id}>
+                    <summary className="disclosure-summary compact-task-summary">
+                      <span className="task-editor-title">
+                        <span className="editor-index subtle">{taskIndex + 1}</span>
+                        <span>
+                          <strong>{task.title || `Task ${taskIndex + 1}`}</strong>
+                          <small>
+                            {task.duration || "No duration"} / {task.priority || "normal"}
+                          </small>
+                        </span>
+                      </span>
+                      <span className="button ghost small">Edit</span>
+                    </summary>
                     <div className="form-grid three">
                       <label className="field-label" htmlFor={`task-title-${task.id}`}>
                         Task title
@@ -758,24 +852,26 @@ export default function RoutinesSection({
                         />
                       </label>
                     </div>
-                    <div className="row-actions">
+                    <div className="row-actions compact-row-actions">
                       <button
-                        className="button small ghost"
+                        className="icon-button small"
                         type="button"
+                        aria-label={`Move task ${taskIndex + 1} up`}
                         disabled={!canEdit || taskIndex === 0}
                         onClick={() => moveTask(selectedPhaseIndex, taskIndex, -1)}
                       >
-                        Move up
+                        ^
                       </button>
                       <button
-                        className="button small ghost"
+                        className="icon-button small"
                         type="button"
+                        aria-label={`Move task ${taskIndex + 1} down`}
                         disabled={
                           !canEdit || taskIndex === selectedPhase.tasks.length - 1
                         }
                         onClick={() => moveTask(selectedPhaseIndex, taskIndex, 1)}
                       >
-                        Move down
+                        v
                       </button>
                       <button
                         className="button small danger-ghost"
@@ -786,7 +882,7 @@ export default function RoutinesSection({
                         Delete task
                       </button>
                     </div>
-                  </div>
+                  </details>
                 ))}
               </div>
 
@@ -799,9 +895,9 @@ export default function RoutinesSection({
                 Add
               </button>
             </section>
-          ) : (
+          ) : !selectedPhase ? (
             <p className="callout small">No phases yet. Add a phase to start building this routine.</p>
-          )}
+          ) : null}
         </section>
       ) : null}
         </>
