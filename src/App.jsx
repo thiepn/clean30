@@ -60,6 +60,29 @@ function createTodayTask(text, dateKey) {
     text,
     completed: false,
     source: "custom",
+    note: "",
+    tags: [],
+    routineId: null,
+    routineName: "",
+    originalTaskId: null,
+    createdAt,
+    completedAt: null
+  };
+}
+
+function createRoutineTodayTask({ routine, task, dateKey }) {
+  const createdAt = new Date().toISOString();
+  return {
+    id: `today-routine-${dateKey}-${routine.id}-${task.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    defaultTaskId: null,
+    text: task.title || "Routine task",
+    completed: false,
+    source: "routine",
+    note: task.detail || "",
+    tags: Array.isArray(task.tags) ? task.tags : [],
+    routineId: routine.id,
+    routineName: routine.title,
+    originalTaskId: task.id,
     createdAt,
     completedAt: null
   };
@@ -73,6 +96,7 @@ export default function App() {
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [deletedTodayTask, setDeletedTodayTask] = useState(null);
   const [editorContext, setEditorContext] = useState({
     origin: "dashboard",
     section: "routines",
@@ -90,6 +114,14 @@ export default function App() {
   useEffect(() => {
     saveAppState(appState);
   }, [appState]);
+
+  useEffect(() => {
+    if (!deletedTodayTask) return;
+    const timeoutId = window.setTimeout(() => {
+      setDeletedTodayTask(null);
+    }, 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [deletedTodayTask]);
 
   useEffect(() => {
     function handleUpdateAvailable() {
@@ -151,9 +183,10 @@ export default function App() {
         appState.todayTasksByDate?.[todayKey],
         activeTemplate,
         todayKey,
-        appState.dailyRuleCompletions?.[todayKey] || []
+        appState.dailyRuleCompletions?.[todayKey] || [],
+        appState.appSettings
       ),
-    [activeTemplate, appState.dailyRuleCompletions, appState.todayTasksByDate, todayKey]
+    [activeTemplate, appState.appSettings, appState.dailyRuleCompletions, appState.todayTasksByDate, todayKey]
   );
 
   function markMeaningfulUse(state) {
@@ -477,8 +510,29 @@ export default function App() {
       state.todayTasksByDate?.[dateKey],
       getTemplateFromState(state),
       dateKey,
-      state.dailyRuleCompletions?.[dateKey] || []
+      state.dailyRuleCompletions?.[dateKey] || [],
+      state.appSettings
     );
+  }
+
+  function getCompletedDefaultIds(tasks) {
+    return tasks
+      .filter((task) => task.source === "default" && task.completed && task.defaultTaskId)
+      .map((task) => task.defaultTaskId);
+  }
+
+  function applyTodayTasksToState(state, dateKey, tasks) {
+    return {
+      ...state,
+      todayTasksByDate: {
+        ...(state.todayTasksByDate || {}),
+        [dateKey]: tasks
+      },
+      dailyRuleCompletions: {
+        ...state.dailyRuleCompletions,
+        [dateKey]: getCompletedDefaultIds(tasks)
+      }
+    };
   }
 
   function addTodayCompletionHistory(state, tasks, dateKey) {
@@ -520,20 +574,7 @@ export default function App() {
           completedAt: completed ? new Date().toISOString() : null
         };
       });
-      const completedDefaultIds = tasks
-        .filter((task) => task.source === "default" && task.completed && task.defaultTaskId)
-        .map((task) => task.defaultTaskId);
-      const next = {
-        ...current,
-        todayTasksByDate: {
-          ...(current.todayTasksByDate || {}),
-          [dateKey]: tasks
-        },
-        dailyRuleCompletions: {
-          ...current.dailyRuleCompletions,
-          [dateKey]: completedDefaultIds
-        }
-      };
+      const next = applyTodayTasksToState(current, dateKey, tasks);
       return markMeaningfulUse(addTodayCompletionHistory(next, tasks, dateKey));
     });
   }
@@ -543,50 +584,134 @@ export default function App() {
     if (!trimmed) return;
     const dateKey = getTodayKey();
     setAppState((current) =>
-      markMeaningfulUse({
-        ...current,
-        todayTasksByDate: {
-          ...(current.todayTasksByDate || {}),
-          [dateKey]: [...getTodayTasksFromState(current, dateKey), createTodayTask(trimmed, dateKey)]
-        }
-      })
+      markMeaningfulUse(
+        applyTodayTasksToState(current, dateKey, [
+          ...getTodayTasksFromState(current, dateKey),
+          createTodayTask(trimmed, dateKey)
+        ])
+      )
     );
   }
 
   function deleteTodayTask(taskId) {
     const dateKey = getTodayKey();
+    const currentTasks = getTodayTasksFromState(appState, dateKey);
+    const deletedIndex = currentTasks.findIndex((task) => task.id === taskId);
+    const deletedTask = currentTasks[deletedIndex];
+    if (deletedTask) {
+      setDeletedTodayTask({
+        dateKey,
+        task: deletedTask,
+        index: deletedIndex,
+        id: `${Date.now()}-${deletedTask.id}`
+      });
+    }
     setAppState((current) => {
       const tasks = getTodayTasksFromState(current, dateKey).filter((task) => task.id !== taskId);
-      const completedDefaultIds = tasks
-        .filter((task) => task.source === "default" && task.completed && task.defaultTaskId)
-        .map((task) => task.defaultTaskId);
+      return applyTodayTasksToState(current, dateKey, tasks);
+    });
+  }
+
+  function undoDeleteTodayTask() {
+    if (!deletedTodayTask) return;
+    setAppState((current) => {
+      const tasks = getTodayTasksFromState(current, deletedTodayTask.dateKey);
+      if (tasks.some((task) => task.id === deletedTodayTask.task.id)) return current;
+      const nextTasks = [...tasks];
+      nextTasks.splice(Math.min(deletedTodayTask.index, nextTasks.length), 0, deletedTodayTask.task);
+      return markMeaningfulUse(applyTodayTasksToState(current, deletedTodayTask.dateKey, nextTasks));
+    });
+    setDeletedTodayTask(null);
+  }
+
+  function moveTodayTask(taskId, direction) {
+    const dateKey = getTodayKey();
+    setAppState((current) => {
+      const tasks = getTodayTasksFromState(current, dateKey);
+      const task = tasks.find((item) => item.id === taskId);
+      if (!task) return current;
+      const group = tasks.filter((item) => Boolean(item.completed) === Boolean(task.completed));
+      const groupIndex = group.findIndex((item) => item.id === taskId);
+      const target = group[groupIndex + direction];
+      if (!target) return current;
+
+      const nextTasks = [...tasks];
+      const currentIndex = nextTasks.findIndex((item) => item.id === taskId);
+      const [moved] = nextTasks.splice(currentIndex, 1);
+      let targetIndex = nextTasks.findIndex((item) => item.id === target.id);
+      if (direction > 0) targetIndex += 1;
+      nextTasks.splice(targetIndex, 0, moved);
+      return markMeaningfulUse(applyTodayTasksToState(current, dateKey, nextTasks));
+    });
+  }
+
+  function updateTodayTaskDetails(taskId, updates) {
+    const dateKey = getTodayKey();
+    setAppState((current) => {
+      const tasks = getTodayTasksFromState(current, dateKey).map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              ...updates,
+              note: typeof updates.note === "string" ? updates.note : task.note,
+              tags: Array.isArray(updates.tags) ? updates.tags : task.tags
+            }
+          : task
+      );
+      return markMeaningfulUse(applyTodayTasksToState(current, dateKey, tasks));
+    });
+  }
+
+  function addTaskTag(tag) {
+    const cleaned = tag.trim();
+    if (!cleaned) return;
+    setAppState((current) => {
+      const tags = current.appSettings?.taskTags || [];
+      if (tags.some((item) => item.toLowerCase() === cleaned.toLowerCase())) return current;
       return {
         ...current,
-        todayTasksByDate: {
-          ...(current.todayTasksByDate || {}),
-          [dateKey]: tasks
-        },
-        dailyRuleCompletions: {
-          ...current.dailyRuleCompletions,
-          [dateKey]: completedDefaultIds
+        appSettings: {
+          ...(current.appSettings || {}),
+          taskTags: [...tags, cleaned]
         }
       };
     });
   }
 
+  function addRoutineTasksToToday(routineId, taskIds) {
+    const routine = getRoutineById(activeTemplate.routines, routineId);
+    if (!routine || !taskIds.length) return;
+    const dateKey = getTodayKey();
+    const selectedIds = new Set(taskIds);
+    const routineTasks = routine.phases.flatMap((phase) => phase.tasks);
+
+    setAppState((current) => {
+      const currentTasks = getTodayTasksFromState(current, dateKey);
+      const existingRoutineKeys = new Set(
+        currentTasks
+          .filter((task) => task.source === "routine" && task.routineId && task.originalTaskId)
+          .map((task) => `${task.routineId}:${task.originalTaskId}`)
+      );
+      const tasksToAdd = routineTasks
+        .filter((task) => selectedIds.has(task.id))
+        .filter((task) => !existingRoutineKeys.has(`${routine.id}:${task.id}`))
+        .map((task) => createRoutineTodayTask({ routine, task, dateKey }));
+      if (!tasksToAdd.length) return current;
+      return markMeaningfulUse(
+        applyTodayTasksToState(current, dateKey, [...currentTasks, ...tasksToAdd])
+      );
+    });
+  }
+
   function resetTodayTasks() {
     const dateKey = getTodayKey();
-    setAppState((current) => ({
-      ...current,
-      todayTasksByDate: {
-        ...(current.todayTasksByDate || {}),
-        [dateKey]: buildTodayTasksForDate(null, getTemplateFromState(current), dateKey, [])
-      },
-      dailyRuleCompletions: {
-        ...current.dailyRuleCompletions,
-        [dateKey]: []
-      }
-    }));
+    setAppState((current) =>
+      applyTodayTasksToState(
+        current,
+        dateKey,
+        buildTodayTasksForDate(null, getTemplateFromState(current), dateKey, [], current.appSettings)
+      )
+    );
   }
 
   function resetEverything() {
@@ -615,6 +740,16 @@ export default function App() {
       appSettings: {
         ...(current.appSettings || {}),
         backupReminderIntervalDays: interval
+      }
+    }));
+  }
+
+  function updateStartTodayEmpty(value) {
+    setAppState((current) => ({
+      ...current,
+      appSettings: {
+        ...(current.appSettings || {}),
+        startTodayEmpty: Boolean(value)
       }
     }));
   }
@@ -688,7 +823,7 @@ export default function App() {
         activeTemplateId: starterTemplate.id,
         todayTasksByDate: {
           ...(current.todayTasksByDate || {}),
-          [dateKey]: buildTodayTasksForDate(null, starterTemplate, dateKey, [])
+          [dateKey]: buildTodayTasksForDate(null, starterTemplate, dateKey, [], current.appSettings)
         },
         onboardingCompleted: true,
         onboardingCompletedAt: new Date().toISOString()
@@ -783,6 +918,7 @@ export default function App() {
         appAppearance={appState.appSettings}
         onUpdateBackupReminderInterval={updateBackupReminderInterval}
         onUpdateAppAppearance={updateAppAppearance}
+        onUpdateStartTodayEmpty={updateStartTodayEmpty}
         onRestartOnboarding={restartOnboarding}
         onOpenHelp={() => setHelpOpen(true)}
         onManageCustomize={() => openInternalEditor("profile", "settings")}
@@ -804,6 +940,13 @@ export default function App() {
         onToggleTodayTask={toggleTodayTask}
         onAddTodayTask={addTodayTask}
         onDeleteTodayTask={deleteTodayTask}
+        onUndoDeleteTodayTask={undoDeleteTodayTask}
+        deletedTodayTask={deletedTodayTask}
+        onMoveTodayTask={moveTodayTask}
+        onUpdateTodayTaskDetails={updateTodayTaskDetails}
+        taskTags={appState.appSettings?.taskTags || []}
+        onAddTaskTag={addTaskTag}
+        onAddRoutineTasksToToday={addRoutineTasksToToday}
         onResetTodayTasks={resetTodayTasks}
         onStartRoutine={startSession}
         onToggleTask={toggleTask}

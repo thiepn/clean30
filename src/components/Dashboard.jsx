@@ -17,6 +17,15 @@ function countLabel(count, singular, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+function getRoutineTasks(routine) {
+  return routine?.phases?.flatMap((phase) =>
+    phase.tasks.map((task) => ({
+      ...task,
+      phaseTitle: phase.title
+    }))
+  ) || [];
+}
+
 function buildMonthCells(referenceDate) {
   const year = referenceDate.getFullYear();
   const month = referenceDate.getMonth();
@@ -70,6 +79,13 @@ export default function Dashboard({
   onToggleTodayTask,
   onAddTodayTask,
   onDeleteTodayTask,
+  onUndoDeleteTodayTask,
+  deletedTodayTask,
+  onMoveTodayTask,
+  onUpdateTodayTaskDetails,
+  taskTags = [],
+  onAddTaskTag,
+  onAddRoutineTasksToToday,
   onResetTodayTasks,
   onStartRoutine,
   onToggleTask,
@@ -83,8 +99,36 @@ export default function Dashboard({
   onAddRoutine
 }) {
   const [taskText, setTaskText] = useState("");
+  const [expandedTaskId, setExpandedTaskId] = useState("");
+  const [routinePickerOpen, setRoutinePickerOpen] = useState(false);
+  const [routineSourceId, setRoutineSourceId] = useState("");
+  const [selectedRoutineTaskIds, setSelectedRoutineTaskIds] = useState([]);
+  const [customTagText, setCustomTagText] = useState("");
   const todayKey = getTodayKey();
   const [selectedDate, setSelectedDate] = useState(todayKey);
+  const displayTasks = useMemo(
+    () => [...todayTasks].sort((first, second) => Number(first.completed) - Number(second.completed)),
+    [todayTasks]
+  );
+  const routineOptions = useMemo(
+    () => template.routines.filter((routine) => routine.id !== "daily-rules"),
+    [template.routines]
+  );
+  const selectedRoutineForImport =
+    routineOptions.find((routine) => routine.id === routineSourceId) || routineOptions[0] || null;
+  const routineTaskOptions = useMemo(
+    () => getRoutineTasks(selectedRoutineForImport),
+    [selectedRoutineForImport]
+  );
+  const existingRoutineTaskKeys = useMemo(
+    () =>
+      new Set(
+        todayTasks
+          .filter((task) => task.source === "routine" && task.routineId && task.originalTaskId)
+          .map((task) => `${task.routineId}:${task.originalTaskId}`)
+      ),
+    [todayTasks]
+  );
   const activityByDate = useMemo(
     () => buildActivityByDate(history, todayTasksByDate),
     [history, todayTasksByDate]
@@ -100,14 +144,52 @@ export default function Dashboard({
     setTaskText("");
   }
 
+  function toggleRoutineTask(taskId) {
+    setSelectedRoutineTaskIds((current) =>
+      current.includes(taskId) ? current.filter((id) => id !== taskId) : [...current, taskId]
+    );
+  }
+
+  function addSelectedRoutineTasks() {
+    if (!selectedRoutineForImport || !selectedRoutineTaskIds.length) return;
+    onAddRoutineTasksToToday(selectedRoutineForImport.id, selectedRoutineTaskIds);
+    setSelectedRoutineTaskIds([]);
+    setRoutinePickerOpen(false);
+  }
+
+  function addTagToTask(task, tag) {
+    const cleaned = tag.trim();
+    if (!cleaned || task.tags?.some((item) => item.toLowerCase() === cleaned.toLowerCase())) return;
+    onAddTaskTag(cleaned);
+    onUpdateTodayTaskDetails(task.id, { tags: [...(task.tags || []), cleaned] });
+  }
+
+  function removeTagFromTask(task, tag) {
+    onUpdateTodayTaskDetails(task.id, {
+      tags: (task.tags || []).filter((item) => item !== tag)
+    });
+  }
+
   return (
     <div className="screen-stack">
       <section className="panel today-panel">
         <div className="section-heading compact-heading">
           <h2>Today</h2>
-          <button className="button edit-action small" type="button" onClick={onEditToday}>
-            Edit
-          </button>
+          <div className="card-actions compact-actions">
+            <button
+              className="button edit-action small"
+              type="button"
+              onClick={() => {
+                setRoutinePickerOpen((open) => !open);
+                if (!routineSourceId && routineOptions[0]) setRoutineSourceId(routineOptions[0].id);
+              }}
+            >
+              Add from routine
+            </button>
+            <button className="button edit-action small" type="button" onClick={onEditToday}>
+              Edit
+            </button>
+          </div>
         </div>
 
         <form className="dashboard-todo-form" onSubmit={submitTask}>
@@ -122,40 +204,207 @@ export default function Dashboard({
           </button>
         </form>
 
+        {routinePickerOpen ? (
+          <div className="routine-import-panel">
+            <div className="routine-import-topline">
+              <label className="field-label" htmlFor="routine-import-select">
+                Routine
+                <select
+                  id="routine-import-select"
+                  value={selectedRoutineForImport?.id || ""}
+                  onChange={(event) => {
+                    setRoutineSourceId(event.target.value);
+                    setSelectedRoutineTaskIds([]);
+                  }}
+                >
+                  {routineOptions.map((routine) => (
+                    <option key={routine.id} value={routine.id}>
+                      {routine.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="button ghost small" type="button" onClick={() => setRoutinePickerOpen(false)}>
+                Close
+              </button>
+            </div>
+            <div className="routine-import-list">
+              {routineTaskOptions.map((task) => {
+                const alreadyAdded = existingRoutineTaskKeys.has(
+                  `${selectedRoutineForImport.id}:${task.id}`
+                );
+                return (
+                  <label className={alreadyAdded ? "routine-import-row disabled" : "routine-import-row"} key={task.id}>
+                    <input
+                      type="checkbox"
+                      checked={selectedRoutineTaskIds.includes(task.id)}
+                      disabled={alreadyAdded}
+                      onChange={() => toggleRoutineTask(task.id)}
+                    />
+                    <span>
+                      <strong>{task.title}</strong>
+                      <small>{alreadyAdded ? "Already in Today" : task.phaseTitle}</small>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <div className="card-actions compact-actions">
+              <button
+                className="button primary small"
+                type="button"
+                disabled={!selectedRoutineTaskIds.length}
+                onClick={addSelectedRoutineTasks}
+              >
+                Add selected
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {todayTasks.length ? (
           <div className="task-list today-task-list">
-            {todayTasks.map((task) => (
-              <label className={task.completed ? "task-row checked" : "task-row"} key={task.id}>
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => onToggleTodayTask(task.id)}
-                />
-                <span className="task-copy">
-                  <span className="task-title-line">
-                    <strong>{task.text}</strong>
+            {displayTasks.map((task) => {
+              const sameGroup = displayTasks.filter(
+                (item) => Boolean(item.completed) === Boolean(task.completed)
+              );
+              const groupIndex = sameGroup.findIndex((item) => item.id === task.id);
+              const expanded = expandedTaskId === task.id;
+
+              return (
+                <div className={task.completed ? "task-row today-task-row checked" : "task-row today-task-row"} key={task.id}>
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={() => onToggleTodayTask(task.id)}
+                  />
+                  <span className="task-copy">
+                    <span className="task-title-line">
+                      <strong>{task.text}</strong>
+                    </span>
+                    {task.source === "routine" && task.routineName ? (
+                      <span className="task-detail compact-source">{task.routineName}</span>
+                    ) : null}
                   </span>
-                </span>
-                {task.source === "custom" ? (
-                  <button
-                    className="icon-button small danger-icon"
-                    type="button"
-                    aria-label={`Remove ${task.text}`}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      onDeleteTodayTask(task.id);
-                    }}
-                  >
-                    X
-                  </button>
-                ) : null}
-              </label>
-            ))}
+                  <div className="today-row-actions">
+                    <button
+                      className="icon-button small"
+                      type="button"
+                      aria-label={`Move ${task.text} up`}
+                      disabled={groupIndex === 0}
+                      onClick={() => onMoveTodayTask(task.id, -1)}
+                    >
+                      ^
+                    </button>
+                    <button
+                      className="icon-button small"
+                      type="button"
+                      aria-label={`Move ${task.text} down`}
+                      disabled={groupIndex === sameGroup.length - 1}
+                      onClick={() => onMoveTodayTask(task.id, 1)}
+                    >
+                      v
+                    </button>
+                    <button
+                      className="button text-button small"
+                      type="button"
+                      onClick={() => setExpandedTaskId(expanded ? "" : task.id)}
+                    >
+                      Details
+                    </button>
+                    <button
+                      className="icon-button small danger-icon"
+                      type="button"
+                      aria-label={`Remove ${task.text}`}
+                      onClick={() => onDeleteTodayTask(task.id)}
+                    >
+                      X
+                    </button>
+                  </div>
+                  {expanded ? (
+                    <div className="today-task-details">
+                      <label className="field-label" htmlFor={`today-note-${task.id}`}>
+                        Note
+                        <textarea
+                          id={`today-note-${task.id}`}
+                          className="textarea-small"
+                          value={task.note || ""}
+                          placeholder="Optional note"
+                          onChange={(event) =>
+                            onUpdateTodayTaskDetails(task.id, { note: event.target.value })
+                          }
+                        />
+                      </label>
+                      <div className="tag-editor">
+                        <span className="field-label">Tags</span>
+                        <div className="tag-chip-row">
+                          {(task.tags || []).map((tag) => (
+                            <button
+                              className="tag-chip removable"
+                              key={tag}
+                              type="button"
+                              onClick={() => removeTagFromTask(task, tag)}
+                            >
+                              {tag} X
+                            </button>
+                          ))}
+                        </div>
+                        <div className="tag-suggestion-row">
+                          {taskTags
+                            .filter(
+                              (tag) =>
+                                !(task.tags || []).some(
+                                  (current) => current.toLowerCase() === tag.toLowerCase()
+                                )
+                            )
+                            .map((tag) => (
+                              <button
+                                className="button ghost small"
+                                key={tag}
+                                type="button"
+                                onClick={() => addTagToTask(task, tag)}
+                              >
+                                {tag}
+                              </button>
+                            ))}
+                        </div>
+                        <form
+                          className="custom-tag-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            addTagToTask(task, customTagText);
+                            setCustomTagText("");
+                          }}
+                        >
+                          <input
+                            type="text"
+                            value={customTagText}
+                            placeholder="Custom tag"
+                            onChange={(event) => setCustomTagText(event.target.value)}
+                          />
+                          <button className="button ghost small" type="submit">
+                            Add tag
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="muted compact-empty">No tasks yet.</p>
         )}
+
+        {deletedTodayTask ? (
+          <div className="undo-toast" role="status">
+            <span>Task deleted</span>
+            <button className="button ghost small" type="button" onClick={onUndoDeleteTodayTask}>
+              Undo
+            </button>
+          </div>
+        ) : null}
 
         {todayTasks.length ? (
           <button className="button text-button small" type="button" onClick={onResetTodayTasks}>

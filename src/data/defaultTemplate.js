@@ -17,6 +17,16 @@ const defaultZones = [
   "Monthly deep-clean zones"
 ];
 
+const emptyWeekdayDefaults = {
+  sunday: [],
+  monday: [],
+  tuesday: [],
+  wednesday: [],
+  thursday: [],
+  friday: [],
+  saturday: []
+};
+
 function priorityFromLabel(label = "") {
   const normalized = label.toLowerCase();
   if (normalized === "critical") return "critical";
@@ -31,6 +41,8 @@ function normalizeTask(task) {
     title: task.title,
     duration: task.duration || "",
     detail: task.detail || "",
+    note: "",
+    tags: [],
     priority: task.priority || priorityFromLabel(task.label)
   };
 }
@@ -67,6 +79,8 @@ export const clean30DefaultTemplate = {
     name
   })),
   todayDefaults: dailyRuleItems.map(normalizeTask),
+  todayWeekdayDefaultsEnabled: false,
+  todayWeekdayDefaults: emptyWeekdayDefaults,
   dailyRules: dailyRuleItems.map(normalizeTask),
   routines: routines.map(normalizeRoutine),
   systems: {

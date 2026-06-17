@@ -21,7 +21,8 @@ const guideSections = [
     title: "Dashboard",
     items: [
       "Start with Today.",
-      "Check off default tasks or add one-off tasks.",
+      "Check off tasks, add one-off tasks, or pull tasks from a routine.",
+      "Completed tasks move below active tasks.",
       "Start or continue cleaning routines from Dashboard.",
       "Use Edit when you want to change what appears each day."
     ]
@@ -39,6 +40,7 @@ const guideSections = [
     title: "Editing",
     items: [
       "Today defaults live inside the routine editor.",
+      "Weekday-specific defaults are optional.",
       "Routines can be edited from Dashboard or Routines.",
       "App details and schedule are also in the editor.",
       "Appearance is changed from Settings."

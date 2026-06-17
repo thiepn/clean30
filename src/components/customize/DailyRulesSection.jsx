@@ -1,57 +1,128 @@
 import { useEffect, useState } from "react";
 import { createTask, moveItem } from "../../utils/routineUtils.js";
 
-export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate, onConfirmEdit }) {
-  const [selectedRuleId, setSelectedRuleId] = useState(dailyRules[0]?.id || "");
-  const selectedRule = dailyRules.find((rule) => rule.id === selectedRuleId) || dailyRules[0] || null;
+const weekdayOptions = [
+  { id: "general", label: "General" },
+  { id: "monday", label: "Mon" },
+  { id: "tuesday", label: "Tue" },
+  { id: "wednesday", label: "Wed" },
+  { id: "thursday", label: "Thu" },
+  { id: "friday", label: "Fri" },
+  { id: "saturday", label: "Sat" },
+  { id: "sunday", label: "Sun" }
+];
+
+const EMPTY_TASKS = [];
+
+function cloneTasks(tasks) {
+  return JSON.parse(JSON.stringify(tasks || []));
+}
+
+export default function DailyRulesSection({
+  dailyRules,
+  weekdayDefaultsEnabled = false,
+  weekdayDefaults = {},
+  canEdit,
+  onEditTemplate,
+  onConfirmEdit
+}) {
+  const [selectedDay, setSelectedDay] = useState("general");
+  const activeRules =
+    selectedDay === "general" ? dailyRules : weekdayDefaults?.[selectedDay] || EMPTY_TASKS;
+  const [selectedRuleId, setSelectedRuleId] = useState(activeRules[0]?.id || "");
+  const selectedRule = activeRules.find((rule) => rule.id === selectedRuleId) || activeRules[0] || null;
   const selectedRuleIndex = selectedRule
-    ? dailyRules.findIndex((rule) => rule.id === selectedRule.id)
+    ? activeRules.findIndex((rule) => rule.id === selectedRule.id)
     : -1;
+  const usesGeneralFallback =
+    weekdayDefaultsEnabled && selectedDay !== "general" && activeRules.length === 0;
 
   useEffect(() => {
-    if (!selectedRule && dailyRules[0]) {
-      setSelectedRuleId(dailyRules[0].id);
+    if (!weekdayDefaultsEnabled && selectedDay !== "general") {
+      setSelectedDay("general");
     }
-    if (!dailyRules.length) {
+  }, [selectedDay, weekdayDefaultsEnabled]);
+
+  useEffect(() => {
+    if (!selectedRule && activeRules[0]) {
+      setSelectedRuleId(activeRules[0].id);
+    }
+    if (!activeRules.length) {
       setSelectedRuleId("");
     }
-  }, [dailyRules, selectedRule]);
+  }, [activeRules, selectedRule]);
+
+  function editActiveRules(mutator) {
+    onEditTemplate((draft) => {
+      if (selectedDay === "general") {
+        const defaults = draft.todayDefaults || draft.dailyRules || [];
+        mutator(defaults);
+        draft.todayDefaults = defaults;
+        return;
+      }
+
+      const weekdayDefaults = { ...(draft.todayWeekdayDefaults || {}) };
+      const defaults = [...(weekdayDefaults[selectedDay] || [])];
+      mutator(defaults);
+      weekdayDefaults[selectedDay] = defaults;
+      draft.todayWeekdayDefaults = weekdayDefaults;
+    });
+  }
+
+  function updateWeekdayEnabled(enabled) {
+    onEditTemplate((draft) => {
+      draft.todayWeekdayDefaultsEnabled = enabled;
+      draft.todayWeekdayDefaults = draft.todayWeekdayDefaults || {};
+    });
+  }
 
   function addRule() {
     const rule = createTask();
     rule.title = "New Today task";
-    onEditTemplate((draft) => {
-      draft.todayDefaults = [...(draft.todayDefaults || draft.dailyRules || []), rule];
+    editActiveRules((defaults) => {
+      defaults.push(rule);
     });
     setSelectedRuleId(rule.id);
   }
 
   function updateRule(index, field, value) {
-    onEditTemplate((draft) => {
-      const defaults = draft.todayDefaults || draft.dailyRules || [];
+    editActiveRules((defaults) => {
       defaults[index][field] = value;
-      draft.todayDefaults = defaults;
     });
   }
 
   function moveRule(index, direction) {
-    onEditTemplate((draft) => {
-      draft.todayDefaults = moveItem(draft.todayDefaults || draft.dailyRules || [], index, direction);
+    editActiveRules((defaults) => {
+      const moved = moveItem(defaults, index, direction);
+      defaults.splice(0, defaults.length, ...moved);
     });
   }
 
   function deleteRule(rule, index) {
-    const fallback = dailyRules[index + 1] || dailyRules[index - 1] || null;
+    const fallback = activeRules[index + 1] || activeRules[index - 1] || null;
     onConfirmEdit({
       title: "Delete default Today task?",
       message: `"${rule.title}" will be removed from the default Today tasks.`,
       confirmLabel: "Delete task",
       edit: (draft) => {
-        const defaults = draft.todayDefaults || draft.dailyRules || [];
+        const defaults =
+          selectedDay === "general"
+            ? draft.todayDefaults || draft.dailyRules || []
+            : draft.todayWeekdayDefaults?.[selectedDay] || [];
         defaults.splice(index, 1);
-        draft.todayDefaults = defaults;
+        if (selectedDay === "general") draft.todayDefaults = defaults;
+        else draft.todayWeekdayDefaults = { ...(draft.todayWeekdayDefaults || {}), [selectedDay]: defaults };
       },
       afterConfirm: () => setSelectedRuleId(fallback?.id || "")
+    });
+  }
+
+  function copyGeneralDefaults() {
+    onEditTemplate((draft) => {
+      draft.todayWeekdayDefaults = {
+        ...(draft.todayWeekdayDefaults || {}),
+        [selectedDay]: cloneTasks(draft.todayDefaults || draft.dailyRules || [])
+      };
     });
   }
 
@@ -61,20 +132,52 @@ export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate,
         <div>
           <p className="eyebrow">Today</p>
           <h2>Default Today Tasks</h2>
-          <p>These tasks appear automatically in Today for each new day.</p>
+          <p>General defaults appear on new days unless weekday defaults override them.</p>
         </div>
-        <button className="button primary" type="button" disabled={!canEdit} onClick={addRule}>
-          Add default task
+        <button className="button edit-action small" type="button" disabled={!canEdit} onClick={addRule}>
+          Add
         </button>
       </div>
 
-      <p className="callout small">
-        Delete every default task if you want Today to start empty. One-off tasks are still added
-        from Dashboard.
-      </p>
+      <label className="toggle-row">
+        <input
+          type="checkbox"
+          checked={weekdayDefaultsEnabled}
+          disabled={!canEdit}
+          onChange={(event) => updateWeekdayEnabled(event.target.checked)}
+        />
+        <span>
+          <strong>Use different defaults by weekday</strong>
+          <small>Empty weekdays fall back to General.</small>
+        </span>
+      </label>
+
+      {weekdayDefaultsEnabled ? (
+        <div className="weekday-selector" role="tablist" aria-label="Today default day">
+          {weekdayOptions.map((option) => (
+            <button
+              className={selectedDay === option.id ? "tab active" : "tab"}
+              key={option.id}
+              type="button"
+              onClick={() => setSelectedDay(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {usesGeneralFallback ? (
+        <div className="callout small weekday-fallback">
+          This weekday uses General defaults.
+          <button className="button ghost small" type="button" disabled={!canEdit} onClick={copyGeneralDefaults}>
+            Copy General
+          </button>
+        </div>
+      ) : null}
 
       <div className="editor-list compact-editor-list">
-        {dailyRules.map((rule, index) => (
+        {activeRules.map((rule, index) => (
           <div className={selectedRule?.id === rule.id ? "editor-row active" : "editor-row"} key={rule.id}>
             <button className="editor-select" type="button" onClick={() => setSelectedRuleId(rule.id)}>
               <strong>{rule.title}</strong>
@@ -92,7 +195,7 @@ export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate,
               <button
                 className="button small ghost"
                 type="button"
-                disabled={!canEdit || index === dailyRules.length - 1}
+                disabled={!canEdit || index === activeRules.length - 1}
                 onClick={() => moveRule(index, 1)}
               >
                 Move down
@@ -151,7 +254,11 @@ export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate,
           </div>
         </div>
       ) : (
-        <p className="callout small">No default Today tasks. Dashboard can still accept one-off tasks.</p>
+        <p className="callout small">
+          {usesGeneralFallback
+            ? "Copy General or add a task to customize this weekday."
+            : "No default Today tasks. Dashboard can still accept one-off tasks."}
+        </p>
       )}
     </section>
   );

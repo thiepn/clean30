@@ -41,6 +41,7 @@ export default function Settings({
   appAppearance,
   onUpdateBackupReminderInterval,
   onUpdateAppAppearance,
+  onUpdateStartTodayEmpty,
   onRestartOnboarding,
   onOpenHelp,
   onManageCustomize,
@@ -141,6 +142,24 @@ export default function Settings({
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="panel settings-card">
+        <div>
+          <h2>Today behavior</h2>
+          <p>Keep Today simple for each new date.</p>
+        </div>
+        <label className="toggle-row">
+          <input
+            type="checkbox"
+            checked={Boolean(appAppearance?.startTodayEmpty)}
+            onChange={(event) => onUpdateStartTodayEmpty(event.target.checked)}
+          />
+          <span>
+            <strong>Start Today empty</strong>
+            <small>New days start with no default tasks. Current tasks stay until you refresh.</small>
+          </span>
+        </label>
       </section>
 
       <section className="panel settings-card">

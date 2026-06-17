@@ -2183,6 +2183,24 @@ details[open] > .phase-summary .phase-chevron::before {
   padding: 0.58rem 0.68rem;
 }
 
+.today-task-row {
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+}
+
+.today-task-row.checked {
+  border-color: rgba(120, 114, 104, 0.26);
+  background: #f0eee8;
+}
+
+.today-task-row.checked .task-title-line strong {
+  color: #747066;
+  text-decoration: line-through;
+}
+
+.today-task-row.checked .task-detail {
+  color: #817c72;
+}
+
 .today-task-list .task-row input {
   margin-top: 0;
 }
@@ -2195,6 +2213,184 @@ details[open] > .phase-summary .phase-chevron::before {
   width: 32px;
   height: 32px;
   min-height: 32px;
+}
+
+.today-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.today-row-actions .button.small {
+  min-height: 30px;
+  padding: 0.22rem 0.4rem;
+}
+
+.today-task-details {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.65rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.65rem;
+}
+
+.compact-source {
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+}
+
+.routine-import-panel {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid var(--selected-border);
+  border-radius: var(--radius-card);
+  background: var(--accent-panel);
+  padding: 0.75rem;
+}
+
+.routine-import-topline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.routine-import-list {
+  display: grid;
+  max-height: 260px;
+  overflow: auto;
+  gap: 0.35rem;
+}
+
+.routine-import-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0.48rem 0.55rem;
+}
+
+.routine-import-row.disabled {
+  opacity: 0.62;
+}
+
+.routine-import-row input {
+  width: 18px;
+  height: 18px;
+  margin-top: 0.1rem;
+}
+
+.routine-import-row strong,
+.routine-import-row small {
+  display: block;
+}
+
+.routine-import-row small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.tag-editor {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.tag-chip-row,
+.tag-suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.tag-chip {
+  border: 1px solid var(--selected-border);
+  border-radius: 999px;
+  background: var(--selected-bg);
+  color: var(--accent-text);
+  padding: 0.14rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.tag-chip.removable {
+  cursor: pointer;
+}
+
+.custom-tag-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
+.undo-toast {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.5rem;
+  border: 1px solid var(--selected-border);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-soft);
+  padding: 0.3rem 0.35rem 0.3rem 0.65rem;
+}
+
+.undo-toast span {
+  color: var(--text-soft);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.toggle-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  padding: 0.75rem;
+}
+
+.toggle-row input {
+  width: 20px;
+  height: 20px;
+  margin-top: 0.1rem;
+  accent-color: var(--accent);
+}
+
+.toggle-row strong,
+.toggle-row small {
+  display: block;
+}
+
+.toggle-row small {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.weekday-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.weekday-selector .tab {
+  min-height: 34px;
+  padding: 0.35rem 0.55rem;
+}
+
+.weekday-fallback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .compact-empty {
@@ -5173,6 +5369,44 @@ details[open] > .phase-summary .phase-chevron::before {
     min-height: 44px;
     gap: 0.48rem;
     padding: 0.46rem 0.52rem;
+  }
+
+  .today-row-actions {
+    gap: 0.18rem;
+  }
+
+  .today-row-actions .button.small {
+    min-height: 28px;
+    padding: 0.16rem 0.32rem;
+    font-size: 0.72rem;
+  }
+
+  .today-task-details {
+    gap: 0.5rem;
+    padding-top: 0.52rem;
+  }
+
+  .routine-import-topline,
+  .custom-tag-form {
+    grid-template-columns: 1fr;
+  }
+
+  .routine-import-list {
+    max-height: 220px;
+  }
+
+  .toggle-row {
+    padding: 0.62rem;
+  }
+
+  .weekday-selector {
+    gap: 0.28rem;
+  }
+
+  .weekday-selector .tab {
+    min-height: 32px;
+    padding: 0.28rem 0.45rem;
+    font-size: 0.78rem;
   }
 
   .routine-picker,

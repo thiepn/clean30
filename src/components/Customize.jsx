@@ -175,6 +175,8 @@ export default function Customize({
       <RoutinesSection
         routines={activeTemplate.routines}
         todayDefaults={activeTemplate.todayDefaults || activeTemplate.dailyRules}
+        todayWeekdayDefaultsEnabled={activeTemplate.todayWeekdayDefaultsEnabled}
+        todayWeekdayDefaults={activeTemplate.todayWeekdayDefaults}
         selectedRoutine={selectedRoutine}
         selectedRoutineId={selectedRoutineId}
         canEdit

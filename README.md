@@ -8,7 +8,8 @@ Live app: https://thiepn.github.io/clean30/
 
 - Four main tabs: Dashboard, Routines, History, Settings.
 - Dashboard with Today tasks, routine/session controls, and a compact mini calendar.
-- Today tasks reset by date and can start from editable default tasks.
+- Today tasks reset by date, can start from editable defaults, support notes/tags, and can pull tasks from routines.
+- Optional weekday-specific Today defaults and a Start Today empty preference.
 - Reusable cleaning routines with saved session progress, notes, partial finish, reset, and discard flows.
 - Routines reference library with collapsed phase checklists and Edit/Add entry points.
 - History for completed sessions and Today task logs.

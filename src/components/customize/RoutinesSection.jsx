@@ -43,6 +43,8 @@ function getPhaseTitleError(phase, phases) {
 export default function RoutinesSection({
   routines,
   todayDefaults = [],
+  todayWeekdayDefaultsEnabled = false,
+  todayWeekdayDefaults = {},
   selectedRoutine,
   selectedRoutineId,
   canEdit,
@@ -300,6 +302,8 @@ export default function RoutinesSection({
       {editorTab === "today" ? (
         <DailyRulesSection
           dailyRules={todayDefaults}
+          weekdayDefaultsEnabled={todayWeekdayDefaultsEnabled}
+          weekdayDefaults={todayWeekdayDefaults}
           canEdit={canEdit}
           onEditTemplate={onEditTemplate}
           onConfirmEdit={onConfirmEdit}

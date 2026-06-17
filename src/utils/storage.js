@@ -65,6 +65,29 @@ function uniqueStrings(value) {
   return [...new Set(value.filter((item) => typeof item === "string"))];
 }
 
+const DEFAULT_TASK_TAGS = ["Kitchen", "Bathroom", "Laundry", "Trash", "Floor", "Quick"];
+const WEEKDAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+function cleanTags(value) {
+  return uniqueStrings(value)
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .slice(0, 24);
+}
+
+function getWeekdayKey(dateKey) {
+  const parsed = new Date(`${dateKey}T00:00:00`);
+  return WEEKDAY_KEYS[Number.isNaN(parsed.getTime()) ? 0 : parsed.getDay()];
+}
+
+function getTemplateTodayDefaults(template, dateKey) {
+  if (template?.todayWeekdayDefaultsEnabled) {
+    const weekdayTasks = template?.todayWeekdayDefaults?.[getWeekdayKey(dateKey)];
+    if (Array.isArray(weekdayTasks) && weekdayTasks.length) return weekdayTasks;
+  }
+  return template?.todayDefaults || template?.dailyRules || [];
+}
+
 function normalizeDateString(value) {
   if (typeof value !== "string") return null;
   const parsed = new Date(value);
@@ -126,6 +149,8 @@ function normalizeDashboardTodos(value) {
           : `dashboard-todo-${createdAt}-${index}`,
         text: todo.text.trim(),
         completed,
+        note: typeof todo.note === "string" ? todo.note : "",
+        tags: cleanTags(todo.tags),
         createdAt,
         completedAt: completed ? normalizeDateString(todo.completedAt) || createdAt : null
       };
@@ -143,7 +168,7 @@ function normalizeTodayTask(value, index, dateKey) {
   if (!textValue.trim()) return null;
   const createdAt = normalizeDateString(saved.createdAt) || `${dateKey}T00:00:00.000Z`;
   const completed = Boolean(saved.completed);
-  const source = saved.source === "custom" ? "custom" : "default";
+  const source = ["custom", "default", "routine"].includes(saved.source) ? saved.source : "default";
   const defaultTaskId =
     typeof saved.defaultTaskId === "string"
       ? saved.defaultTaskId
@@ -162,20 +187,27 @@ function normalizeTodayTask(value, index, dateKey) {
     text: textValue.trim(),
     completed,
     source,
+    note: typeof saved.note === "string" ? saved.note : "",
+    tags: cleanTags(saved.tags),
+    routineId: typeof saved.routineId === "string" ? saved.routineId : null,
+    routineName: typeof saved.routineName === "string" ? saved.routineName : "",
+    originalTaskId: typeof saved.originalTaskId === "string" ? saved.originalTaskId : null,
     createdAt,
     completedAt: completed ? normalizeDateString(saved.completedAt) || createdAt : null
   };
 }
 
-export function buildTodayTasksForDate(existingTasks, template, dateKey, completedDefaultIds = []) {
+export function buildTodayTasksForDate(existingTasks, template, dateKey, completedDefaultIds = [], appSettings = {}) {
   if (Array.isArray(existingTasks)) {
     return existingTasks
       .map((task, index) => normalizeTodayTask(task, index, dateKey))
       .filter(Boolean);
   }
 
+  if (appSettings?.startTodayEmpty) return [];
+
   const completed = new Set(uniqueStrings(completedDefaultIds));
-  const defaults = template?.todayDefaults || template?.dailyRules || [];
+  const defaults = getTemplateTodayDefaults(template, dateKey);
   return defaults.map((task, index) => {
     const isCompleted = completed.has(task.id);
     return {
@@ -184,13 +216,18 @@ export function buildTodayTasksForDate(existingTasks, template, dateKey, complet
       text: task.title || task.text || `Task ${index + 1}`,
       completed: isCompleted,
       source: "default",
+      note: typeof task.note === "string" ? task.note : "",
+      tags: cleanTags(task.tags),
+      routineId: null,
+      routineName: "",
+      originalTaskId: null,
       createdAt: `${dateKey}T00:00:00.000Z`,
       completedAt: isCompleted ? `${dateKey}T12:00:00.000Z` : null
     };
   });
 }
 
-function normalizeTodayTasksByDate(value, template, dailyRuleCompletions, dashboardTodos) {
+function normalizeTodayTasksByDate(value, template, dailyRuleCompletions, dashboardTodos, appSettings = {}) {
   const result = {};
   if (isPlainObject(value)) {
     Object.entries(value).forEach(([dateKey, tasks]) => {
@@ -206,7 +243,8 @@ function normalizeTodayTasksByDate(value, template, dailyRuleCompletions, dashbo
       null,
       template,
       todayKey,
-      dailyRuleCompletions[todayKey] || []
+      dailyRuleCompletions[todayKey] || [],
+      appSettings
     );
     const migratedTodos = normalizeDashboardTodos(dashboardTodos).map((todo, index) => ({
       id: todo.id || `today-custom-${todayKey}-${index}`,
@@ -214,6 +252,11 @@ function normalizeTodayTasksByDate(value, template, dailyRuleCompletions, dashbo
       text: todo.text,
       completed: todo.completed,
       source: "custom",
+      note: todo.note,
+      tags: todo.tags,
+      routineId: null,
+      routineName: "",
+      originalTaskId: null,
       createdAt: todo.createdAt,
       completedAt: todo.completedAt
     }));
@@ -286,7 +329,9 @@ function normalizeAppSettings(value) {
   return {
     backupReminderIntervalDays: [0, 14, 30, 60].includes(interval) ? interval : 30,
     accentColor: accentOptions.includes(accentColor) ? accentColor : "green",
-    backgroundColor: backgroundOptions.includes(backgroundColor) ? backgroundColor : "cream"
+    backgroundColor: backgroundOptions.includes(backgroundColor) ? backgroundColor : "cream",
+    startTodayEmpty: Boolean(value?.startTodayEmpty),
+    taskTags: cleanTags(value?.taskTags).length ? cleanTags(value.taskTags) : DEFAULT_TASK_TAGS
   };
 }
 
@@ -439,6 +484,7 @@ function createLegacyState() {
   const activeTemplateId = customTemplate.id;
   const history = normalizeHistory(readJson(STORAGE_KEYS.history, []));
   const dailyRuleCompletions = normalizeDailyRuleCompletions(readJson(STORAGE_KEYS.dailyRules, {}));
+  const appSettings = normalizeAppSettings();
 
   return {
     templates,
@@ -450,10 +496,10 @@ function createLegacyState() {
       activeTemplateId
     ),
     dailyRuleCompletions,
-    todayTasksByDate: normalizeTodayTasksByDate({}, customTemplate, dailyRuleCompletions, []),
+    todayTasksByDate: normalizeTodayTasksByDate({}, customTemplate, dailyRuleCompletions, [], appSettings),
     dashboardTodos: [],
     dismissedRecommendations: {},
-    appSettings: normalizeAppSettings(),
+    appSettings,
     onboardingCompleted: false,
     onboardingCompletedAt: null,
     lastFullBackupExportedAt: null,
@@ -477,6 +523,7 @@ export function normalizeAppState(value) {
   const history = normalizeHistory(value.history);
   const dailyRuleCompletions = normalizeDailyRuleCompletions(value.dailyRuleCompletions);
   const activeTemplate = templates.find((template) => template.id === activeTemplateId) || templates[0];
+  const appSettings = normalizeAppSettings(value.appSettings);
 
   return {
     templates,
@@ -488,11 +535,12 @@ export function normalizeAppState(value) {
       value.todayTasksByDate,
       activeTemplate,
       dailyRuleCompletions,
-      value.dashboardTodos
+      value.dashboardTodos,
+      appSettings
     ),
     dashboardTodos: normalizeDashboardTodos(value.dashboardTodos),
     dismissedRecommendations: normalizeDismissedRecommendations(value.dismissedRecommendations),
-    appSettings: normalizeAppSettings(value.appSettings),
+    appSettings,
     onboardingCompleted: Boolean(value.onboardingCompleted),
     onboardingCompletedAt: normalizeDateString(value.onboardingCompletedAt),
     lastFullBackupExportedAt: normalizeDateString(value.lastFullBackupExportedAt),

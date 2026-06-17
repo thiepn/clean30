@@ -16,6 +16,7 @@ export const accentOptions = [
   "charcoal"
 ];
 export const densityOptions = ["comfortable", "compact"];
+export const weekdayKeys = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 export function cloneDeep(value) {
   return JSON.parse(JSON.stringify(value));
@@ -63,11 +64,16 @@ function normalizeTemplateAccent(value, fallback = "green") {
 
 export function normalizeTask(task, fallbackTitle = "New task") {
   const saved = isPlainObject(task) ? task : {};
+  const tags = Array.isArray(saved.tags)
+    ? saved.tags.filter((tag) => typeof tag === "string" && tag.trim()).map((tag) => tag.trim())
+    : [];
   return {
     id: text(saved.id) || createId("task"),
     title: text(saved.title, fallbackTitle) || fallbackTitle,
     duration: text(saved.duration),
     detail: text(saved.detail),
+    note: text(saved.note),
+    tags,
     priority: normalizePriority(saved.priority || saved.label?.toLowerCase())
   };
 }
@@ -114,6 +120,17 @@ function normalizeZones(value) {
       };
     })
     .filter((zone) => zone.name.trim());
+}
+
+function normalizeWeekdayDefaults(value, fallback = {}) {
+  const saved = isPlainObject(value) ? value : {};
+  const fallbackSource = isPlainObject(fallback) ? fallback : {};
+  return Object.fromEntries(
+    weekdayKeys.map((day) => [
+      day,
+      normalizeTodayDefaults(saved[day], Array.isArray(fallbackSource[day]) ? fallbackSource[day] : [])
+    ])
+  );
 }
 
 function normalizeSystems(value) {
@@ -189,6 +206,10 @@ export function normalizeTemplate(template, options = {}) {
     saved.todayDefaults,
     Array.isArray(saved.dailyRules) ? saved.dailyRules : fallback.todayDefaults || fallback.dailyRules
   );
+  const todayWeekdayDefaults = normalizeWeekdayDefaults(
+    saved.todayWeekdayDefaults,
+    fallback.todayWeekdayDefaults
+  );
   const profile = isPlainObject(saved.profile) ? saved.profile : {};
   const schedule = isPlainObject(saved.schedule) ? saved.schedule : {};
   const appearance = isPlainObject(saved.appearance) ? saved.appearance : {};
@@ -216,6 +237,8 @@ export function normalizeTemplate(template, options = {}) {
     },
     zones: normalizeZones(saved.zones || fallback.zones),
     todayDefaults,
+    todayWeekdayDefaultsEnabled: Boolean(saved.todayWeekdayDefaultsEnabled),
+    todayWeekdayDefaults,
     dailyRules: cloneDeep(todayDefaults),
     routines: routines.map((routine) => normalizeRoutine(routine, "Routine")),
     systems: normalizeSystems(saved.systems || fallback.systems),
