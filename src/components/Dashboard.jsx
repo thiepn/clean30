@@ -1,41 +1,73 @@
-import { useState } from "react";
-import { getLastCompleted } from "../utils/calculations.js";
-import { formatRelativeDays, getTodayKey } from "../utils/dates.js";
+import { useMemo, useState } from "react";
+import { formatDate, getTodayKey } from "../utils/dates.js";
 import ProgressBar from "./ProgressBar.jsx";
 import StartSession from "./StartSession.jsx";
 
-const lastCards = [
-  { routineId: "weekly-reset", label: "Weekly Reset" },
-  { routineId: "minimal-reset", label: "Minimal Reset" },
-  { routineId: "monthly-deep-clean", label: "Monthly Deep Clean" },
-  { routineId: "guest-reset", label: "Guest Reset" }
-];
+function dateFromKey(dateKey) {
+  return new Date(`${dateKey}T00:00:00`);
+}
 
-const mobileDailyRuleLabels = {
-  "No food trash overnight": "No food trash",
-  "Dishes returned to kitchen": "Dishes back",
-  "Clothes into laundry basket": "Laundry basket",
-  "Bathroom smell check": "Smell check"
-};
+function displayShortDate(dateKey) {
+  return new Intl.DateTimeFormat("en-DE", {
+    month: "short",
+    day: "numeric"
+  }).format(dateFromKey(dateKey));
+}
 
-function getMobileDailyRuleLabel(title) {
-  return mobileDailyRuleLabels[title] || title;
+function buildMonthCells(referenceDate) {
+  const year = referenceDate.getFullYear();
+  const month = referenceDate.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const leading = first.getDay();
+  const cells = Array.from({ length: leading }, (_, index) => ({
+    id: `empty-${index}`,
+    empty: true
+  }));
+
+  for (let day = 1; day <= last.getDate(); day += 1) {
+    const date = new Date(year, month, day);
+    cells.push({
+      id: getTodayKey(date),
+      dateKey: getTodayKey(date),
+      day
+    });
+  }
+
+  return cells;
+}
+
+function buildActivityByDate(history, todayTasksByDate) {
+  const activity = {};
+
+  (history || []).forEach((entry) => {
+    const dateKey = entry.date || getTodayKey(new Date(entry.finishedAt || entry.completedAt));
+    if (!activity[dateKey]) activity[dateKey] = { sessions: [], todayCompleted: 0 };
+    activity[dateKey].sessions.push(entry);
+  });
+
+  Object.entries(todayTasksByDate || {}).forEach(([dateKey, tasks]) => {
+    const completed = Array.isArray(tasks) ? tasks.filter((task) => task.completed).length : 0;
+    if (!activity[dateKey]) activity[dateKey] = { sessions: [], todayCompleted: 0 };
+    activity[dateKey].todayCompleted = completed;
+  });
+
+  return activity;
 }
 
 export default function Dashboard({
   template,
   history = [],
-  dailyRuleCompletions = {},
-  dashboardTodos = [],
+  todayTasks = [],
+  todayTasksByDate = {},
   activeSession,
   completionSummary,
   selectedRoutineId,
   onSelectRoutine,
-  onToggleDailyRule,
-  onAddDashboardTodo,
-  onToggleDashboardTodo,
-  onDeleteDashboardTodo,
-  onClearCompletedDashboardTodos,
+  onToggleTodayTask,
+  onAddTodayTask,
+  onDeleteTodayTask,
+  onResetTodayTasks,
   onStartRoutine,
   onToggleTask,
   onCompletePhase,
@@ -43,174 +75,108 @@ export default function Dashboard({
   onFinishSession,
   onCancelSession,
   onUpdateNotes,
-  onEditDailyRules,
+  onEditToday,
   onEditRoutines,
   onAddRoutine
 }) {
-  const [todoText, setTodoText] = useState("");
-  const [reviewDailyRules, setReviewDailyRules] = useState(false);
+  const [taskText, setTaskText] = useState("");
   const todayKey = getTodayKey();
-  const todayCompleted = dailyRuleCompletions[todayKey] || [];
-  const dailyRules = template.dailyRules;
-  const validTodayCompleted = dailyRules.filter((rule) => todayCompleted.includes(rule.id));
-  const dailyProgress = {
-    completed: validTodayCompleted.length,
-    total: dailyRules.length,
-    percent: dailyRules.length ? Math.round((validTodayCompleted.length / dailyRules.length) * 100) : 0
-  };
-  const dailyRulesComplete = dailyProgress.total > 0 && dailyProgress.completed === dailyProgress.total;
-  const completedTodoCount = dashboardTodos.filter((todo) => todo.completed).length;
-  const hasMaintenanceMemory = history.length > 0;
-  const mostRecentSession = [...history].sort(
-    (a, b) => new Date(b.finishedAt) - new Date(a.finishedAt)
-  )[0];
+  const [selectedDate, setSelectedDate] = useState(todayKey);
+  const completedCount = todayTasks.filter((task) => task.completed).length;
+  const progressPercent = todayTasks.length
+    ? Math.round((completedCount / todayTasks.length) * 100)
+    : 0;
+  const activityByDate = useMemo(
+    () => buildActivityByDate(history, todayTasksByDate),
+    [history, todayTasksByDate]
+  );
+  const calendarCells = useMemo(() => buildMonthCells(new Date()), []);
+  const selectedActivity = activityByDate[selectedDate] || { sessions: [], todayCompleted: 0 };
 
-  function submitTodo(event) {
+  function submitTask(event) {
     event.preventDefault();
-    const trimmed = todoText.trim();
+    const trimmed = taskText.trim();
     if (!trimmed) return;
-    onAddDashboardTodo(trimmed);
-    setTodoText("");
+    onAddTodayTask(trimmed);
+    setTaskText("");
   }
 
   return (
     <div className="screen-stack">
-      <section className="panel dashboard-daily-panel">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Today</p>
-            <h2>Daily Rules</h2>
-          </div>
-          <div className="daily-panel-actions">
-            <span className="daily-progress-count">
-              {dailyProgress.completed}/{dailyProgress.total}
-            </span>
-            {dailyRulesComplete ? <span className="status-pill compact">Complete</span> : null}
-            <button className="button ghost small" type="button" onClick={onEditDailyRules}>
-              Edit Daily Rules
-            </button>
-          </div>
-        </div>
-        <ProgressBar
-          percent={dailyProgress.percent}
-          label={`${dailyProgress.completed}/${dailyProgress.total} complete`}
-        />
-        {dailyRulesComplete && !reviewDailyRules ? (
-          <div className="daily-complete-card">
-            <div>
-              <strong>Daily Rules are done.</strong>
-              <p>
-                Small habits are handled for today. {dailyProgress.completed}/{dailyProgress.total} complete.
-              </p>
-            </div>
-            <button
-              className="button ghost small"
-              type="button"
-              onClick={() => setReviewDailyRules(true)}
-            >
-              Review
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="task-list daily">
-              {dailyRules.map((rule) => (
-                <label
-                  className={todayCompleted.includes(rule.id) ? "task-row checked" : "task-row"}
-                  key={rule.id}
-                >
-                  <input
-                    type="checkbox"
-                    checked={todayCompleted.includes(rule.id)}
-                    onChange={() => onToggleDailyRule(rule.id)}
-                  />
-                  <span className="task-copy">
-                    <span className="task-title-line">
-                      <strong>
-                        <span className="desktop-rule-label">{rule.title}</span>
-                        <span className="mobile-rule-label">
-                          {getMobileDailyRuleLabel(rule.title)}
-                        </span>
-                      </strong>
-                      {rule.duration ? <span className="duration">{rule.duration}</span> : null}
-                    </span>
-                    {rule.detail ? <span className="task-detail">{rule.detail}</span> : null}
-                  </span>
-                </label>
-              ))}
-            </div>
-            {dailyRulesComplete ? (
-              <button
-                className="button ghost small daily-review-done"
-                type="button"
-                onClick={() => setReviewDailyRules(false)}
-              >
-                Done reviewing
-              </button>
-            ) : null}
-          </>
-        )}
-      </section>
-
-      <section className="panel dashboard-todo-panel">
+      <section className="panel today-panel">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Dashboard</p>
-            <h2>Custom To-Do List</h2>
-            <p>Small one-off tasks that do not belong in routine history.</p>
+            <h2>Today</h2>
+            <p>Tasks for today. Check them off or add your own.</p>
           </div>
-          {dashboardTodos.length ? (
-            <span className="status-pill compact">
-              {completedTodoCount}/{dashboardTodos.length} done
-            </span>
-          ) : null}
+          <div className="daily-panel-actions">
+            {todayTasks.length ? (
+              <span className="daily-progress-count">
+                {completedCount}/{todayTasks.length}
+              </span>
+            ) : null}
+            <button className="button ghost small" type="button" onClick={onEditToday}>
+              Edit defaults
+            </button>
+          </div>
         </div>
-        <form className="dashboard-todo-form" onSubmit={submitTodo}>
+
+        {todayTasks.length ? (
+          <ProgressBar percent={progressPercent} label={`${completedCount} of ${todayTasks.length} done`} />
+        ) : null}
+
+        <form className="dashboard-todo-form" onSubmit={submitTask}>
           <input
             type="text"
-            value={todoText}
-            placeholder="Add a one-off task"
-            onChange={(event) => setTodoText(event.target.value)}
+            value={taskText}
+            placeholder="Add a task for today"
+            onChange={(event) => setTaskText(event.target.value)}
           />
           <button className="button primary" type="submit">
             Add
           </button>
         </form>
-        {dashboardTodos.length ? (
-          <div className="task-list dashboard-todos">
-            {dashboardTodos.map((todo) => (
-              <label className={todo.completed ? "task-row checked" : "task-row"} key={todo.id}>
+
+        {todayTasks.length ? (
+          <div className="task-list today-task-list">
+            {todayTasks.map((task) => (
+              <label className={task.completed ? "task-row checked" : "task-row"} key={task.id}>
                 <input
                   type="checkbox"
-                  checked={todo.completed}
-                  onChange={() => onToggleDashboardTodo(todo.id)}
+                  checked={task.completed}
+                  onChange={() => onToggleTodayTask(task.id)}
                 />
                 <span className="task-copy">
                   <span className="task-title-line">
-                    <strong>{todo.text}</strong>
+                    <strong>{task.text}</strong>
+                    <span className="duration">{task.source === "custom" ? "Today" : "Default"}</span>
                   </span>
                 </span>
-                <button
-                  className="icon-button small danger-icon"
-                  type="button"
-                  aria-label={`Remove ${todo.text}`}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    onDeleteDashboardTodo(todo.id);
-                  }}
-                >
-                  X
-                </button>
+                {task.source === "custom" ? (
+                  <button
+                    className="icon-button small danger-icon"
+                    type="button"
+                    aria-label={`Remove ${task.text}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onDeleteTodayTask(task.id);
+                    }}
+                  >
+                    X
+                  </button>
+                ) : null}
               </label>
             ))}
           </div>
         ) : (
-          <p className="muted">No custom tasks yet.</p>
+          <p className="muted">No tasks for today. Add one when needed.</p>
         )}
-        {completedTodoCount ? (
-          <button className="button ghost small" type="button" onClick={onClearCompletedDashboardTodos}>
-            Clear completed
+
+        {todayTasks.length ? (
+          <button className="button ghost small" type="button" onClick={onResetTodayTasks}>
+            Reset today
           </button>
         ) : null}
       </section>
@@ -232,32 +198,71 @@ export default function Dashboard({
         onAddRoutine={onAddRoutine}
       />
 
-      {hasMaintenanceMemory ? (
-        <section className="panel dashboard-memory-panel">
-          <p className="eyebrow">Recent history</p>
-          <h2>Maintenance Memory</h2>
-          <div className="last-grid maintenance-grid">
-            {lastCards.map((item) => (
-              <div className="metric-card" key={item.routineId}>
-                <span>{item.label}</span>
-                <strong>{formatRelativeDays(getLastCompleted(history, item.routineId))}</strong>
-              </div>
-            ))}
-            <div className="metric-card">
-              <span>Total completed sessions</span>
-              <strong>{history.length}</strong>
-            </div>
-            <div className="metric-card">
-              <span>Most recent</span>
-              <strong>
-                {mostRecentSession
-                  ? `${mostRecentSession.routineTitle} - ${formatRelativeDays(mostRecentSession.finishedAt)}`
-                  : "Not yet"}
-              </strong>
-            </div>
+      <section className="panel dashboard-calendar-panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Month</p>
+            <h2>Mini Calendar</h2>
+            <p>Days are marked when Today tasks or cleaning sessions have activity.</p>
           </div>
-        </section>
-      ) : null}
+          <span className="status-pill compact">{formatDate(new Date())}</span>
+        </div>
+
+        <div className="mini-calendar" aria-label="Current month activity calendar">
+          {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+            <span className="calendar-weekday" key={`${day}-${index}`}>
+              {day}
+            </span>
+          ))}
+          {calendarCells.map((cell) =>
+            cell.empty ? (
+              <span className="calendar-empty" key={cell.id} />
+            ) : (
+              <button
+                className={[
+                  "calendar-day",
+                  cell.dateKey === todayKey ? "today" : "",
+                  cell.dateKey === selectedDate ? "selected" : "",
+                  activityByDate[cell.dateKey]?.sessions.length ||
+                  activityByDate[cell.dateKey]?.todayCompleted
+                    ? "has-activity"
+                    : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                key={cell.id}
+                type="button"
+                onClick={() => setSelectedDate(cell.dateKey)}
+              >
+                <span>{cell.day}</span>
+              </button>
+            )
+          )}
+        </div>
+
+        <div className="calendar-detail">
+          <p className="eyebrow">{displayShortDate(selectedDate)}</p>
+          {selectedActivity.sessions.length || selectedActivity.todayCompleted ? (
+            <>
+              <strong>
+                {selectedActivity.sessions.length} session
+                {selectedActivity.sessions.length === 1 ? "" : "s"} /{" "}
+                {selectedActivity.todayCompleted} Today task
+                {selectedActivity.todayCompleted === 1 ? "" : "s"}
+              </strong>
+              {selectedActivity.sessions.length ? (
+                <ul className="system-list compact">
+                  {selectedActivity.sessions.map((entry) => (
+                    <li key={entry.id}>{entry.routineTitle}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </>
+          ) : (
+            <p>No activity for this day.</p>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

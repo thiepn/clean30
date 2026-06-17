@@ -57,8 +57,8 @@ export function createHistoryEntry(session, template) {
   };
 }
 
-function estimateDailyRuleMinutes(dailyRules) {
-  return (dailyRules || []).reduce((total, rule) => {
+function estimateTodayTaskMinutes(tasks) {
+  return (tasks || []).reduce((total, rule) => {
     const match = String(rule.duration || "").match(/(\d+(?:\.\d+)?)/);
     return total + (match ? Number(match[1]) : 0);
   }, 0);
@@ -68,13 +68,13 @@ export function createDailyRulesHistoryEntry({ dateKey, dailyRules, template }) 
   const completedAt = new Date().toISOString();
   const totalTasks = dailyRules.length;
   return {
-    id: `daily-rules-${dateKey}`,
-    kind: "daily-rules",
-    source: "daily-rules",
+    id: `today-tasks-${dateKey}`,
+    kind: "today",
+    source: "today",
     date: dateKey,
     completedAt,
     routineId: "daily-rules",
-    routineTitle: "Daily Rules",
+    routineTitle: "Today tasks",
     templateId: template?.id || null,
     templateName: template?.name || "",
     startedAt: completedAt,
@@ -82,8 +82,8 @@ export function createDailyRulesHistoryEntry({ dateKey, dailyRules, template }) 
     completedTasks: totalTasks,
     totalTasks,
     percent: totalTasks ? 100 : 0,
-    estimatedDurationMinutes: estimateDailyRuleMinutes(dailyRules),
-    notes: "Completed from Dashboard daily rules."
+    estimatedDurationMinutes: estimateTodayTaskMinutes(dailyRules),
+    notes: "Completed from Dashboard Today tasks."
   };
 }
 
@@ -91,13 +91,22 @@ export function hasDailyRulesHistoryEntry(history, dateKey) {
   return (history || []).some(
     (entry) =>
       entry?.id === `daily-rules-${dateKey}` ||
-      ((entry?.kind === "daily-rules" || entry?.source === "daily-rules") &&
+      entry?.id === `today-tasks-${dateKey}` ||
+      ((entry?.kind === "daily-rules" ||
+        entry?.source === "daily-rules" ||
+        entry?.kind === "today" ||
+        entry?.source === "today") &&
         entry?.date === dateKey)
   );
 }
 
 export function isDailyRulesHistoryEntry(entry) {
-  return entry?.kind === "daily-rules" || entry?.source === "daily-rules";
+  return (
+    entry?.kind === "daily-rules" ||
+    entry?.source === "daily-rules" ||
+    entry?.kind === "today" ||
+    entry?.source === "today"
+  );
 }
 
 export function getLastCompleted(history, routineId) {

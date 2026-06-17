@@ -1,4 +1,11 @@
-export default function ProfileSection({ template, canEdit, onEditTemplate }) {
+export default function ProfileSection({
+  template,
+  templates = [],
+  activeTemplateId,
+  onSetActiveTemplate,
+  canEdit,
+  onEditTemplate
+}) {
   function updateTemplateName(value) {
     onEditTemplate((draft) => {
       draft.name = value;
@@ -22,6 +29,23 @@ export default function ProfileSection({ template, canEdit, onEditTemplate }) {
       </div>
 
       <div className="form-grid customize-card">
+        {templates.length > 1 ? (
+          <label className="field-label" htmlFor="active-template">
+            Active template
+            <select
+              id="active-template"
+              value={activeTemplateId || template.id}
+              onChange={(event) => onSetActiveTemplate?.(event.target.value)}
+            >
+              {templates.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
         <label className="field-label" htmlFor="template-name">
           Template name
           <input

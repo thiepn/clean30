@@ -1,24 +1,34 @@
 import { useRef, useState } from "react";
 import { formatDateTime } from "../utils/dates.js";
-import Systems from "./Systems.jsx";
 
 const accentOptions = [
   { id: "forest", label: "Forest" },
+  { id: "emerald", label: "Emerald" },
   { id: "teal", label: "Teal" },
+  { id: "ocean", label: "Ocean" },
   { id: "navy", label: "Navy" },
-  { id: "slate", label: "Slate" },
+  { id: "indigo", label: "Indigo" },
+  { id: "violet", label: "Violet" },
   { id: "plum", label: "Plum" },
-  { id: "brown", label: "Brown" },
+  { id: "rose", label: "Rose" },
+  { id: "crimson", label: "Crimson" },
+  { id: "copper", label: "Copper" },
   { id: "charcoal", label: "Charcoal" }
 ];
 
 const backgroundOptions = [
   { id: "soft-blue", label: "Soft blue" },
+  { id: "sky", label: "Sky" },
+  { id: "cool-gray", label: "Cool gray" },
   { id: "warm-cream", label: "Warm cream" },
+  { id: "sand", label: "Sand" },
   { id: "soft-mint", label: "Soft mint" },
-  { id: "pale-green", label: "Pale green" },
+  { id: "sage", label: "Sage" },
   { id: "lavender", label: "Lavender" },
-  { id: "cool-gray", label: "Cool gray" }
+  { id: "lilac", label: "Lilac" },
+  { id: "blush", label: "Blush" },
+  { id: "peach", label: "Peach" },
+  { id: "pale-yellow", label: "Pale yellow" }
 ];
 
 export default function Settings({
@@ -72,17 +82,17 @@ export default function Settings({
 
       <section className="panel settings-card">
         <div>
-          <p className="eyebrow">Active system</p>
+          <p className="eyebrow">App details</p>
           <h2>{template.name}</h2>
           <p>{template.profile.goalText}</p>
         </div>
         <div className="settings-summary-row">
           <span>{template.profile.homeName}</span>
-          <span>{template.readOnly ? "Default / read-only" : "Custom / editable"}</span>
+          <span>Editable</span>
           <span>{template.profile.apartmentSizeText}</span>
         </div>
         <button className="button ghost" type="button" onClick={onManageCustomize}>
-          Edit system details
+          Edit app details
         </button>
       </section>
 
@@ -215,20 +225,6 @@ export default function Settings({
           </button>
         </div>
       </section>
-
-      <details className="panel settings-systems-detail">
-        <summary className="simple-summary">
-          <span>
-            <span className="eyebrow">Reference</span>
-            <strong>Cleaning Systems</strong>
-            <small>Zones, priority order, and practical system notes.</small>
-          </span>
-          <span className="button ghost small">Open</span>
-        </summary>
-        <div className="settings-embedded-systems">
-          <Systems template={template} />
-        </div>
-      </details>
 
       <section className="panel settings-card">
         <p className="eyebrow">Install & Device</p>

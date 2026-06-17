@@ -8,7 +8,6 @@ import Settings from "./components/Settings.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import HelpGuide from "./components/HelpGuide.jsx";
 import Onboarding from "./components/Onboarding.jsx";
-import { templateGallery } from "./data/templateGallery.js";
 import {
   createDailyRulesHistoryEntry,
   createHistoryEntry,
@@ -18,6 +17,7 @@ import {
 } from "./utils/calculations.js";
 import { daysBetween, getTodayKey } from "./utils/dates.js";
 import {
+  buildTodayTasksForDate,
   createFullBackup,
   loadAppState,
   resetToFreshState,
@@ -27,7 +27,6 @@ import {
 import {
   createDefaultTemplate,
   createTemplateExport,
-  duplicateTemplate,
   normalizeTemplate,
   validateTemplatePayload
 } from "./utils/templateUtils.js";
@@ -53,12 +52,14 @@ function downloadJson(filename, payload) {
   }
 }
 
-function createDashboardTodo(text) {
+function createTodayTask(text, dateKey) {
   const createdAt = new Date().toISOString();
   return {
-    id: `dashboard-todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `today-custom-${dateKey}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    defaultTaskId: null,
     text,
     completed: false,
+    source: "custom",
     createdAt,
     completedAt: null
   };
@@ -129,8 +130,21 @@ export default function App() {
     effectiveView === "customize"
       ? editorContext.origin === "settings"
         ? "settings"
-        : "dashboard"
+        : editorContext.origin === "routines"
+          ? "routines"
+          : "dashboard"
       : effectiveView;
+  const todayKey = getTodayKey();
+  const todayTasks = useMemo(
+    () =>
+      buildTodayTasksForDate(
+        appState.todayTasksByDate?.[todayKey],
+        activeTemplate,
+        todayKey,
+        appState.dailyRuleCompletions?.[todayKey] || []
+      ),
+    [activeTemplate, appState.dailyRuleCompletions, appState.todayTasksByDate, todayKey]
+  );
 
   function markMeaningfulUse(state) {
     return state.firstMeaningfulUseAt
@@ -178,13 +192,21 @@ export default function App() {
   }
 
   function closeInternalEditor() {
-    setCurrentView(editorContext.origin === "settings" ? "settings" : "dashboard");
+    if (editorContext.origin === "settings") {
+      setCurrentView("settings");
+      return;
+    }
+    if (editorContext.origin === "routines") {
+      setCurrentView("routines");
+      return;
+    }
+    setCurrentView("dashboard");
   }
 
   function updateActiveTemplate(updater) {
     setAppState((current) => {
       const template = current.templates.find((item) => item.id === current.activeTemplateId);
-      if (!template || template.readOnly) return current;
+      if (!template) return current;
       const updated = normalizeTemplate(updater(template), { readOnly: false });
       return markMeaningfulUse({
         ...current,
@@ -201,46 +223,11 @@ export default function App() {
     );
   }
 
-  function duplicateDefaultTemplate() {
-    const defaultTemplate =
-      appState.templates.find((template) => template.id === "clean30-default") ||
-      createDefaultTemplate();
-    const customTemplate = duplicateTemplate(defaultTemplate, "My Cleaning System");
-    setAppState((current) => markMeaningfulUse({
-      ...current,
-      templates: [...current.templates, customTemplate],
-      activeTemplateId: customTemplate.id
-    }));
-    setSelectedRoutineId("weekly-reset");
-    setCurrentView("customize");
-  }
-
-  function useGalleryTemplate(galleryItem) {
-    requestConfirmation({
-      title: `Use ${galleryItem.name}?`,
-      message:
-        "This creates a new editable custom template from the protected gallery preset. Existing templates and history are kept.",
-      confirmLabel: "Use template",
-      onConfirm: () => {
-        const customTemplate = duplicateTemplate(
-          galleryItem.template,
-          `${galleryItem.name} Copy`
-        );
-        setAppState((current) => markMeaningfulUse({
-          ...current,
-          templates: [...current.templates, customTemplate],
-          activeTemplateId: customTemplate.id
-        }));
-        setSelectedRoutineId(customTemplate.routines[0]?.id || "weekly-reset");
-      }
-    });
-  }
-
   function resetCurrentTemplateToDefault() {
     requestConfirmation({
       title: "Reset current template?",
       message:
-        "This replaces the active custom template with the Clean30 default content. History is kept.",
+        "This replaces the active template with the Clean30 starter content. History is kept.",
       confirmLabel: "Reset template",
       onConfirm: () => {
         setAppState((current) => {
@@ -250,7 +237,7 @@ export default function App() {
           const active = current.templates.find(
             (template) => template.id === current.activeTemplateId
           );
-          if (!active || active.readOnly) return current;
+          if (!active) return current;
           const resetTemplate = normalizeTemplate(
             {
               ...defaultTemplate,
@@ -300,7 +287,7 @@ export default function App() {
     requestConfirmation({
       title: "Import full backup?",
       message:
-        "This overwrites templates, active session, daily rule completions, and history with the backup data.",
+        "This overwrites templates, Today tasks, active session, and history with the backup data.",
       confirmLabel: "Import backup",
       onConfirm: () => {
         setAppState(result.data);
@@ -467,82 +454,135 @@ export default function App() {
     setCompletionSummary(entry);
   }
 
-  function toggleDailyRule(ruleId) {
-    const todayKey = getTodayKey();
-    setAppState((current) => {
-      const completed = new Set(current.dailyRuleCompletions[todayKey] || []);
-      if (completed.has(ruleId)) completed.delete(ruleId);
-      else completed.add(ruleId);
-      const completedRuleIds = [...completed];
-      const validDailyRuleIds = new Set(activeTemplate.dailyRules.map((rule) => rule.id));
-      const allDailyRulesComplete =
-        activeTemplate.dailyRules.length > 0 &&
-        activeTemplate.dailyRules.every((rule) => completed.has(rule.id));
-      const historyAlreadyLogged = hasDailyRulesHistoryEntry(current.history, todayKey);
-      const dailyHistoryEntry =
-        allDailyRulesComplete && !historyAlreadyLogged
-          ? createDailyRulesHistoryEntry({
-              dateKey: todayKey,
-              dailyRules: activeTemplate.dailyRules,
-              template: activeTemplate
-            })
-          : null;
+  function getTemplateFromState(state) {
+    return (
+      state.templates.find((template) => template.id === state.activeTemplateId) ||
+      state.templates[0] ||
+      activeTemplate
+    );
+  }
 
-      return markMeaningfulUse({
+  function getTodayTasksFromState(state, dateKey) {
+    return buildTodayTasksForDate(
+      state.todayTasksByDate?.[dateKey],
+      getTemplateFromState(state),
+      dateKey,
+      state.dailyRuleCompletions?.[dateKey] || []
+    );
+  }
+
+  function addTodayCompletionHistory(state, tasks, dateKey) {
+    const defaultTasks = tasks.filter((task) => task.source === "default");
+    const allDefaultsComplete =
+      defaultTasks.length > 0 && defaultTasks.every((task) => task.completed);
+    if (!allDefaultsComplete || hasDailyRulesHistoryEntry(state.history, dateKey)) {
+      return state;
+    }
+
+    const historyTasks = defaultTasks.map((task) => ({
+      id: task.defaultTaskId || task.id,
+      title: task.text,
+      duration: "",
+      detail: "",
+      priority: "normal"
+    }));
+    const todayHistoryEntry = createDailyRulesHistoryEntry({
+      dateKey,
+      dailyRules: historyTasks,
+      template: getTemplateFromState(state)
+    });
+
+    return {
+      ...state,
+      history: [todayHistoryEntry, ...state.history]
+    };
+  }
+
+  function toggleTodayTask(taskId) {
+    const dateKey = getTodayKey();
+    setAppState((current) => {
+      const tasks = getTodayTasksFromState(current, dateKey).map((task) => {
+        if (task.id !== taskId) return task;
+        const completed = !task.completed;
+        return {
+          ...task,
+          completed,
+          completedAt: completed ? new Date().toISOString() : null
+        };
+      });
+      const completedDefaultIds = tasks
+        .filter((task) => task.source === "default" && task.completed && task.defaultTaskId)
+        .map((task) => task.defaultTaskId);
+      const next = {
         ...current,
-        history: dailyHistoryEntry ? [dailyHistoryEntry, ...current.history] : current.history,
+        todayTasksByDate: {
+          ...(current.todayTasksByDate || {}),
+          [dateKey]: tasks
+        },
         dailyRuleCompletions: {
           ...current.dailyRuleCompletions,
-          [todayKey]: completedRuleIds.filter((id) => validDailyRuleIds.has(id))
+          [dateKey]: completedDefaultIds
         }
-      });
+      };
+      return markMeaningfulUse(addTodayCompletionHistory(next, tasks, dateKey));
     });
   }
 
-  function addDashboardTodo(text) {
+  function addTodayTask(text) {
     const trimmed = text.trim();
     if (!trimmed) return;
+    const dateKey = getTodayKey();
     setAppState((current) =>
       markMeaningfulUse({
         ...current,
-        dashboardTodos: [...(current.dashboardTodos || []), createDashboardTodo(trimmed)]
+        todayTasksByDate: {
+          ...(current.todayTasksByDate || {}),
+          [dateKey]: [...getTodayTasksFromState(current, dateKey), createTodayTask(trimmed, dateKey)]
+        }
       })
     );
   }
 
-  function toggleDashboardTodo(todoId) {
-    setAppState((current) => ({
-      ...current,
-      dashboardTodos: (current.dashboardTodos || []).map((todo) => {
-        if (todo.id !== todoId) return todo;
-        const completed = !todo.completed;
-        return {
-          ...todo,
-          completed,
-          completedAt: completed ? new Date().toISOString() : null
-        };
-      })
-    }));
+  function deleteTodayTask(taskId) {
+    const dateKey = getTodayKey();
+    setAppState((current) => {
+      const tasks = getTodayTasksFromState(current, dateKey).filter((task) => task.id !== taskId);
+      const completedDefaultIds = tasks
+        .filter((task) => task.source === "default" && task.completed && task.defaultTaskId)
+        .map((task) => task.defaultTaskId);
+      return {
+        ...current,
+        todayTasksByDate: {
+          ...(current.todayTasksByDate || {}),
+          [dateKey]: tasks
+        },
+        dailyRuleCompletions: {
+          ...current.dailyRuleCompletions,
+          [dateKey]: completedDefaultIds
+        }
+      };
+    });
   }
 
-  function deleteDashboardTodo(todoId) {
+  function resetTodayTasks() {
+    const dateKey = getTodayKey();
     setAppState((current) => ({
       ...current,
-      dashboardTodos: (current.dashboardTodos || []).filter((todo) => todo.id !== todoId)
-    }));
-  }
-
-  function clearCompletedDashboardTodos() {
-    setAppState((current) => ({
-      ...current,
-      dashboardTodos: (current.dashboardTodos || []).filter((todo) => !todo.completed)
+      todayTasksByDate: {
+        ...(current.todayTasksByDate || {}),
+        [dateKey]: buildTodayTasksForDate(null, getTemplateFromState(current), dateKey, [])
+      },
+      dailyRuleCompletions: {
+        ...current.dailyRuleCompletions,
+        [dateKey]: []
+      }
     }));
   }
 
   function resetEverything() {
     requestConfirmation({
       title: "Reset all Clean30 data?",
-      message: "This clears templates, daily rules, active session, and all history.",
+      message: "This clears templates, Today tasks, active session, and all history.",
       confirmLabel: "Reset all",
       onConfirm: () => {
         setAppState(resetToFreshState());
@@ -571,14 +611,33 @@ export default function App() {
 
   function updateAppAppearance(field, value) {
     const allowedValues = {
-      accentColor: ["forest", "teal", "navy", "slate", "plum", "brown", "charcoal"],
+      accentColor: [
+        "forest",
+        "emerald",
+        "teal",
+        "ocean",
+        "navy",
+        "indigo",
+        "violet",
+        "plum",
+        "rose",
+        "crimson",
+        "copper",
+        "charcoal"
+      ],
       backgroundColor: [
         "soft-blue",
+        "sky",
+        "cool-gray",
         "warm-cream",
+        "sand",
         "soft-mint",
-        "pale-green",
+        "sage",
         "lavender",
-        "cool-gray"
+        "lilac",
+        "blush",
+        "peach",
+        "pale-yellow"
       ]
     };
     if (!allowedValues[field]?.includes(value)) return;
@@ -591,7 +650,7 @@ export default function App() {
     }));
   }
 
-  function completeOnboarding({ setupMode, profile, schedule }) {
+  function completeOnboarding({ setupMode }) {
     setAppState((current) => {
       const defaultTemplate =
         current.templates.find((template) => template.id === "clean30-default") ||
@@ -599,42 +658,28 @@ export default function App() {
       const templates = current.templates.some((template) => template.id === defaultTemplate.id)
         ? current.templates
         : [defaultTemplate, ...current.templates];
-      const profileChanged =
-        profile.appDisplayName !== defaultTemplate.profile.appDisplayName ||
-        profile.homeName !== defaultTemplate.profile.homeName ||
-        schedule.weeklyResetDay !== defaultTemplate.schedule.weeklyResetDay ||
-        schedule.backupResetDay !== defaultTemplate.schedule.backupResetDay;
-
-      if (setupMode === "custom" || profileChanged) {
-        const customTemplate = normalizeTemplate(
-          {
-            ...duplicateTemplate(defaultTemplate, profile.homeName || "My Cleaning System"),
-            name: profile.homeName || "My Cleaning System",
-            profile: {
-              ...defaultTemplate.profile,
-              ...profile
-            },
-            schedule: {
-              ...defaultTemplate.schedule,
-              ...schedule
+      const starterTemplate = normalizeTemplate(
+        setupMode === "empty-today"
+          ? {
+              ...defaultTemplate,
+              todayDefaults: [],
+              dailyRules: []
             }
-          },
-          { readOnly: false }
-        );
-
-        return markMeaningfulUse({
-          ...current,
-          templates: [...templates, customTemplate],
-          activeTemplateId: customTemplate.id,
-          onboardingCompleted: true,
-          onboardingCompletedAt: new Date().toISOString()
-        });
-      }
+          : defaultTemplate,
+        { readOnly: false }
+      );
+      const dateKey = getTodayKey();
 
       return {
         ...current,
-        templates,
-        activeTemplateId: defaultTemplate.id,
+        templates: templates.map((template) =>
+          template.id === starterTemplate.id ? starterTemplate : template
+        ),
+        activeTemplateId: starterTemplate.id,
+        todayTasksByDate: {
+          ...(current.todayTasksByDate || {}),
+          [dateKey]: buildTodayTasksForDate(null, starterTemplate, dateKey, [])
+        },
         onboardingCompleted: true,
         onboardingCompletedAt: new Date().toISOString()
       };
@@ -646,7 +691,7 @@ export default function App() {
   function resetOnlyHistory() {
     requestConfirmation({
       title: "Reset history?",
-      message: "This clears completed sessions but keeps templates and daily rules.",
+      message: "This clears completed sessions but keeps templates and Today tasks.",
       confirmLabel: "Reset history",
       onConfirm: () => {
         setAppState((current) => ({ ...current, history: [] }));
@@ -677,28 +722,36 @@ export default function App() {
         appState={appState}
         activeTemplate={activeTemplate}
         onSetActiveTemplate={setActiveTemplateId}
-        onDuplicateDefault={duplicateDefaultTemplate}
         onResetTemplate={resetCurrentTemplateToDefault}
         onUpdateTemplate={updateActiveTemplate}
         onExportTemplate={exportTemplate}
         onImportTemplate={importTemplate}
         onExportFullBackup={exportFullBackup}
         onImportFullBackup={importFullBackup}
-        templateGallery={templateGallery}
-        onUseGalleryTemplate={useGalleryTemplate}
         onResetHistory={resetOnlyHistory}
         onResetAll={resetEverything}
         onRequestConfirmation={requestConfirmation}
-        onUpdateAppAppearance={updateAppAppearance}
         initialSection={editorContext.section}
-        initialMode={editorContext.section === "menu" ? "simple" : "advanced"}
         entryIntent={editorContext.intent}
         onBack={closeInternalEditor}
-        backLabel={editorContext.origin === "settings" ? "Back to Settings" : "Back to Dashboard"}
+        backLabel={
+          editorContext.origin === "settings"
+            ? "Back to Settings"
+            : editorContext.origin === "routines"
+              ? "Back to Routines"
+              : "Back to Dashboard"
+        }
       />
     );
   } else if (effectiveView === "routines") {
-    content = <Routines routines={activeTemplate.routines} history={appState.history} />;
+    content = (
+      <Routines
+        routines={activeTemplate.routines}
+        history={appState.history}
+        onEditRoutines={() => openInternalEditor("routines", "routines")}
+        onAddRoutine={() => openInternalEditor("routines", "routines", "add-routine")}
+      />
+    );
   } else if (effectiveView === "history") {
     content = (
       <History
@@ -732,17 +785,16 @@ export default function App() {
       <Dashboard
         template={activeTemplate}
         history={appState.history}
-        dailyRuleCompletions={appState.dailyRuleCompletions}
-        dashboardTodos={appState.dashboardTodos}
+        todayTasks={todayTasks}
+        todayTasksByDate={appState.todayTasksByDate}
         activeSession={appState.activeSession}
         completionSummary={completionSummary}
         selectedRoutineId={selectedRoutineId}
         onSelectRoutine={setSelectedRoutineId}
-        onToggleDailyRule={toggleDailyRule}
-        onAddDashboardTodo={addDashboardTodo}
-        onToggleDashboardTodo={toggleDashboardTodo}
-        onDeleteDashboardTodo={deleteDashboardTodo}
-        onClearCompletedDashboardTodos={clearCompletedDashboardTodos}
+        onToggleTodayTask={toggleTodayTask}
+        onAddTodayTask={addTodayTask}
+        onDeleteTodayTask={deleteTodayTask}
+        onResetTodayTasks={resetTodayTasks}
         onStartRoutine={startSession}
         onToggleTask={toggleTask}
         onCompletePhase={completePhase}
@@ -750,7 +802,7 @@ export default function App() {
         onFinishSession={finishSession}
         onCancelSession={cancelSession}
         onUpdateNotes={updateSessionNotes}
-        onEditDailyRules={() => openInternalEditor("daily-rules", "dashboard")}
+        onEditToday={() => openInternalEditor("routines", "dashboard", "today")}
         onEditRoutines={() => openInternalEditor("routines", "dashboard")}
         onAddRoutine={() => openInternalEditor("routines", "dashboard", "add-routine")}
       />

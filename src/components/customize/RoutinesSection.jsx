@@ -2,28 +2,26 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getRoutineTotalTasks } from "../../utils/calculations.js";
 import { createPhase, createRoutine, createTask, moveItem } from "../../utils/routineUtils.js";
 import { priorityOptions } from "../../utils/templateUtils.js";
-
-const coreRoutineIds = new Set([
-  "weekly-reset",
-  "minimal-reset",
-  "monthly-deep-clean",
-  "guest-reset",
-  "initial-reset",
-  "daily-rules"
-]);
+import DailyRulesSection from "./DailyRulesSection.jsx";
 
 export default function RoutinesSection({
   routines,
+  todayDefaults = [],
   selectedRoutine,
   selectedRoutineId,
   canEdit,
   onSelectRoutine,
   onEditTemplate,
   onConfirmEdit,
-  autoAddRoutine = false
+  autoAddRoutine = false,
+  initialEditorTab = "routines"
 }) {
   const autoAddHandled = useRef(false);
-  const dailyRulesRoutineSelected = selectedRoutine?.id === "daily-rules";
+  const [editorTab, setEditorTab] = useState(initialEditorTab);
+  const visibleRoutines = useMemo(
+    () => routines.filter((routine) => routine.id !== "daily-rules"),
+    [routines]
+  );
   const [selectedPhaseId, setSelectedPhaseId] = useState(selectedRoutine?.phases[0]?.id || "");
   const selectedPhase = useMemo(() => {
     return (
@@ -49,8 +47,13 @@ export default function RoutinesSection({
   useEffect(() => {
     if (!autoAddRoutine || autoAddHandled.current || !canEdit) return;
     autoAddHandled.current = true;
+    setEditorTab("routines");
     addRoutine();
   }, [autoAddRoutine, canEdit]);
+
+  useEffect(() => {
+    setEditorTab(initialEditorTab);
+  }, [initialEditorTab]);
 
   function editSelectedRoutine(mutator) {
     if (!selectedRoutine) return;
@@ -81,19 +84,29 @@ export default function RoutinesSection({
   }
 
   function moveRoutine(index, direction) {
+    const routine = visibleRoutines[index];
+    const targetRoutine = visibleRoutines[index + direction];
+    if (!routine || !targetRoutine) return;
     onEditTemplate((draft) => {
-      draft.routines = moveItem(draft.routines, index, direction);
+      const currentIndex = draft.routines.findIndex((item) => item.id === routine.id);
+      const targetIndex = draft.routines.findIndex((item) => item.id === targetRoutine.id);
+      if (currentIndex < 0 || targetIndex < 0) return;
+      [draft.routines[currentIndex], draft.routines[targetIndex]] = [
+        draft.routines[targetIndex],
+        draft.routines[currentIndex]
+      ];
     });
   }
 
   function deleteRoutine(routine, index) {
-    const fallback = routines[index + 1] || routines[index - 1] || null;
+    const originalIndex = routines.findIndex((item) => item.id === routine.id);
+    const fallback = visibleRoutines[index + 1] || visibleRoutines[index - 1] || null;
     onConfirmEdit({
       title: "Delete routine?",
-      message: `"${routine.title}" will be removed from this custom template.`,
+      message: `"${routine.title}" will be removed from this template.`,
       confirmLabel: "Delete routine",
       edit: (draft) => {
-        draft.routines.splice(index, 1);
+        draft.routines.splice(originalIndex, 1);
       },
       afterConfirm: () => onSelectRoutine(fallback?.id || "")
     });
@@ -173,17 +186,49 @@ export default function RoutinesSection({
         <div className="section-heading">
           <div>
             <p className="eyebrow">Routines</p>
-            <h2>Routine Library</h2>
-            <p>Select a routine to edit its checklist structure below.</p>
+            <h2>Today Defaults And Routines</h2>
+            <p>Today defaults start each day. Routines are reusable cleaning sessions.</p>
           </div>
-          <button className="button primary" type="button" disabled={!canEdit} onClick={addRoutine}>
-            Add routine
-          </button>
+          {editorTab === "routines" ? (
+            <button className="button primary" type="button" disabled={!canEdit} onClick={addRoutine}>
+              Add routine
+            </button>
+          ) : null}
         </div>
 
+        <div className="tab-row" role="tablist" aria-label="Routine editor sections">
+          <button
+            className={editorTab === "today" ? "tab active" : "tab"}
+            type="button"
+            onClick={() => setEditorTab("today")}
+          >
+            Today defaults
+          </button>
+          <button
+            className={editorTab === "routines" ? "tab active" : "tab"}
+            type="button"
+            onClick={() => setEditorTab("routines")}
+          >
+            Routines
+          </button>
+        </div>
+      </section>
+
+      {editorTab === "today" ? (
+        <DailyRulesSection
+          dailyRules={todayDefaults}
+          canEdit={canEdit}
+          onEditTemplate={onEditTemplate}
+          onConfirmEdit={onConfirmEdit}
+        />
+      ) : null}
+
+      {editorTab === "routines" ? (
+        <>
+      <section className="panel">
         <div className="editor-list">
-          {routines.map((routine, index) => {
-            const canDelete = canEdit && !coreRoutineIds.has(routine.id);
+          {visibleRoutines.map((routine, index) => {
+            const canDelete = canEdit && visibleRoutines.length > 1;
             return (
               <div
                 className={
@@ -213,7 +258,7 @@ export default function RoutinesSection({
                   <button
                     className="button small ghost"
                     type="button"
-                    disabled={!canEdit || index === routines.length - 1}
+                    disabled={!canEdit || index === visibleRoutines.length - 1}
                     onClick={() => moveRoutine(index, 1)}
                   >
                     Move down
@@ -295,12 +340,6 @@ export default function RoutinesSection({
             </label>
           </div>
 
-          {dailyRulesRoutineSelected ? (
-            <p className="callout">
-              Daily Rules routine tasks are generated from the Daily Rules section.
-            </p>
-          ) : null}
-
           <div className="section-heading editor-heading">
             <div>
               <p className="eyebrow">Phases</p>
@@ -310,7 +349,7 @@ export default function RoutinesSection({
             <button
               className="button ghost"
               type="button"
-              disabled={!canEdit || dailyRulesRoutineSelected}
+              disabled={!canEdit}
               onClick={addPhase}
             >
               Add phase
@@ -335,7 +374,7 @@ export default function RoutinesSection({
                   <button
                     className="button small ghost"
                     type="button"
-                    disabled={!canEdit || dailyRulesRoutineSelected || phaseIndex === 0}
+                    disabled={!canEdit || phaseIndex === 0}
                     onClick={() => movePhase(phaseIndex, -1)}
                   >
                     Move up
@@ -344,9 +383,7 @@ export default function RoutinesSection({
                     className="button small ghost"
                     type="button"
                     disabled={
-                      !canEdit ||
-                      dailyRulesRoutineSelected ||
-                      phaseIndex === selectedRoutine.phases.length - 1
+                      !canEdit || phaseIndex === selectedRoutine.phases.length - 1
                     }
                     onClick={() => movePhase(phaseIndex, 1)}
                   >
@@ -355,7 +392,7 @@ export default function RoutinesSection({
                   <button
                     className="button small danger-ghost"
                     type="button"
-                    disabled={!canEdit || dailyRulesRoutineSelected}
+                    disabled={!canEdit}
                     onClick={() => deletePhase(phase, phaseIndex)}
                   >
                     Delete
@@ -375,7 +412,7 @@ export default function RoutinesSection({
                     <input
                       id={`phase-${selectedPhase.id}`}
                       value={selectedPhase.title}
-                      disabled={!canEdit || dailyRulesRoutineSelected}
+                      disabled={!canEdit}
                       onChange={(event) => updatePhase(selectedPhaseIndex, event.target.value)}
                     />
                   </label>
@@ -396,7 +433,7 @@ export default function RoutinesSection({
                         <input
                           id={`task-title-${task.id}`}
                           value={task.title}
-                          disabled={!canEdit || dailyRulesRoutineSelected}
+                          disabled={!canEdit}
                           onChange={(event) =>
                             updateTask(selectedPhaseIndex, taskIndex, "title", event.target.value)
                           }
@@ -407,7 +444,7 @@ export default function RoutinesSection({
                         <input
                           id={`task-duration-${task.id}`}
                           value={task.duration}
-                          disabled={!canEdit || dailyRulesRoutineSelected}
+                          disabled={!canEdit}
                           onChange={(event) =>
                             updateTask(
                               selectedPhaseIndex,
@@ -423,7 +460,7 @@ export default function RoutinesSection({
                         <select
                           id={`task-priority-${task.id}`}
                           value={task.priority || "normal"}
-                          disabled={!canEdit || dailyRulesRoutineSelected}
+                          disabled={!canEdit}
                           onChange={(event) =>
                             updateTask(
                               selectedPhaseIndex,
@@ -446,7 +483,7 @@ export default function RoutinesSection({
                           id={`task-detail-${task.id}`}
                           className="textarea-small"
                           value={task.detail}
-                          disabled={!canEdit || dailyRulesRoutineSelected}
+                          disabled={!canEdit}
                           onChange={(event) =>
                             updateTask(selectedPhaseIndex, taskIndex, "detail", event.target.value)
                           }
@@ -457,7 +494,7 @@ export default function RoutinesSection({
                       <button
                         className="button small ghost"
                         type="button"
-                        disabled={!canEdit || dailyRulesRoutineSelected || taskIndex === 0}
+                        disabled={!canEdit || taskIndex === 0}
                         onClick={() => moveTask(selectedPhaseIndex, taskIndex, -1)}
                       >
                         Move up
@@ -466,9 +503,7 @@ export default function RoutinesSection({
                         className="button small ghost"
                         type="button"
                         disabled={
-                          !canEdit ||
-                          dailyRulesRoutineSelected ||
-                          taskIndex === selectedPhase.tasks.length - 1
+                          !canEdit || taskIndex === selectedPhase.tasks.length - 1
                         }
                         onClick={() => moveTask(selectedPhaseIndex, taskIndex, 1)}
                       >
@@ -477,7 +512,7 @@ export default function RoutinesSection({
                       <button
                         className="button small danger-ghost"
                         type="button"
-                        disabled={!canEdit || dailyRulesRoutineSelected}
+                        disabled={!canEdit}
                         onClick={() => deleteTask(task, selectedPhaseIndex, taskIndex)}
                       >
                         Delete task
@@ -490,7 +525,7 @@ export default function RoutinesSection({
               <button
                 className="button ghost"
                 type="button"
-                disabled={!canEdit || dailyRulesRoutineSelected}
+                disabled={!canEdit}
                 onClick={() => addTask(selectedPhaseIndex)}
               >
                 Add task
@@ -500,6 +535,8 @@ export default function RoutinesSection({
             <p className="callout small">No phases yet. Add a phase to start building this routine.</p>
           )}
         </section>
+      ) : null}
+        </>
       ) : null}
     </>
   );

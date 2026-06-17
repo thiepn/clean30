@@ -54,7 +54,7 @@ function normalizeRoutine(routine) {
 export const clean30DefaultTemplate = {
   id: "clean30-default",
   name: "Clean30 Default",
-  readOnly: true,
+  readOnly: false,
   profile: {
     appDisplayName: "Clean30",
     homeName: "30 m2 apartment",
@@ -66,6 +66,7 @@ export const clean30DefaultTemplate = {
     id: `zone-${index + 1}`,
     name
   })),
+  todayDefaults: dailyRuleItems.map(normalizeTask),
   dailyRules: dailyRuleItems.map(normalizeTask),
   routines: routines.map(normalizeRoutine),
   systems: {

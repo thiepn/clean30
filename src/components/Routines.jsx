@@ -30,7 +30,7 @@ function averageCompletion(history, routineId) {
   );
 }
 
-export default function Routines({ routines, history }) {
+export default function Routines({ routines, history, onEditRoutines, onAddRoutine }) {
   const referenceRoutines = useMemo(
     () => routines.filter((routine) => routine.id !== "daily-rules"),
     [routines]
@@ -64,7 +64,7 @@ export default function Routines({ routines, history }) {
     return (
       <EmptyState
         title="No reset routines"
-        message="Daily Rules are handled from Dashboard. Add reset routines from the Dashboard routine editor."
+        message="Today tasks live on Dashboard. Add reusable routines from the editor."
       />
     );
   }
@@ -79,6 +79,14 @@ export default function Routines({ routines, history }) {
             <p className="eyebrow">Routine library</p>
             <h2>Reference Checklists</h2>
             <p>Use this tab to inspect what is inside each reset routine.</p>
+          </div>
+          <div className="card-actions compact-actions">
+            <button className="button ghost small" type="button" onClick={onEditRoutines}>
+              Edit/Add
+            </button>
+            <button className="button ghost small" type="button" onClick={onAddRoutine}>
+              Add routine
+            </button>
           </div>
         </div>
         <div className="routine-library-grid" role="list">

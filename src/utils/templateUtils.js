@@ -41,6 +41,11 @@ export function normalizeTask(task, fallbackTitle = "New task") {
   };
 }
 
+function normalizeTodayDefaults(value, fallback) {
+  const source = Array.isArray(value) ? value : fallback;
+  return (source || []).map((task) => normalizeTask(task, "Today task"));
+}
+
 export function normalizePhase(phase, fallbackTitle = "New phase") {
   const saved = isPlainObject(phase) ? phase : {};
   const tasks = Array.isArray(saved.tasks) ? saved.tasks : [];
@@ -118,22 +123,26 @@ function normalizeSystems(value) {
 
 export function syncDailyRulesRoutine(template) {
   const next = cloneDeep(template);
+  next.dailyRules = cloneDeep(next.todayDefaults || next.dailyRules || []);
   const dailyRoutine = next.routines.find((routine) => routine.id === "daily-rules");
   if (!dailyRoutine) {
     next.routines.push({
       id: "daily-rules",
-      title: "Daily Rules",
+      title: "Today Tasks",
       estimatedTime: "Maximum 5 minutes",
-      purpose: "Daily Rules, not daily cleaning.",
-      whenToUse: "Use every day to stop the main bottlenecks from growing.",
+      purpose: "Default tasks for the Today section.",
+      whenToUse: "Use every day to keep small cleaning tasks visible.",
       message: "",
-      phases: [{ id: "daily-maintenance", title: "Daily maintenance", tasks: next.dailyRules }]
+      phases: [{ id: "daily-maintenance", title: "Today defaults", tasks: next.dailyRules }]
     });
   } else {
+    dailyRoutine.title = "Today Tasks";
+    dailyRoutine.purpose = "Default tasks for the Today section.";
+    dailyRoutine.whenToUse = "Use every day to keep small cleaning tasks visible.";
     dailyRoutine.phases = [
       {
         id: dailyRoutine.phases?.[0]?.id || "daily-maintenance",
-        title: dailyRoutine.phases?.[0]?.title || "Daily maintenance",
+        title: dailyRoutine.phases?.[0]?.title || "Today defaults",
         tasks: cloneDeep(next.dailyRules)
       }
     ];
@@ -145,7 +154,10 @@ export function normalizeTemplate(template, options = {}) {
   const fallback = options.fallback || clean30DefaultTemplate;
   const saved = isPlainObject(template) ? template : {};
   const routines = Array.isArray(saved.routines) ? saved.routines : fallback.routines;
-  const dailyRules = Array.isArray(saved.dailyRules) ? saved.dailyRules : fallback.dailyRules;
+  const todayDefaults = normalizeTodayDefaults(
+    saved.todayDefaults,
+    Array.isArray(saved.dailyRules) ? saved.dailyRules : fallback.todayDefaults || fallback.dailyRules
+  );
   const profile = isPlainObject(saved.profile) ? saved.profile : {};
   const schedule = isPlainObject(saved.schedule) ? saved.schedule : {};
   const appearance = isPlainObject(saved.appearance) ? saved.appearance : {};
@@ -153,7 +165,7 @@ export function normalizeTemplate(template, options = {}) {
   const normalized = {
     id: text(saved.id) || fallback.id || createId("template"),
     name: text(saved.name, fallback.name || "Cleaning Template") || "Cleaning Template",
-    readOnly: Boolean(saved.readOnly),
+    readOnly: false,
     profile: {
       appDisplayName:
         text(profile.appDisplayName, fallback.profile?.appDisplayName || "Clean30") || "Clean30",
@@ -172,7 +184,8 @@ export function normalizeTemplate(template, options = {}) {
       )
     },
     zones: normalizeZones(saved.zones || fallback.zones),
-    dailyRules: dailyRules.map((rule) => normalizeTask(rule, "Daily rule")),
+    todayDefaults,
+    dailyRules: cloneDeep(todayDefaults),
     routines: routines.map((routine) => normalizeRoutine(routine, "Routine")),
     systems: normalizeSystems(saved.systems || fallback.systems),
     schedule: {
@@ -205,12 +218,12 @@ export function normalizeTemplate(template, options = {}) {
     }
   };
 
-  if (options.readOnly !== undefined) normalized.readOnly = Boolean(options.readOnly);
+  if (options.readOnly !== undefined) normalized.readOnly = false;
   return syncDailyRulesRoutine(normalized);
 }
 
 export function createDefaultTemplate() {
-  return normalizeTemplate(cloneDeep(clean30DefaultTemplate), { readOnly: true });
+  return normalizeTemplate(cloneDeep(clean30DefaultTemplate), { readOnly: false });
 }
 
 export function duplicateTemplate(template, name = "My Cleaning System") {
@@ -231,8 +244,12 @@ export function validateTemplatePayload(payload) {
   if (!isPlainObject(rawTemplate)) {
     return { ok: false, error: "Template backup must contain a template object." };
   }
-  if (!rawTemplate.profile || !Array.isArray(rawTemplate.routines) || !Array.isArray(rawTemplate.dailyRules)) {
-    return { ok: false, error: "Template is missing required profile, routines, or daily rules." };
+  if (
+    !rawTemplate.profile ||
+    !Array.isArray(rawTemplate.routines) ||
+    (!Array.isArray(rawTemplate.todayDefaults) && !Array.isArray(rawTemplate.dailyRules))
+  ) {
+    return { ok: false, error: "Template is missing required profile, routines, or Today tasks." };
   }
   return {
     ok: true,

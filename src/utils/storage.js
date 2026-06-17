@@ -1,3 +1,4 @@
+import { getTodayKey } from "./dates.js";
 import { createDefaultTemplate, duplicateTemplate, normalizeRoutine, normalizeTemplate } from "./templateUtils.js";
 
 export const STORAGE_KEYS = {
@@ -131,13 +132,142 @@ function normalizeDashboardTodos(value) {
     });
 }
 
+function normalizeTodayTask(value, index, dateKey) {
+  const saved = isPlainObject(value) ? value : {};
+  const textValue =
+    typeof saved.text === "string"
+      ? saved.text
+      : typeof saved.title === "string"
+        ? saved.title
+        : "";
+  if (!textValue.trim()) return null;
+  const createdAt = normalizeDateString(saved.createdAt) || `${dateKey}T00:00:00.000Z`;
+  const completed = Boolean(saved.completed);
+  const source = saved.source === "custom" ? "custom" : "default";
+  const defaultTaskId =
+    typeof saved.defaultTaskId === "string"
+      ? saved.defaultTaskId
+      : typeof saved.ruleId === "string"
+        ? saved.ruleId
+        : source === "default" && typeof saved.id === "string"
+          ? saved.id.replace(/^today-[^-]+-\d{2}-\d{2}-/, "")
+          : null;
+
+  return {
+    id:
+      typeof saved.id === "string" && saved.id
+        ? saved.id
+        : `today-${source}-${dateKey}-${index}`,
+    defaultTaskId,
+    text: textValue.trim(),
+    completed,
+    source,
+    createdAt,
+    completedAt: completed ? normalizeDateString(saved.completedAt) || createdAt : null
+  };
+}
+
+export function buildTodayTasksForDate(existingTasks, template, dateKey, completedDefaultIds = []) {
+  if (Array.isArray(existingTasks)) {
+    return existingTasks
+      .map((task, index) => normalizeTodayTask(task, index, dateKey))
+      .filter(Boolean);
+  }
+
+  const completed = new Set(uniqueStrings(completedDefaultIds));
+  const defaults = template?.todayDefaults || template?.dailyRules || [];
+  return defaults.map((task, index) => {
+    const isCompleted = completed.has(task.id);
+    return {
+      id: `today-default-${dateKey}-${task.id || index}`,
+      defaultTaskId: task.id || null,
+      text: task.title || task.text || `Task ${index + 1}`,
+      completed: isCompleted,
+      source: "default",
+      createdAt: `${dateKey}T00:00:00.000Z`,
+      completedAt: isCompleted ? `${dateKey}T12:00:00.000Z` : null
+    };
+  });
+}
+
+function normalizeTodayTasksByDate(value, template, dailyRuleCompletions, dashboardTodos) {
+  const result = {};
+  if (isPlainObject(value)) {
+    Object.entries(value).forEach(([dateKey, tasks]) => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+        result[dateKey] = buildTodayTasksForDate(tasks, template, dateKey);
+      }
+    });
+  }
+
+  const todayKey = getTodayKey();
+  if (!Object.prototype.hasOwnProperty.call(result, todayKey)) {
+    const defaults = buildTodayTasksForDate(
+      null,
+      template,
+      todayKey,
+      dailyRuleCompletions[todayKey] || []
+    );
+    const migratedTodos = normalizeDashboardTodos(dashboardTodos).map((todo, index) => ({
+      id: todo.id || `today-custom-${todayKey}-${index}`,
+      defaultTaskId: null,
+      text: todo.text,
+      completed: todo.completed,
+      source: "custom",
+      createdAt: todo.createdAt,
+      completedAt: todo.completedAt
+    }));
+    result[todayKey] = [...defaults, ...migratedTodos];
+  }
+
+  return result;
+}
+
 function normalizeAppSettings(value) {
   const interval = Number(value?.backupReminderIntervalDays);
-  const accentColor = typeof value?.accentColor === "string" ? value.accentColor : "forest";
-  const backgroundColor =
+  const accentAliases = {
+    green: "forest",
+    blue: "ocean",
+    brown: "copper",
+    slate: "charcoal",
+    gray: "charcoal"
+  };
+  const backgroundAliases = {
+    "pale-green": "sage"
+  };
+  const rawAccentColor = typeof value?.accentColor === "string" ? value.accentColor : "forest";
+  const rawBackgroundColor =
     typeof value?.backgroundColor === "string" ? value.backgroundColor : "soft-blue";
-  const accentOptions = ["forest", "teal", "navy", "slate", "plum", "brown", "charcoal"];
-  const backgroundOptions = ["soft-blue", "warm-cream", "soft-mint", "pale-green", "lavender", "cool-gray"];
+  const accentColor = accentAliases[rawAccentColor] || rawAccentColor;
+  const backgroundColor = backgroundAliases[rawBackgroundColor] || rawBackgroundColor;
+  const accentOptions = [
+    "forest",
+    "emerald",
+    "teal",
+    "ocean",
+    "navy",
+    "indigo",
+    "violet",
+    "plum",
+    "rose",
+    "crimson",
+    "copper",
+    "charcoal"
+  ];
+  const backgroundOptions = [
+    "soft-blue",
+    "sky",
+    "cool-gray",
+    "warm-cream",
+    "sand",
+    "soft-mint",
+    "sage",
+    "lavender",
+    "lilac",
+    "blush",
+    "peach",
+    "pale-yellow"
+  ];
   return {
     backupReminderIntervalDays: [0, 14, 30, 60].includes(interval) ? interval : 30,
     accentColor: accentOptions.includes(accentColor) ? accentColor : "forest",
@@ -250,6 +380,7 @@ function createLegacyState() {
       history: [],
       activeSession: null,
       dailyRuleCompletions: {},
+      todayTasksByDate: {},
       dashboardTodos: [],
       dismissedRecommendations: {},
       appSettings: normalizeAppSettings(),
@@ -273,6 +404,7 @@ function createLegacyState() {
       history: [],
       activeSession: null,
       dailyRuleCompletions: {},
+      todayTasksByDate: {},
       dashboardTodos: [],
       dismissedRecommendations: {},
       appSettings: normalizeAppSettings(),
@@ -303,6 +435,7 @@ function createLegacyState() {
       activeTemplateId
     ),
     dailyRuleCompletions,
+    todayTasksByDate: normalizeTodayTasksByDate({}, customTemplate, dailyRuleCompletions, []),
     dashboardTodos: [],
     dismissedRecommendations: {},
     appSettings: normalizeAppSettings(),
@@ -328,6 +461,7 @@ export function normalizeAppState(value) {
     : templates[0].id;
   const history = normalizeHistory(value.history);
   const dailyRuleCompletions = normalizeDailyRuleCompletions(value.dailyRuleCompletions);
+  const activeTemplate = templates.find((template) => template.id === activeTemplateId) || templates[0];
 
   return {
     templates,
@@ -335,6 +469,12 @@ export function normalizeAppState(value) {
     history,
     activeSession: normalizeActiveSession(value.activeSession, templates, activeTemplateId),
     dailyRuleCompletions,
+    todayTasksByDate: normalizeTodayTasksByDate(
+      value.todayTasksByDate,
+      activeTemplate,
+      dailyRuleCompletions,
+      value.dashboardTodos
+    ),
     dashboardTodos: normalizeDashboardTodos(value.dashboardTodos),
     dismissedRecommendations: normalizeDismissedRecommendations(value.dismissedRecommendations),
     appSettings: normalizeAppSettings(value.appSettings),
@@ -387,6 +527,7 @@ export function resetToFreshState() {
     history: [],
     activeSession: null,
     dailyRuleCompletions: {},
+    todayTasksByDate: {},
     dashboardTodos: [],
     dismissedRecommendations: {},
     appSettings: normalizeAppSettings(),

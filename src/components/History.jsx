@@ -25,7 +25,7 @@ function displayDuration(minutes) {
 
 function filterLabel(routine) {
   const labels = {
-    "daily-rules": "Daily",
+    "daily-rules": "Today",
     "weekly-reset": "Weekly",
     "minimal-reset": "Minimal",
     "guest-reset": "Guest",
@@ -36,7 +36,11 @@ function filterLabel(routine) {
 }
 
 function entryKindLabel(entry) {
-  return isDailyRulesHistoryEntry(entry) ? "Daily" : "Reset";
+  return isDailyRulesHistoryEntry(entry) ? "Today" : "Reset";
+}
+
+function entryTitle(entry) {
+  return isDailyRulesHistoryEntry(entry) ? "Today tasks" : entry.routineTitle;
 }
 
 export default function History({ history, routines, template, onDeleteEntry }) {
@@ -77,11 +81,11 @@ export default function History({ history, routines, template, onDeleteEntry }) 
           <div className="history-empty-panel">
             <div>
               <h3>No cleaning history yet.</h3>
-              <p>Complete Daily Rules or finish a reset to start building history.</p>
+              <p>Complete Today tasks or finish a reset to start building history.</p>
             </div>
             <div className="history-starter-stats">
               <div>
-                <span>Daily rules completed</span>
+                <span>Today completed</span>
                 <strong>0</strong>
               </div>
               <div>
@@ -113,7 +117,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
               <strong>{stats.monthly}</strong>
             </div>
             <div className="metric-card">
-              <span>Daily rules completed</span>
+              <span>Today completed</span>
               <strong>{stats.dailyRules}</strong>
             </div>
             <div className="metric-card">
@@ -148,7 +152,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
         {history.length === 0 ? (
           <EmptyState
             title="No insights yet"
-            message="Complete Daily Rules or finish a reset to reveal useful patterns."
+            message="Complete Today tasks or finish a reset to reveal useful patterns."
           />
         ) : (
           <>
@@ -251,7 +255,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
           message={
             hasHistory
               ? "Try another filter to review completed entries."
-              : "Complete Daily Rules or finish a reset to build cleaning history."
+              : "Complete Today tasks or finish a reset to build cleaning history."
           }
         />
       ) : (
@@ -265,7 +269,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
                 onClick={() => setSelectedId(entry.id)}
               >
                 <div className="history-card-topline">
-                  <span>{entry.routineTitle}</span>
+                  <span>{entryTitle(entry)}</span>
                   <small className="pill">{entryKindLabel(entry)}</small>
                 </div>
                 <strong>{formatDateTime(entry.finishedAt)}</strong>
@@ -282,16 +286,16 @@ export default function History({ history, routines, template, onDeleteEntry }) 
             {selected ? (
               <>
                 <p className="eyebrow">Entry details</p>
-                <h2>{selected.routineTitle}</h2>
+                <h2>{entryTitle(selected)}</h2>
                 <dl className="detail-list">
-                  <div>
-                    <dt>Routine</dt>
-                    <dd>{selected.routineTitle}</dd>
-                  </div>
+                    <div>
+                      <dt>Routine</dt>
+                    <dd>{entryTitle(selected)}</dd>
+                    </div>
                   {selectedIsDailyRules ? (
                     <div>
                       <dt>Status</dt>
-                      <dd>Daily rules complete</dd>
+                      <dd>Today tasks complete</dd>
                     </div>
                   ) : selected.percent < 100 ? (
                     <div>

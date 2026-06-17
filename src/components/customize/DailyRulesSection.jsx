@@ -19,33 +19,37 @@ export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate,
 
   function addRule() {
     const rule = createTask();
-    rule.title = "New daily rule";
+    rule.title = "New Today task";
     onEditTemplate((draft) => {
-      draft.dailyRules.push(rule);
+      draft.todayDefaults = [...(draft.todayDefaults || draft.dailyRules || []), rule];
     });
     setSelectedRuleId(rule.id);
   }
 
   function updateRule(index, field, value) {
     onEditTemplate((draft) => {
-      draft.dailyRules[index][field] = value;
+      const defaults = draft.todayDefaults || draft.dailyRules || [];
+      defaults[index][field] = value;
+      draft.todayDefaults = defaults;
     });
   }
 
   function moveRule(index, direction) {
     onEditTemplate((draft) => {
-      draft.dailyRules = moveItem(draft.dailyRules, index, direction);
+      draft.todayDefaults = moveItem(draft.todayDefaults || draft.dailyRules || [], index, direction);
     });
   }
 
   function deleteRule(rule, index) {
     const fallback = dailyRules[index + 1] || dailyRules[index - 1] || null;
     onConfirmEdit({
-      title: "Delete daily rule?",
-      message: `"${rule.title}" will be removed from today's checklist and the Daily Rules routine.`,
-      confirmLabel: "Delete rule",
+      title: "Delete default Today task?",
+      message: `"${rule.title}" will be removed from the default Today tasks.`,
+      confirmLabel: "Delete task",
       edit: (draft) => {
-        draft.dailyRules.splice(index, 1);
+        const defaults = draft.todayDefaults || draft.dailyRules || [];
+        defaults.splice(index, 1);
+        draft.todayDefaults = defaults;
       },
       afterConfirm: () => setSelectedRuleId(fallback?.id || "")
     });
@@ -55,19 +59,18 @@ export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate,
     <section className="panel">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Daily Rules</p>
-          <h2>Tiny Preventive Rules</h2>
-          <p>
-            These rules appear on the dashboard and also power the generated Daily Rules routine.
-          </p>
+          <p className="eyebrow">Today</p>
+          <h2>Default Today Tasks</h2>
+          <p>These tasks appear automatically in Today for each new day.</p>
         </div>
         <button className="button primary" type="button" disabled={!canEdit} onClick={addRule}>
-          Add daily rule
+          Add default task
         </button>
       </div>
 
       <p className="callout small">
-        Edit daily rules here. The Daily Rules routine mirrors this list automatically.
+        Delete every default task if you want Today to start empty. One-off tasks are still added
+        from Dashboard.
       </p>
 
       <div className="editor-list compact-editor-list">
@@ -111,7 +114,7 @@ export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate,
         <div className="editor-card selected-editor-card">
           <div className="section-heading compact-heading">
             <div>
-              <p className="eyebrow">Selected rule</p>
+              <p className="eyebrow">Selected task</p>
               <h3>{selectedRule.title}</h3>
             </div>
             <span className="duration">{selectedRule.duration || "No estimate"}</span>
@@ -148,7 +151,7 @@ export default function DailyRulesSection({ dailyRules, canEdit, onEditTemplate,
           </div>
         </div>
       ) : (
-        <p className="callout small">No daily rules yet. Add a rule to show it on Dashboard.</p>
+        <p className="callout small">No default Today tasks. Dashboard can still accept one-off tasks.</p>
       )}
     </section>
   );

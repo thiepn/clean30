@@ -18,31 +18,30 @@ function scheduleFocus(callback) {
 
 const guideSections = [
   {
-    title: "Dashboard Flow",
+    title: "Dashboard",
     items: [
-      "Start with Dashboard.",
-      "Complete Daily Rules.",
-      "Add one-off tasks to the custom to-do list.",
+      "Start with Today.",
+      "Check off default tasks or add one-off tasks.",
       "Start or continue cleaning routines from Dashboard.",
-      "Use Edit Cleaning Plan only when you want to change routines or rules."
+      "Use Edit defaults only when you want to change what appears each day."
     ]
   },
   {
-    title: "What Each Area Is For",
+    title: "Tabs",
     items: [
-      "Dashboard: Daily Rules, custom tasks, and cleaning sessions.",
-      "Routines: view the full checklists.",
+      "Dashboard: Today tasks and cleaning sessions.",
+      "Routines: inspect and edit reusable checklists.",
       "History: see what you completed.",
-      "Settings: backup, appearance, systems, privacy, help, install, and reset controls."
+      "Settings: appearance, backups, privacy, help, install, and reset controls."
     ]
   },
   {
-    title: "Templates Explained",
+    title: "Editing",
     items: [
-      "Default templates are protected.",
-      "Duplicate a template to edit it.",
-      "Template export shares routines and settings only.",
-      "Full backup saves personal data too, including history."
+      "Today defaults live inside the routine editor.",
+      "Routines can be edited from Dashboard or Routines.",
+      "App details and schedule are also in the editor.",
+      "Appearance is changed from Settings."
     ]
   },
   {
@@ -56,9 +55,9 @@ const guideSections = [
   {
     title: "If It Feels Overwhelming",
     items: [
-      "Use the default template.",
       "Only use Dashboard at first.",
-      "Open the routine editor only when you need to change the plan."
+      "Treat Today as the daily checklist.",
+      "Open the editor only when you need to change the plan."
     ]
   },
   {
@@ -132,7 +131,7 @@ export default function HelpGuide({ open, onClose }) {
           ))}
         </div>
 
-        <p className="callout guide-note">Dashboard is for doing. Edit Cleaning Plan is for changing routines.</p>
+        <p className="callout guide-note">Dashboard is for doing. The editor is for changing the plan.</p>
 
         <div className="dialog-actions">
           <button className="button primary" type="button" onClick={onClose}>

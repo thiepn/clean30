@@ -1,30 +1,31 @@
 # Clean30
 
-Clean30 is a local-first apartment cleaning routine PWA for daily habits, custom dashboard tasks, reset sessions, cleaning systems, history, and backups.
+Clean30 is a local-first apartment cleaning PWA for Today tasks, reusable cleaning routines, session history, backups, and simple appearance settings.
 
 Live app: https://thiepn.github.io/clean30/
 
 ## Features
 
-- Dashboard with Daily Rules, custom to-dos, routine starting, and active sessions.
-- Cleaning sessions with saved progress, notes, partial finish, reset, and discard flows.
-- Routines reference library with collapsed phase checklists.
-- Internal editor for Daily Rules, routines, systems, schedule, templates, and profile settings.
-- History page for completed resets, Daily Rules, and practical patterns.
-- Settings with systems, backup, privacy, help, appearance, install, reminder, and reset tools.
+- Four main tabs: Dashboard, Routines, History, Settings.
+- Dashboard with Today tasks, routine/session controls, and a compact mini calendar.
+- Today tasks reset by date and can start from editable default tasks.
+- Reusable cleaning routines with saved session progress, notes, partial finish, reset, and discard flows.
+- Routines reference library with collapsed phase checklists and Edit/Add entry points.
+- History for completed sessions and Today task logs.
+- Settings for appearance, backups, privacy, help, install, onboarding, and reset tools.
+- 12 accent colors and 12 calm background colors.
 - PWA install support for phone home screens.
 - Local-only data storage in browser/PWA storage.
 - Full backup export/import for restoring or moving app data.
 
 ## How To Use
 
-1. Open the app.
-2. Complete Daily Rules from the Dashboard.
-3. Add one-off dashboard tasks when needed.
-4. Start or resume a reset session from the Dashboard.
-5. Use Routines as a reference library.
-6. Review History to see what has been completed.
-7. Export a full backup regularly from Settings.
+1. Open Dashboard.
+2. Check off Today tasks or add a one-off task.
+3. Start or resume a cleaning routine when needed.
+4. Use Routines to inspect or edit reusable cleaning plans.
+5. Review History to see what has been completed.
+6. Export a full backup regularly from Settings.
 
 ## Mobile / PWA Install
 
@@ -68,15 +69,13 @@ Clean30 has:
 
 Data is stored locally in browser/PWA storage. Clearing browser or app data may delete Clean30 data. Export full backups from Settings if you want to protect or move your data.
 
-Appearance preferences, such as accent and background color, are also stored locally with the rest of the app settings.
+Appearance preferences are stored locally with the rest of the app settings.
 
 ## Template Sharing
 
-Template export/import is for sharing a cleaning system with friends or family. Template files include routines, Daily Rules, systems, zones, schedule, profile labels, and appearance settings.
+Template export/import is for sharing a reusable cleaning plan with friends or family. Template files include Today defaults, routines, schedule, profile labels, and other compatibility fields.
 
-Template exports do not include personal history, active sessions, or daily completion data. Full backups do include personal app data and should be treated as private.
-
-Routine and Daily Rules editing is opened from the Dashboard. App-level settings, systems, appearance, and data controls live in Settings.
+Template exports do not include personal history, active sessions, or per-date Today task data. Full backups do include personal app data and should be treated as private.
 
 ## Current Status
 
