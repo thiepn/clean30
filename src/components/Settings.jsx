@@ -146,8 +146,7 @@ export default function Settings({
 
       <section className="panel settings-card">
         <div>
-          <h2>Today behavior</h2>
-          <p>Keep Today simple for each new date.</p>
+          <h2>Today</h2>
         </div>
         <label className="toggle-row">
           <input
@@ -156,8 +155,8 @@ export default function Settings({
             onChange={(event) => onUpdateStartTodayEmpty(event.target.checked)}
           />
           <span>
-            <strong>Start Today empty</strong>
-            <small>New days start with no default tasks. Current tasks stay until you refresh.</small>
+            <strong>Start empty</strong>
+            <small>New days skip default tasks.</small>
           </span>
         </label>
       </section>

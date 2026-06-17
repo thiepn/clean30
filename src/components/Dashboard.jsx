@@ -100,6 +100,7 @@ export default function Dashboard({
 }) {
   const [taskText, setTaskText] = useState("");
   const [expandedTaskId, setExpandedTaskId] = useState("");
+  const [reorderMode, setReorderMode] = useState(false);
   const [routinePickerOpen, setRoutinePickerOpen] = useState(false);
   const [routineSourceId, setRoutineSourceId] = useState("");
   const [selectedRoutineTaskIds, setSelectedRoutineTaskIds] = useState([]);
@@ -170,26 +171,19 @@ export default function Dashboard({
     });
   }
 
+  function openRoutinePicker() {
+    setRoutinePickerOpen(true);
+    if (!routineSourceId && routineOptions[0]) setRoutineSourceId(routineOptions[0].id);
+  }
+
   return (
     <div className="screen-stack">
       <section className="panel today-panel">
         <div className="section-heading compact-heading">
           <h2>Today</h2>
-          <div className="card-actions compact-actions">
-            <button
-              className="button edit-action small"
-              type="button"
-              onClick={() => {
-                setRoutinePickerOpen((open) => !open);
-                if (!routineSourceId && routineOptions[0]) setRoutineSourceId(routineOptions[0].id);
-              }}
-            >
-              Add from routine
-            </button>
-            <button className="button edit-action small" type="button" onClick={onEditToday}>
-              Edit
-            </button>
-          </div>
+          <button className="button edit-action small" type="button" onClick={onEditToday}>
+            Edit
+          </button>
         </div>
 
         <form className="dashboard-todo-form" onSubmit={submitTask}>
@@ -204,8 +198,48 @@ export default function Dashboard({
           </button>
         </form>
 
+        <div className="today-secondary-actions">
+          <button className="button ghost small" type="button" onClick={openRoutinePicker}>
+            Add from routine
+          </button>
+          {todayTasks.length ? (
+            <>
+              <button
+                className={reorderMode ? "button edit-action small" : "button ghost small"}
+                type="button"
+                onClick={() => setReorderMode((enabled) => !enabled)}
+              >
+                Reorder
+              </button>
+              <button className="button text-button small" type="button" onClick={onResetTodayTasks}>
+                Reset list
+              </button>
+            </>
+          ) : null}
+        </div>
+
         {routinePickerOpen ? (
-          <div className="routine-import-panel">
+          <div className="dialog-backdrop compact-backdrop" role="presentation">
+            <section
+              aria-labelledby="routine-import-title"
+              aria-modal="true"
+              className="dialog routine-import-dialog"
+              role="dialog"
+            >
+              <div className="dialog-header">
+                <div>
+                  <p className="eyebrow">Today</p>
+                  <h2 id="routine-import-title">Add from routine</h2>
+                </div>
+                <button
+                  className="icon-button"
+                  type="button"
+                  aria-label="Close routine picker"
+                  onClick={() => setRoutinePickerOpen(false)}
+                >
+                  X
+                </button>
+              </div>
             <div className="routine-import-topline">
               <label className="field-label" htmlFor="routine-import-select">
                 Routine
@@ -224,9 +258,6 @@ export default function Dashboard({
                   ))}
                 </select>
               </label>
-              <button className="button ghost small" type="button" onClick={() => setRoutinePickerOpen(false)}>
-                Close
-              </button>
             </div>
             <div className="routine-import-list">
               {routineTaskOptions.map((task) => {
@@ -258,7 +289,11 @@ export default function Dashboard({
               >
                 Add selected
               </button>
+              <button className="button ghost small" type="button" onClick={() => setRoutinePickerOpen(false)}>
+                Cancel
+              </button>
             </div>
+            </section>
           </div>
         ) : null}
 
@@ -270,6 +305,8 @@ export default function Dashboard({
               );
               const groupIndex = sameGroup.findIndex((item) => item.id === task.id);
               const expanded = expandedTaskId === task.id;
+              const tags = task.tags || [];
+              const firstTag = tags[0] || "";
 
               return (
                 <div className={task.completed ? "task-row today-task-row checked" : "task-row today-task-row"} key={task.id}>
@@ -281,36 +318,42 @@ export default function Dashboard({
                   <span className="task-copy">
                     <span className="task-title-line">
                       <strong>{task.text}</strong>
+                      <span className="task-inline-meta">
+                        {task.note?.trim() ? <span className="mini-chip">Note</span> : null}
+                        {firstTag ? <span className="mini-chip">{firstTag}</span> : null}
+                        {tags.length > 1 ? <span className="mini-chip">+{tags.length - 1}</span> : null}
+                      </span>
                     </span>
-                    {task.source === "routine" && task.routineName ? (
-                      <span className="task-detail compact-source">{task.routineName}</span>
-                    ) : null}
                   </span>
                   <div className="today-row-actions">
-                    <button
-                      className="icon-button small"
-                      type="button"
-                      aria-label={`Move ${task.text} up`}
-                      disabled={groupIndex === 0}
-                      onClick={() => onMoveTodayTask(task.id, -1)}
-                    >
-                      ^
-                    </button>
-                    <button
-                      className="icon-button small"
-                      type="button"
-                      aria-label={`Move ${task.text} down`}
-                      disabled={groupIndex === sameGroup.length - 1}
-                      onClick={() => onMoveTodayTask(task.id, 1)}
-                    >
-                      v
-                    </button>
+                    {reorderMode ? (
+                      <>
+                        <button
+                          className="icon-button small"
+                          type="button"
+                          aria-label={`Move ${task.text} up`}
+                          disabled={groupIndex === 0}
+                          onClick={() => onMoveTodayTask(task.id, -1)}
+                        >
+                          ^
+                        </button>
+                        <button
+                          className="icon-button small"
+                          type="button"
+                          aria-label={`Move ${task.text} down`}
+                          disabled={groupIndex === sameGroup.length - 1}
+                          onClick={() => onMoveTodayTask(task.id, 1)}
+                        >
+                          v
+                        </button>
+                      </>
+                    ) : null}
                     <button
                       className="button text-button small"
                       type="button"
                       onClick={() => setExpandedTaskId(expanded ? "" : task.id)}
                     >
-                      Details
+                      More
                     </button>
                     <button
                       className="icon-button small danger-icon"
@@ -323,6 +366,9 @@ export default function Dashboard({
                   </div>
                   {expanded ? (
                     <div className="today-task-details">
+                      {task.source === "routine" && task.routineName ? (
+                        <p className="muted compact-source">From {task.routineName}</p>
+                      ) : null}
                       <label className="field-label" htmlFor={`today-note-${task.id}`}>
                         Note
                         <textarea
@@ -406,11 +452,6 @@ export default function Dashboard({
           </div>
         ) : null}
 
-        {todayTasks.length ? (
-          <button className="button text-button small" type="button" onClick={onResetTodayTasks}>
-            Refresh from defaults
-          </button>
-        ) : null}
       </section>
 
       <StartSession

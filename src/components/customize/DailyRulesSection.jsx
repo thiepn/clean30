@@ -131,8 +131,7 @@ export default function DailyRulesSection({
       <div className="section-heading">
         <div>
           <p className="eyebrow">Today</p>
-          <h2>Default Today Tasks</h2>
-          <p>General defaults appear on new days unless weekday defaults override them.</p>
+          <h2>{selectedDay === "general" ? "General defaults" : "Weekday defaults"}</h2>
         </div>
         <button className="button edit-action small" type="button" disabled={!canEdit} onClick={addRule}>
           Add
@@ -147,8 +146,8 @@ export default function DailyRulesSection({
           onChange={(event) => updateWeekdayEnabled(event.target.checked)}
         />
         <span>
-          <strong>Use different defaults by weekday</strong>
-          <small>Empty weekdays fall back to General.</small>
+          <strong>Weekday defaults</strong>
+          <small>Empty weekdays use General.</small>
         </span>
       </label>
 
@@ -169,9 +168,9 @@ export default function DailyRulesSection({
 
       {usesGeneralFallback ? (
         <div className="callout small weekday-fallback">
-          This weekday uses General defaults.
+          Uses general defaults.
           <button className="button ghost small" type="button" disabled={!canEdit} onClick={copyGeneralDefaults}>
-            Copy General
+            Copy general
           </button>
         </div>
       ) : null}
@@ -256,7 +255,7 @@ export default function DailyRulesSection({
       ) : (
         <p className="callout small">
           {usesGeneralFallback
-            ? "Copy General or add a task to customize this weekday."
+            ? "Copy general or add a task."
             : "No default Today tasks. Dashboard can still accept one-off tasks."}
         </p>
       )}

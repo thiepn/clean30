@@ -705,13 +705,29 @@ export default function App() {
 
   function resetTodayTasks() {
     const dateKey = getTodayKey();
-    setAppState((current) =>
-      applyTodayTasksToState(
-        current,
-        dateKey,
-        buildTodayTasksForDate(null, getTemplateFromState(current), dateKey, [], current.appSettings)
-      )
-    );
+    const reset = () => {
+      setAppState((current) =>
+        applyTodayTasksToState(
+          current,
+          dateKey,
+          buildTodayTasksForDate(null, getTemplateFromState(current), dateKey, [], current.appSettings)
+        )
+      );
+    };
+
+    if (!getTodayTasksFromState(appState, dateKey).length) {
+      reset();
+      return;
+    }
+
+    requestConfirmation({
+      title: "Reset today?",
+      message: appState.appSettings?.startTodayEmpty
+        ? "This clears today's tasks because Start Today empty is on."
+        : "This replaces today's tasks with your current defaults.",
+      confirmLabel: "Reset",
+      onConfirm: reset
+    });
   }
 
   function resetEverything() {

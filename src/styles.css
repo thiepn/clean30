@@ -2171,6 +2171,13 @@ details[open] > .phase-summary .phase-chevron::before {
   min-height: 42px;
 }
 
+.today-secondary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
 .dashboard-todos .task-row,
 .today-task-list .task-row {
   grid-template-columns: 28px minmax(0, 1fr) auto;
@@ -2209,6 +2216,26 @@ details[open] > .phase-summary .phase-chevron::before {
   line-height: 1.25;
 }
 
+.task-inline-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.mini-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  border: 1px solid rgba(98, 92, 82, 0.22);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  padding: 0.04rem 0.36rem;
+  font-size: 0.68rem;
+  font-weight: 720;
+  line-height: 1;
+}
+
 .today-task-list .icon-button.small {
   width: 32px;
   height: 32px;
@@ -2240,7 +2267,8 @@ details[open] > .phase-summary .phase-chevron::before {
   font-size: 0.78rem;
 }
 
-.routine-import-panel {
+.routine-import-panel,
+.routine-import-dialog {
   display: grid;
   gap: 0.65rem;
   border: 1px solid var(--selected-border);
@@ -2249,9 +2277,15 @@ details[open] > .phase-summary .phase-chevron::before {
   padding: 0.75rem;
 }
 
+.routine-import-dialog {
+  width: min(560px, 100%);
+  max-height: min(82vh, 680px);
+  overflow: auto;
+}
+
 .routine-import-topline {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.65rem;
   align-items: end;
 }
@@ -2327,14 +2361,17 @@ details[open] > .phase-summary .phase-chevron::before {
 }
 
 .undo-toast {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 95;
   display: inline-flex;
   align-items: center;
-  justify-self: start;
   gap: 0.5rem;
   border: 1px solid var(--selected-border);
   border-radius: 999px;
   background: var(--surface-strong);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow);
   padding: 0.3rem 0.35rem 0.3rem 0.65rem;
 }
 
@@ -5359,9 +5396,24 @@ details[open] > .phase-summary .phase-chevron::before {
     bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 0.75rem);
   }
 
+  .undo-toast {
+    right: 0.75rem;
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 0.75rem);
+  }
+
   .today-panel .section-heading {
     display: flex;
     align-items: center;
+  }
+
+  .today-secondary-actions {
+    gap: 0.32rem;
+  }
+
+  .today-secondary-actions .button.small {
+    min-height: 32px;
+    padding: 0.28rem 0.46rem;
+    font-size: 0.76rem;
   }
 
   .today-task-list .task-row {
@@ -5373,6 +5425,14 @@ details[open] > .phase-summary .phase-chevron::before {
 
   .today-row-actions {
     gap: 0.18rem;
+  }
+
+  .task-inline-meta {
+    gap: 0.18rem;
+  }
+
+  .mini-chip {
+    font-size: 0.64rem;
   }
 
   .today-row-actions .button.small {
