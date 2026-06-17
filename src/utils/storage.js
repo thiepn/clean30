@@ -330,6 +330,12 @@ function normalizeAppSettings(value) {
     backupReminderIntervalDays: [0, 14, 30, 60].includes(interval) ? interval : 30,
     accentColor: accentOptions.includes(accentColor) ? accentColor : "green",
     backgroundColor: backgroundOptions.includes(backgroundColor) ? backgroundColor : "cream",
+    fontSize: ["small", "normal", "large"].includes(value?.fontSize)
+      ? value.fontSize
+      : "normal",
+    density: ["compact", "comfortable"].includes(value?.density)
+      ? value.density
+      : "comfortable",
     startTodayEmpty: Boolean(value?.startTodayEmpty),
     taskTags: cleanTags(value?.taskTags).length ? cleanTags(value.taskTags) : DEFAULT_TASK_TAGS
   };

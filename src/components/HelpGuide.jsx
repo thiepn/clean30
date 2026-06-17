@@ -25,6 +25,7 @@ const guideSections = [
       "Completed tasks move below active tasks.",
       "Start, continue, pause, or finish cleaning routines from Dashboard.",
       "An unfinished session appears near the top with progress and elapsed time.",
+      "Calendar days open a compact activity detail, with a weekly summary kept inside Calendar.",
       "Use Edit when you want to change what appears each day."
     ]
   },
@@ -53,6 +54,8 @@ const guideSections = [
     items: [
       "Data is stored locally on this device/browser.",
       "Export a full backup occasionally.",
+      "Settings shows backup health and previews backup contents before an import replaces data.",
+      "Font size and layout density are stored locally with your other preferences.",
       "There is no account, cloud sync, or remote storage."
     ]
   },

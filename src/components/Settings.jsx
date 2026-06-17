@@ -1,20 +1,21 @@
 import { useRef, useState } from "react";
-import { formatDateTime } from "../utils/dates.js";
+import packageInfo from "../../package.json";
+import { formatRelativeDays } from "../utils/dates.js";
 
 const accentOptions = [
-  { id: "red", label: "Red" },
-  { id: "orange", label: "Orange" },
-  { id: "amber", label: "Amber" },
-  { id: "green", label: "Green" },
-  { id: "teal", label: "Teal" },
-  { id: "cyan", label: "Cyan" },
-  { id: "blue", label: "Blue" },
-  { id: "navy", label: "Navy" },
-  { id: "purple", label: "Purple" },
-  { id: "pink", label: "Pink" },
-  { id: "brown", label: "Brown" },
-  { id: "charcoal", label: "Charcoal" }
-];
+  "red",
+  "orange",
+  "amber",
+  "green",
+  "teal",
+  "cyan",
+  "blue",
+  "navy",
+  "purple",
+  "pink",
+  "brown",
+  "charcoal"
+].map((id) => ({ id, label: id[0].toUpperCase() + id.slice(1) }));
 
 const backgroundOptions = [
   { id: "white", label: "White" },
@@ -30,6 +31,49 @@ const backgroundOptions = [
   { id: "sand", label: "Sand" },
   { id: "slate", label: "Slate" }
 ];
+
+function backupStatus(lastBackup, backupDue) {
+  if (!lastBackup) {
+    return {
+      label: "No backup yet",
+      detail: "Export a backup to protect your local routines and history.",
+      tone: "due"
+    };
+  }
+  if (backupDue) {
+    return {
+      label: "Backup recommended",
+      detail: `Last backup ${formatRelativeDays(lastBackup).toLowerCase()}.`,
+      tone: "due"
+    };
+  }
+  return {
+    label: "Backup recent",
+    detail: `Last backup ${formatRelativeDays(lastBackup).toLowerCase()}.`,
+    tone: "recent"
+  };
+}
+
+function ChoiceButtons({ label, value, options, onChange }) {
+  return (
+    <div className="appearance-setting-group">
+      <p className="field-label">{label}</p>
+      <div className="setting-segmented" role="group" aria-label={label}>
+        {options.map((option) => (
+          <button
+            className={value === option.id ? "button edit-action small" : "button ghost small"}
+            key={option.id}
+            type="button"
+            aria-pressed={value === option.id}
+            onClick={() => onChange(option.id)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Settings({
   template,
@@ -50,6 +94,7 @@ export default function Settings({
 }) {
   const fileInputRef = useRef(null);
   const [message, setMessage] = useState("");
+  const health = backupStatus(lastFullBackupExportedAt, backupDue);
 
   function handleImportFile(event) {
     const file = event.target.files?.[0];
@@ -58,10 +103,10 @@ export default function Settings({
     reader.onload = () => {
       try {
         const payload = JSON.parse(reader.result);
-        const result = onImportFullBackup(payload);
-        setMessage(result.ok ? result.message || "Backup imported successfully." : result.error);
+        const result = onImportFullBackup(payload, { fileName: file.name });
+        setMessage(result.ok ? result.message || "Backup validated." : result.error);
       } catch {
-        setMessage("Backup file is not valid JSON.");
+        setMessage("Backup file is not valid JSON. Current data was not changed.");
       } finally {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
@@ -73,81 +118,12 @@ export default function Settings({
     <div className="screen-stack">
       <section className="panel">
         <div className="section-heading compact-heading">
-          <div>
-            <h2>Settings</h2>
-          </div>
+          <h2>Settings</h2>
         </div>
       </section>
 
       <section className="panel settings-card">
-        <div>
-          <h2>{template.name}</h2>
-          <p>{template.profile.goalText}</p>
-        </div>
-        <div className="settings-summary-row">
-          <span>{template.profile.homeName}</span>
-          <span>Editable</span>
-          <span>{template.profile.apartmentSizeText}</span>
-        </div>
-        <button className="button ghost" type="button" onClick={onManageCustomize}>
-          Edit app details
-        </button>
-      </section>
-
-      <section className="panel settings-card">
-        <div>
-          <h2>App Colors</h2>
-        </div>
-        <div className="appearance-setting-group">
-          <p className="field-label">Accent color</p>
-          <div className="appearance-choice-grid">
-            {accentOptions.map((option) => (
-              <button
-                className={
-                  appAppearance?.accentColor === option.id
-                    ? "appearance-choice active"
-                    : "appearance-choice"
-                }
-                data-accent-choice={option.id}
-                key={option.id}
-                type="button"
-                aria-pressed={appAppearance?.accentColor === option.id}
-                onClick={() => onUpdateAppAppearance("accentColor", option.id)}
-              >
-                <span className="appearance-swatch" />
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="appearance-setting-group">
-          <p className="field-label">Background color</p>
-          <div className="appearance-choice-grid">
-            {backgroundOptions.map((option) => (
-              <button
-                className={
-                  appAppearance?.backgroundColor === option.id
-                    ? "appearance-choice active"
-                    : "appearance-choice"
-                }
-                data-background-choice={option.id}
-                key={option.id}
-                type="button"
-                aria-pressed={appAppearance?.backgroundColor === option.id}
-                onClick={() => onUpdateAppAppearance("backgroundColor", option.id)}
-              >
-                <span className="appearance-swatch" />
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="panel settings-card">
-        <div>
-          <h2>Today</h2>
-        </div>
+        <h2>Today</h2>
         <label className="toggle-row">
           <input
             type="checkbox"
@@ -162,27 +138,110 @@ export default function Settings({
       </section>
 
       <section className="panel settings-card">
-        <div className="section-heading compact-heading">
-          <div>
-            <p className="eyebrow">Backup & Data</p>
-            <h2>Local Data</h2>
-            <p>Your data is stored only on this device/browser.</p>
+        <h2>Appearance</h2>
+        <ChoiceButtons
+          label="Font size"
+          value={appAppearance?.fontSize || "normal"}
+          options={[
+            { id: "small", label: "Small" },
+            { id: "normal", label: "Normal" },
+            { id: "large", label: "Large" }
+          ]}
+          onChange={(value) => onUpdateAppAppearance("fontSize", value)}
+        />
+        <ChoiceButtons
+          label="Layout density"
+          value={appAppearance?.density || "comfortable"}
+          options={[
+            { id: "compact", label: "Compact" },
+            { id: "comfortable", label: "Comfortable" }
+          ]}
+          onChange={(value) => onUpdateAppAppearance("density", value)}
+        />
+      </section>
+
+      <details className="panel settings-card compact-detail">
+        <summary className="simple-summary">
+          <span>
+            <strong>App colors</strong>
+            <small>Accent and page background.</small>
+          </span>
+          <span className="button ghost small">Open</span>
+        </summary>
+        <div className="settings-detail-content">
+          <div className="appearance-setting-group">
+            <p className="field-label">Accent color</p>
+            <div className="appearance-choice-grid">
+              {accentOptions.map((option) => (
+                <button
+                  className={
+                    appAppearance?.accentColor === option.id
+                      ? "appearance-choice active"
+                      : "appearance-choice"
+                  }
+                  data-accent-choice={option.id}
+                  key={option.id}
+                  type="button"
+                  aria-pressed={appAppearance?.accentColor === option.id}
+                  onClick={() => onUpdateAppAppearance("accentColor", option.id)}
+                >
+                  <span className="appearance-swatch" />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="appearance-setting-group">
+            <p className="field-label">Background color</p>
+            <div className="appearance-choice-grid">
+              {backgroundOptions.map((option) => (
+                <button
+                  className={
+                    appAppearance?.backgroundColor === option.id
+                      ? "appearance-choice active"
+                      : "appearance-choice"
+                  }
+                  data-background-choice={option.id}
+                  key={option.id}
+                  type="button"
+                  aria-pressed={appAppearance?.backgroundColor === option.id}
+                  onClick={() => onUpdateAppAppearance("backgroundColor", option.id)}
+                >
+                  <span className="appearance-swatch" />
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <div className={backupDue ? "backup-box due" : "backup-box"}>
+      </details>
+
+      <section className="panel settings-card backup-health-card">
+        <div className="section-heading compact-heading">
           <div>
-            <strong>{backupDue ? "Backup reminder" : "Backup status"}</strong>
-            <p>
-              Export a full backup occasionally so your routines and history are easy to restore.
-            </p>
-            <span>
-              Last full backup:{" "}
-              {lastFullBackupExportedAt ? formatDateTime(lastFullBackupExportedAt) : "Not yet"}
-            </span>
+            <p className="eyebrow">Backup</p>
+            <h2>Backup health</h2>
+            <p>Your data exists only in this browser or installed app.</p>
           </div>
+          <span className={health.tone === "due" ? "status-pill warning" : "status-pill"}>
+            {health.label}
+          </span>
+        </div>
+        <p>{health.detail}</p>
+        <div className="settings-actions">
           <button className="button primary" type="button" onClick={onExportFullBackup}>
             Export full backup
           </button>
+          <button className="button ghost" type="button" onClick={() => fileInputRef.current?.click()}>
+            Import full backup
+          </button>
+          <input
+            ref={fileInputRef}
+            className="hidden-input"
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportFile}
+          />
         </div>
         <label className="field-label settings-inline-field" htmlFor="backup-reminder-interval">
           Backup reminder
@@ -197,22 +256,6 @@ export default function Settings({
             <option value={60}>Every 60 days</option>
           </select>
         </label>
-        <div className="settings-actions">
-          <button
-            className="button ghost"
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Import full backup
-          </button>
-          <input
-            ref={fileInputRef}
-            className="hidden-input"
-            type="file"
-            accept="application/json,.json"
-            onChange={handleImportFile}
-          />
-        </div>
         {message ? <p className="form-message">{message}</p> : null}
       </section>
 
@@ -225,8 +268,8 @@ export default function Settings({
           <span className="button ghost small">Open</span>
         </summary>
         <p>
-          Clean30 has no account, no cloud sync, no analytics, and no ads. Your data stays on this
-          device unless you export a backup.
+          Clean30 has no account, cloud sync, analytics, or ads. Export a backup before clearing
+          browser or app data.
         </p>
       </details>
 
@@ -260,6 +303,26 @@ export default function Settings({
         <button className="button ghost" type="button" onClick={() => window.location.reload()}>
           Reload app
         </button>
+      </details>
+
+      <details className="panel settings-card compact-detail">
+        <summary className="simple-summary">
+          <span>
+            <strong>About</strong>
+            <small>App details and tester version.</small>
+          </span>
+          <span className="button ghost small">Open</span>
+        </summary>
+        <div className="settings-detail-content">
+          <div>
+            <h3>{template.name}</h3>
+            <p>{template.profile.homeName}</p>
+          </div>
+          <p className="version-label">Version {packageInfo.version}</p>
+          <button className="button ghost" type="button" onClick={onManageCustomize}>
+            Edit app details
+          </button>
+        </div>
       </details>
 
       <details className="panel danger-zone settings-danger-detail">

@@ -7,18 +7,20 @@ Live app: https://thiepn.github.io/clean30/
 ## Features
 
 - Four main tabs: Dashboard, Routines, History, Settings.
-- Dashboard with Today tasks, routine/session controls, and a compact mini calendar.
+- Dashboard with Today tasks, routine/session controls, and a Calendar with day details and a weekly summary.
 - Today tasks reset by date, can start from editable defaults, support notes/tags, and can pull tasks from routines.
 - Optional weekday-specific Today defaults and a Start Today empty preference.
 - Reusable cleaning routines with editable duration, optional color labels, duplicate/archive controls, and last-done badges.
 - Active cleaning sessions with saved progress, notes, elapsed timer, pause/resume, partial finish, reset, and discard flows.
 - Routines reference library with collapsed phase checklists, archived-routine toggle, and Edit/Add entry points.
 - History for completed sessions and Today task logs.
-- Settings for appearance, backups, privacy, help, install, onboarding, and reset tools.
+- History with elapsed time, active-day streaks, and weekly consistency context.
+- Settings for font size, density, appearance, backup health/import preview, privacy, help, install, onboarding, and reset tools.
 - 12 accent colors and 12 calm background colors.
 - PWA install support for phone home screens.
 - Local-only data storage in browser/PWA storage.
 - Full backup export/import for restoring or moving app data.
+- Backup restore preview before local data is replaced.
 
 ## How To Use
 

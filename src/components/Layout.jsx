@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import Navigation from "./Navigation.jsx";
 
 export default function Layout({
@@ -9,7 +10,16 @@ export default function Layout({
   appAppearance
 }) {
   const profile = template.profile;
-  const shellClass = `app-shell density-${template.appearance.density}`;
+  const density = appAppearance?.density || template.appearance.density || "comfortable";
+  const fontSize = appAppearance?.fontSize || "normal";
+  const shellClass = `app-shell density-${density}`;
+
+  useEffect(() => {
+    document.documentElement.dataset.fontSize = fontSize;
+    return () => {
+      delete document.documentElement.dataset.fontSize;
+    };
+  }, [fontSize]);
 
   return (
     <div

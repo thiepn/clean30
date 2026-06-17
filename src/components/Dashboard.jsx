@@ -6,6 +6,7 @@ import {
   getSessionProgress
 } from "../utils/calculations.js";
 import { formatDate, getTodayKey } from "../utils/dates.js";
+import { buildActivityByDate, getWeeklyActivitySummary } from "../utils/activity.js";
 import StartSession from "./StartSession.jsx";
 
 function dateFromKey(dateKey) {
@@ -55,22 +56,12 @@ function buildMonthCells(referenceDate) {
   return cells;
 }
 
-function buildActivityByDate(history, todayTasksByDate) {
-  const activity = {};
-
-  (history || []).forEach((entry) => {
-    const dateKey = entry.date || getTodayKey(new Date(entry.finishedAt || entry.completedAt));
-    if (!activity[dateKey]) activity[dateKey] = { sessions: [], todayCompleted: 0 };
-    activity[dateKey].sessions.push(entry);
-  });
-
-  Object.entries(todayTasksByDate || {}).forEach(([dateKey, tasks]) => {
-    const completed = Array.isArray(tasks) ? tasks.filter((task) => task.completed).length : 0;
-    if (!activity[dateKey]) activity[dateKey] = { sessions: [], todayCompleted: 0 };
-    activity[dateKey].todayCompleted = completed;
-  });
-
-  return activity;
+function displayMinutes(minutes) {
+  const rounded = Math.round(Number(minutes) || 0);
+  if (rounded < 60) return `${rounded} min`;
+  const hours = Math.floor(rounded / 60);
+  const remainder = rounded % 60;
+  return remainder ? `${hours} hr ${remainder} min` : `${hours} hr`;
 }
 
 export default function Dashboard({
@@ -119,6 +110,7 @@ export default function Dashboard({
   const [timerNow, setTimerNow] = useState(Date.now());
   const todayKey = getTodayKey();
   const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [calendarDetailOpen, setCalendarDetailOpen] = useState(false);
   const displayTasks = useMemo(
     () => [...todayTasks].sort((first, second) => Number(first.completed) - Number(second.completed)),
     [todayTasks]
@@ -147,7 +139,15 @@ export default function Dashboard({
     [history, todayTasksByDate]
   );
   const calendarCells = useMemo(() => buildMonthCells(new Date()), []);
-  const selectedActivity = activityByDate[selectedDate] || { sessions: [], todayCompleted: 0 };
+  const selectedActivity = activityByDate[selectedDate] || {
+    sessions: [],
+    todayCompleted: 0,
+    cleaningMinutes: 0
+  };
+  const weeklySummary = useMemo(
+    () => getWeeklyActivitySummary(activityByDate, selectedDate),
+    [activityByDate, selectedDate]
+  );
   const activeRoutine = useMemo(
     () =>
       activeSession
@@ -169,6 +169,15 @@ export default function Dashboard({
     }, 1000);
     return () => window.clearInterval(intervalId);
   }, [activeSession?.id, activeSession?.paused]);
+
+  useEffect(() => {
+    if (!calendarDetailOpen) return;
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setCalendarDetailOpen(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [calendarDetailOpen]);
 
   function submitTask(event) {
     event.preventDefault();
@@ -577,7 +586,10 @@ export default function Dashboard({
                   .join(" ")}
                 key={cell.id}
                 type="button"
-                onClick={() => setSelectedDate(cell.dateKey)}
+                onClick={() => {
+                  setSelectedDate(cell.dateKey);
+                  setCalendarDetailOpen(true);
+                }}
               >
                 <span>{cell.day}</span>
               </button>
@@ -585,27 +597,75 @@ export default function Dashboard({
           )}
         </div>
 
-        <div className="calendar-detail">
-          <p className="eyebrow">{displayShortDate(selectedDate)}</p>
-          {selectedActivity.sessions.length || selectedActivity.todayCompleted ? (
-            <>
-              <strong>
-                {countLabel(selectedActivity.sessions.length, "routine")} /{" "}
-                {countLabel(selectedActivity.todayCompleted, "Today task")}
-              </strong>
-              {selectedActivity.sessions.length ? (
-                <ul className="system-list compact">
-                  {selectedActivity.sessions.map((entry) => (
-                    <li key={entry.id}>{entry.routineTitle}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </>
-          ) : (
-            <p>No activity.</p>
-          )}
+        <div className="calendar-week-summary" aria-label="Selected week summary">
+          <strong>This week:</strong>
+          <span>{weeklySummary.activeDays}/7 active days</span>
+          <span>{countLabel(weeklySummary.todayCompleted, "Today task")}</span>
+          <span>{countLabel(weeklySummary.routines, "routine")}</span>
+          {weeklySummary.cleaningMinutes > 0 ? (
+            <span>{displayMinutes(weeklySummary.cleaningMinutes)} cleaning</span>
+          ) : null}
         </div>
       </section>
+
+      {calendarDetailOpen ? (
+        <div
+          className="dialog-backdrop calendar-sheet-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setCalendarDetailOpen(false);
+          }}
+        >
+          <section
+            aria-labelledby="calendar-detail-title"
+            aria-modal="true"
+            className="dialog calendar-day-sheet"
+            role="dialog"
+          >
+            <div className="dialog-header">
+              <div>
+                <p className="eyebrow">Calendar</p>
+                <h2 id="calendar-detail-title">{displayShortDate(selectedDate)}</h2>
+              </div>
+              <button
+                className="icon-button"
+                type="button"
+                aria-label="Close calendar day details"
+                onClick={() => setCalendarDetailOpen(false)}
+              >
+                X
+              </button>
+            </div>
+
+            {selectedActivity.sessions.length || selectedActivity.todayCompleted ? (
+              <>
+                <div className="calendar-day-metrics">
+                  <span>{countLabel(selectedActivity.todayCompleted, "Today task")}</span>
+                  <span>{countLabel(selectedActivity.sessions.length, "routine")}</span>
+                  {selectedActivity.cleaningMinutes > 0 ? (
+                    <span>{displayMinutes(selectedActivity.cleaningMinutes)} cleaning</span>
+                  ) : null}
+                </div>
+                {selectedActivity.sessions.length ? (
+                  <div className="calendar-session-list">
+                    <p className="field-label">Routine sessions</p>
+                    {selectedActivity.sessions.map((entry) => (
+                      <div key={entry.id}>
+                        <strong>{entry.routineTitle || "Routine"}</strong>
+                        <span>
+                          {entry.completedTasks}/{entry.totalTasks} tasks
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <p className="muted">No activity</p>
+            )}
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

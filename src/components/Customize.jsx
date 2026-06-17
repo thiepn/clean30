@@ -125,7 +125,7 @@ export default function Customize({
     reader.onload = () => {
       try {
         const payload = JSON.parse(reader.result);
-        const result = handler(payload);
+        const result = handler(payload, { fileName: file.name });
         setMessage(result.ok ? result.message || fallbackMessage : result.error);
       } catch {
         setMessage("File is not valid JSON.");

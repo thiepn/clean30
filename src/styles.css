@@ -1207,6 +1207,32 @@ textarea {
   margin-top: 0.85rem;
 }
 
+.settings-detail-content {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+}
+
+.setting-segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.backup-health-card {
+  border-color: rgba(160, 108, 45, 0.28);
+}
+
+.backup-health-card .settings-actions {
+  margin-top: 0.25rem;
+}
+
+.version-label {
+  color: var(--text-soft);
+  font-weight: 720;
+}
+
 .appearance-setting-group {
   display: grid;
   gap: 0.55rem;
@@ -1516,6 +1542,12 @@ textarea {
   min-height: 26px;
   padding: 0.2rem 0.55rem;
   font-size: 0.78rem;
+}
+
+.status-pill.warning {
+  border-color: rgba(160, 108, 45, 0.38);
+  background: var(--warning-soft);
+  color: #754916;
 }
 
 .backup-reminder-panel,
@@ -2501,17 +2533,61 @@ details[open] > .phase-summary .phase-chevron::before {
   content: "";
 }
 
-.calendar-detail {
-  display: grid;
-  gap: 0.35rem;
-  border: 1px solid var(--selected-border);
-  border-radius: var(--radius-card);
-  background: var(--selected-bg);
-  padding: 0.85rem 1rem;
+.calendar-week-summary,
+.calendar-day-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
 }
 
-.calendar-detail strong {
-  color: var(--accent-text);
+.calendar-week-summary {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.calendar-week-summary strong {
+  color: var(--text);
+}
+
+.calendar-week-summary span,
+.calendar-day-metrics span,
+.history-card-meta span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  padding: 0.14rem 0.48rem;
+  font-size: 0.78rem;
+  font-weight: 680;
+}
+
+.calendar-day-sheet {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.calendar-session-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.calendar-session-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-strong);
+  padding: 0.65rem 0.75rem;
+}
+
+.calendar-session-list span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .settings-systems-detail {
@@ -3183,6 +3259,19 @@ details[open] > .phase-summary .phase-chevron::before {
   color: var(--muted);
 }
 
+.history-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+
+.history-card .history-card-meta span {
+  display: inline-flex;
+  color: var(--text-soft);
+  font-size: 0.76rem;
+}
+
 .history-card .history-card-topline {
   display: flex;
 }
@@ -3419,6 +3508,18 @@ details[open] > .phase-summary .phase-chevron::before {
   min-height: 100vh;
   padding: 1rem;
   background: var(--bg);
+}
+
+html[data-font-size="small"] {
+  font-size: 15px;
+}
+
+html[data-font-size="normal"] {
+  font-size: 16px;
+}
+
+html[data-font-size="large"] {
+  font-size: 17.5px;
 }
 
 .crash-card {
@@ -5633,6 +5734,45 @@ details[open] > .phase-summary .phase-chevron::before {
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .calendar-sheet-backdrop {
+    place-items: end center;
+    padding: 0 0 calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+  }
+
+  .calendar-day-sheet {
+    width: 100%;
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+  }
+
+  .calendar-week-summary {
+    gap: 0.3rem;
+    padding-top: 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  .calendar-session-list > div {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .calendar-session-list span {
+    white-space: normal;
+  }
+
+  .setting-segmented {
+    gap: 0.3rem;
+  }
+
+  .setting-segmented .button {
+    width: auto;
+    flex: 1 1 90px;
   }
 
   .routine-editor-row,

@@ -88,6 +88,33 @@ function createRoutineTodayTask({ routine, task, dateKey }) {
   };
 }
 
+function createBackupPreview(data, fileName = "") {
+  const templates = Array.isArray(data?.templates) ? data.templates : [];
+  const routines = templates.flatMap((template) =>
+    (template.routines || []).filter((routine) => routine.id !== "daily-rules")
+  );
+  const archived = routines.filter((routine) => routine.archived).length;
+  const historyCount = Array.isArray(data?.history) ? data.history.length : 0;
+  const todayDateCount =
+    data?.todayTasksByDate && typeof data.todayTasksByDate === "object"
+      ? Object.keys(data.todayTasksByDate).length
+      : 0;
+  const tagCount = Array.isArray(data?.appSettings?.taskTags)
+    ? data.appSettings.taskTags.length
+    : 0;
+  return [
+    fileName ? `File: ${fileName}.` : "",
+    `${routines.length} routines (${archived} archived).`,
+    `${historyCount} history entries.`,
+    `${todayDateCount} Today dates.`,
+    `${tagCount} task tags.`,
+    data?.appSettings ? "App settings included." : "No app settings found.",
+    "Importing replaces current local data."
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export default function App() {
   const [appState, setAppState] = useState(() => loadAppState());
   const [currentView, setCurrentView] = useState("dashboard");
@@ -324,21 +351,21 @@ export default function App() {
     setAppState(nextState);
   }
 
-  function importFullBackup(payload) {
+  function importFullBackup(payload, metadata = {}) {
     const result = validateFullBackupPayload(payload);
     if (!result.ok) return result;
+    const previewData = payload?.data || payload;
     requestConfirmation({
-      title: "Import full backup?",
-      message:
-        "This overwrites templates, Today tasks, active session, and history with the backup data.",
-      confirmLabel: "Import backup",
+      title: "Review backup before import",
+      message: createBackupPreview(previewData, metadata.fileName),
+      confirmLabel: "Import",
       onConfirm: () => {
         setAppState(result.data);
         setSelectedRoutineId(result.data.templates[0]?.routines[0]?.id || "weekly-reset");
         setCompletionSummary(null);
       }
     });
-    return { ok: true, message: "Backup validated. Confirm import to overwrite local data." };
+    return { ok: true, message: "Backup validated. Review the preview before importing." };
   }
 
   function startSession(routineId = selectedRoutineId) {
@@ -865,7 +892,9 @@ export default function App() {
         "green",
         "sand",
         "slate"
-      ]
+      ],
+      fontSize: ["small", "normal", "large"],
+      density: ["compact", "comfortable"]
     };
     if (!allowedValues[field]?.includes(value)) return;
     setAppState((current) => ({
@@ -984,6 +1013,7 @@ export default function App() {
     content = (
       <History
         history={appState.history}
+        todayTasksByDate={appState.todayTasksByDate}
         routines={activeTemplate.routines}
         template={activeTemplate}
         onDeleteEntry={deleteHistoryEntry}

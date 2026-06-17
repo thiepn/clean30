@@ -1,15 +1,13 @@
 import { useMemo, useState } from "react";
 import { getHistoryStats, isDailyRulesHistoryEntry } from "../utils/calculations.js";
 import { formatDateTime, formatRelativeDays } from "../utils/dates.js";
+import {
+  buildActivityByDate,
+  getActivityStreaks,
+  getWeeklyActivitySummary
+} from "../utils/activity.js";
 import { getHistoryInsights, getSessionDurationMinutes } from "../utils/historyInsights.js";
 import EmptyState from "./EmptyState.jsx";
-import ProgressBar from "./ProgressBar.jsx";
-
-function displayDays(value) {
-  if (value === null || value === undefined) return "Not yet";
-  if (value === 0) return "Today";
-  return `${value} days`;
-}
 
 function displayInsightDate(value) {
   return value ? formatRelativeDays(value) : "Not yet";
@@ -43,11 +41,24 @@ function entryTitle(entry) {
   return isDailyRulesHistoryEntry(entry) ? "Today tasks" : entry.routineTitle;
 }
 
-export default function History({ history, routines, template, onDeleteEntry }) {
+export default function History({ history, todayTasksByDate = {}, routines, template, onDeleteEntry }) {
   const [filter, setFilter] = useState("all");
   const [selectedId, setSelectedId] = useState(null);
   const stats = getHistoryStats(history);
   const insights = getHistoryInsights(history, routines, template);
+  const activityByDate = useMemo(
+    () => buildActivityByDate(history, todayTasksByDate),
+    [history, todayTasksByDate]
+  );
+  const streaks = useMemo(() => getActivityStreaks(activityByDate), [activityByDate]);
+  const weeklyActivity = useMemo(
+    () => getWeeklyActivitySummary(activityByDate),
+    [activityByDate]
+  );
+  const todayActivityDays = useMemo(
+    () => Object.values(activityByDate).filter((item) => item.todayCompleted > 0).length,
+    [activityByDate]
+  );
   const filterOptions = [
     { id: "all", label: "All" },
     ...routines.map((routine) => ({ id: routine.id, label: filterLabel(routine) }))
@@ -101,36 +112,25 @@ export default function History({ history, routines, template, onDeleteEntry }) 
         ) : (
           <div className="stats-grid">
             <div className="metric-card">
-              <span>Completed resets</span>
+              <span>Routine sessions</span>
               <strong>{stats.total}</strong>
             </div>
             <div className="metric-card">
-              <span>Weekly resets</span>
-              <strong>{stats.weekly}</strong>
+              <span>Today activity days</span>
+              <strong>{todayActivityDays}</strong>
             </div>
             <div className="metric-card">
-              <span>Minimal resets</span>
-              <strong>{stats.minimal}</strong>
+              <span>Current streak</span>
+              <strong>{streaks.current} days</strong>
             </div>
             <div className="metric-card">
-              <span>Monthly deep cleans</span>
-              <strong>{stats.monthly}</strong>
+              <span>Best streak</span>
+              <strong>{streaks.best} days</strong>
             </div>
             <div className="metric-card">
-              <span>Today completed</span>
-              <strong>{stats.dailyRules}</strong>
-            </div>
-            <div className="metric-card">
-              <span>Average completion</span>
-              <strong>{stats.total ? `${stats.average}%` : "Not yet"}</strong>
-            </div>
-            <div className="metric-card">
-              <span>Last weekly reset</span>
-              <strong>{displayDays(stats.daysSinceWeekly)}</strong>
-            </div>
-            <div className="metric-card">
-              <span>Last monthly deep clean</span>
-              <strong>{displayDays(stats.daysSinceMonthly)}</strong>
+              <span>This week</span>
+              <strong>{weeklyActivity.activeDays}/7 days</strong>
+              <small>active-day consistency</small>
             </div>
             <div className="metric-card">
               <span>Most recent</span>
@@ -261,7 +261,11 @@ export default function History({ history, routines, template, onDeleteEntry }) 
       ) : (
         <div className="history-grid">
           <section className="history-list" aria-label="Completed sessions">
-            {filtered.map((entry) => (
+            {filtered.map((entry) => {
+              const duration = isDailyRulesHistoryEntry(entry)
+                ? entry.estimatedDurationMinutes
+                : getSessionDurationMinutes(entry);
+              return (
               <button
                 className={selectedId === entry.id ? "history-card active" : "history-card"}
                 key={entry.id}
@@ -273,13 +277,17 @@ export default function History({ history, routines, template, onDeleteEntry }) 
                   <small className="pill">{entryKindLabel(entry)}</small>
                 </div>
                 <strong>{formatDateTime(entry.finishedAt)}</strong>
-                <ProgressBar
-                  percent={entry.percent}
-                  label={`${entry.completedTasks}/${entry.totalTasks} tasks`}
-                />
+                <div className="history-card-meta">
+                  <span>{entry.completedTasks}/{entry.totalTasks} tasks</span>
+                  {duration !== null && duration !== undefined ? (
+                    <span>{displayDuration(duration)}</span>
+                  ) : null}
+                  {!isDailyRulesHistoryEntry(entry) ? <span>{entry.percent}%</span> : null}
+                </div>
                 {entry.notes ? <small>{entry.notes.slice(0, 100)}</small> : null}
               </button>
-            ))}
+              );
+            })}
           </section>
 
           <section className="panel detail-panel">

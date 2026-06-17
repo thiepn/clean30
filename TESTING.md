@@ -43,7 +43,9 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Finishing a routine shows a compact completion summary with View History and Close.
 - [ ] Mini calendar renders.
 - [ ] Calendar marks days with session or Today activity.
-- [ ] Selecting a calendar day shows details.
+- [ ] Selecting a calendar day opens a closeable detail sheet.
+- [ ] Day details clearly separate Today tasks, routine sessions, and cleaning time.
+- [ ] Calendar weekly summary updates from real activity.
 
 ## Routines
 
@@ -80,6 +82,8 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Today entries appear as Today entries.
 - [ ] Routine/session entries render correctly.
 - [ ] Stats are not distorted by one-off Today tasks.
+- [ ] Current/best streak and weekly consistency use completed activity only.
+- [ ] Entry cards show tasks and elapsed time when available.
 - [ ] Filters work.
 - [ ] Entry detail panel opens.
 - [ ] Delete entry requires confirmation.
@@ -90,8 +94,13 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Appearance shows 12 accent colors and 12 background colors.
 - [ ] Changing accent/background persists after refresh.
 - [ ] Backup export downloads a JSON file.
-- [ ] Backup import validates and asks for confirmation.
+- [ ] Backup health updates after export.
+- [ ] Backup import previews file name and data counts before confirmation.
+- [ ] Canceling import leaves current data unchanged.
 - [ ] Backup reminder interval can be changed.
+- [ ] Font size Small/Normal/Large persists after refresh.
+- [ ] Compact/Comfortable density persists after refresh.
+- [ ] Version number appears in About.
 - [ ] Privacy/local-only section is clear.
 - [ ] Help guide opens.
 - [ ] Restart onboarding works.
