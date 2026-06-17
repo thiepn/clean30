@@ -36,7 +36,9 @@ export default function StartSession({
   onResetSession,
   onFinishSession,
   onCancelSession,
-  onUpdateNotes
+  onUpdateNotes,
+  onEditRoutines,
+  onAddRoutine
 }) {
   const startRoutines = useMemo(
     () =>
@@ -64,8 +66,8 @@ export default function StartSession({
               <h2>{routine.title}</h2>
               <p>{routine.purpose}</p>
               <p className="muted">
-                This unfinished session is saved locally. Continue it, finish partial, or cancel it
-                before starting another routine.
+                This unfinished session is saved locally. Finish it, discard it, or reset it before
+                starting another routine.
               </p>
             </div>
             <div className="session-meta">
@@ -146,10 +148,18 @@ export default function StartSession({
       <section className="panel">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Choose routine</p>
-            <h2>Start Session</h2>
+              <p className="eyebrow">Cleaning routine</p>
+              <h2>Choose a routine</h2>
+            </div>
+            <div className="card-actions compact-actions">
+              <button className="button ghost small" type="button" onClick={onEditRoutines}>
+                Edit routines
+              </button>
+              <button className="button ghost small" type="button" onClick={onAddRoutine}>
+                Add routine
+              </button>
+            </div>
           </div>
-        </div>
         <div className="routine-picker">
           {startRoutines.map((routine) => (
             <button
@@ -201,7 +211,8 @@ export default function StartSession({
             </button>
           </div>
           <p className="muted start-reference-note">
-            Need to inspect the full checklist? Open Routines for the reference view.
+            Routine details are available in the Routines tab. Editing opens the cleaning-plan
+            editor.
           </p>
         </section>
       ) : null}

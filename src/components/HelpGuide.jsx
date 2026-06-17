@@ -18,25 +18,22 @@ function scheduleFocus(callback) {
 
 const guideSections = [
   {
-    title: "Quick Start",
+    title: "Dashboard Flow",
     items: [
       "Start with Dashboard.",
-      "If Clean30 recommends a reset, start that session.",
-      "If you are tired, use Minimal Reset.",
-      "If guests are coming, use Guest Reset.",
-      "Use Customize only when you want to change the system."
+      "Complete Daily Rules.",
+      "Add one-off tasks to the custom to-do list.",
+      "Start or continue cleaning routines from Dashboard.",
+      "Use Edit Cleaning Plan only when you want to change routines or rules."
     ]
   },
   {
     title: "What Each Area Is For",
     items: [
-      "Dashboard: today's status and next action.",
-      "Start: do a cleaning session.",
-      "Systems: understand cleaning principles and zones.",
+      "Dashboard: Daily Rules, custom tasks, and cleaning sessions.",
       "Routines: view the full checklists.",
-      "Customize: edit templates, routines, and rules.",
       "History: see what you completed.",
-      "Settings: backup, reset, and onboarding."
+      "Settings: backup, appearance, systems, privacy, help, install, and reset controls."
     ]
   },
   {
@@ -60,8 +57,8 @@ const guideSections = [
     title: "If It Feels Overwhelming",
     items: [
       "Use the default template.",
-      "Only use Dashboard and Start Session at first.",
-      "Ignore Advanced Customize until you need it."
+      "Only use Dashboard at first.",
+      "Open the routine editor only when you need to change the plan."
     ]
   },
   {
@@ -135,7 +132,7 @@ export default function HelpGuide({ open, onClose }) {
           ))}
         </div>
 
-        <p className="callout guide-note">Cleaning screens are for doing. Customize is for editing.</p>
+        <p className="callout guide-note">Dashboard is for doing. Edit Cleaning Plan is for changing routines.</p>
 
         <div className="dialog-actions">
           <button className="button primary" type="button" onClick={onClose}>

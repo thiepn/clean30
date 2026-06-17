@@ -5,8 +5,6 @@ import History from "./components/History.jsx";
 import Layout from "./components/Layout.jsx";
 import Routines from "./components/Routines.jsx";
 import Settings from "./components/Settings.jsx";
-import StartSession from "./components/StartSession.jsx";
-import Systems from "./components/Systems.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import HelpGuide from "./components/HelpGuide.jsx";
 import Onboarding from "./components/Onboarding.jsx";
@@ -55,6 +53,17 @@ function downloadJson(filename, payload) {
   }
 }
 
+function createDashboardTodo(text) {
+  const createdAt = new Date().toISOString();
+  return {
+    id: `dashboard-todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    text,
+    completed: false,
+    createdAt,
+    completedAt: null
+  };
+}
+
 export default function App() {
   const [appState, setAppState] = useState(() => loadAppState());
   const [currentView, setCurrentView] = useState("dashboard");
@@ -62,6 +71,12 @@ export default function App() {
   const [completionSummary, setCompletionSummary] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [editorContext, setEditorContext] = useState({
+    origin: "dashboard",
+    section: "routines",
+    intent: null,
+    key: 0
+  });
 
   const activeTemplate = useMemo(() => {
     return (
@@ -104,33 +119,23 @@ export default function App() {
     backupAge !== null &&
     backupAge >= backupReminderInterval;
 
+  const effectiveView =
+    currentView === "start"
+      ? "dashboard"
+      : currentView === "systems"
+        ? "settings"
+        : currentView;
+  const publicView =
+    effectiveView === "customize"
+      ? editorContext.origin === "settings"
+        ? "settings"
+        : "dashboard"
+      : effectiveView;
+
   function markMeaningfulUse(state) {
     return state.firstMeaningfulUseAt
       ? state
       : { ...state, firstMeaningfulUseAt: new Date().toISOString() };
-  }
-
-  function clearTodayRecommendationDismissals(state) {
-    const todayKey = getTodayKey();
-    if (!state.dismissedRecommendations?.[todayKey]?.length) return state;
-    const { [todayKey]: _today, ...remaining } = state.dismissedRecommendations;
-    return { ...state, dismissedRecommendations: remaining };
-  }
-
-  function dismissRecommendation(recommendationKey) {
-    if (!recommendationKey) return;
-    const todayKey = getTodayKey();
-    setAppState((current) => {
-      const existing = new Set(current.dismissedRecommendations?.[todayKey] || []);
-      existing.add(recommendationKey);
-      return {
-        ...current,
-        dismissedRecommendations: {
-          ...(current.dismissedRecommendations || {}),
-          [todayKey]: [...existing]
-        }
-      };
-    });
   }
 
   function requestConfirmation({ title, message, confirmLabel, onConfirm }) {
@@ -144,6 +149,36 @@ export default function App() {
   function confirmCurrentAction() {
     confirmDialog?.onConfirm?.();
     closeConfirmation();
+  }
+
+  function navigateTo(viewId) {
+    if (viewId === "start") {
+      setCurrentView("dashboard");
+      return;
+    }
+    if (viewId === "systems") {
+      setCurrentView("settings");
+      return;
+    }
+    if (viewId === "customize") {
+      openInternalEditor("routines", "dashboard");
+      return;
+    }
+    setCurrentView(viewId);
+  }
+
+  function openInternalEditor(section = "routines", origin = "dashboard", intent = null) {
+    setEditorContext({
+      origin,
+      section,
+      intent,
+      key: Date.now()
+    });
+    setCurrentView("customize");
+  }
+
+  function closeInternalEditor() {
+    setCurrentView(editorContext.origin === "settings" ? "settings" : "dashboard");
   }
 
   function updateActiveTemplate(updater) {
@@ -288,23 +323,23 @@ export default function App() {
         message: "This will discard the current active session and start the selected routine.",
         confirmLabel: "Replace",
         onConfirm: () => {
-          setAppState((current) => clearTodayRecommendationDismissals({
+          setAppState((current) => ({
             ...current,
             activeSession: createSession(routine, activeTemplate)
           }));
           setCompletionSummary(null);
-          setCurrentView("start");
+          setCurrentView("dashboard");
         }
       });
       return;
     }
 
-    setAppState((current) => clearTodayRecommendationDismissals({
+    setAppState((current) => ({
       ...current,
       activeSession: createSession(routine, activeTemplate)
     }));
     setCompletionSummary(null);
-    setCurrentView("start");
+    setCurrentView("dashboard");
   }
 
   function toggleTask(taskId) {
@@ -464,6 +499,46 @@ export default function App() {
     });
   }
 
+  function addDashboardTodo(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setAppState((current) =>
+      markMeaningfulUse({
+        ...current,
+        dashboardTodos: [...(current.dashboardTodos || []), createDashboardTodo(trimmed)]
+      })
+    );
+  }
+
+  function toggleDashboardTodo(todoId) {
+    setAppState((current) => ({
+      ...current,
+      dashboardTodos: (current.dashboardTodos || []).map((todo) => {
+        if (todo.id !== todoId) return todo;
+        const completed = !todo.completed;
+        return {
+          ...todo,
+          completed,
+          completedAt: completed ? new Date().toISOString() : null
+        };
+      })
+    }));
+  }
+
+  function deleteDashboardTodo(todoId) {
+    setAppState((current) => ({
+      ...current,
+      dashboardTodos: (current.dashboardTodos || []).filter((todo) => todo.id !== todoId)
+    }));
+  }
+
+  function clearCompletedDashboardTodos() {
+    setAppState((current) => ({
+      ...current,
+      dashboardTodos: (current.dashboardTodos || []).filter((todo) => !todo.completed)
+    }));
+  }
+
   function resetEverything() {
     requestConfirmation({
       title: "Reset all Clean30 data?",
@@ -514,17 +589,6 @@ export default function App() {
         [field]: value
       }
     }));
-  }
-
-  function resetHiddenRecommendations() {
-    requestConfirmation({
-      title: "Reset hidden recommendations?",
-      message: "Dismissed Dashboard recommendations will be allowed to appear again.",
-      confirmLabel: "Reset recommendations",
-      onConfirm: () => {
-        setAppState((current) => ({ ...current, dismissedRecommendations: {} }));
-      }
-    });
   }
 
   function completeOnboarding({ setupMode, profile, schedule }) {
@@ -606,37 +670,10 @@ export default function App() {
   }
 
   let content;
-  if (currentView === "start") {
-    content = (
-      <StartSession
-        routines={activeTemplate.routines}
-        selectedRoutineId={selectedRoutineId}
-        onSelectRoutine={setSelectedRoutineId}
-        activeSession={appState.activeSession}
-        completionSummary={completionSummary}
-        onStartSession={startSession}
-        onToggleTask={toggleTask}
-        onCompletePhase={completePhase}
-        onResetSession={resetSession}
-        onFinishSession={finishSession}
-        onCancelSession={cancelSession}
-        onUpdateNotes={updateSessionNotes}
-      />
-    );
-  } else if (currentView === "routines") {
-    content = (
-      <Routines
-        routines={activeTemplate.routines}
-        history={appState.history}
-        template={activeTemplate}
-        onStartRoutine={startSession}
-      />
-    );
-  } else if (currentView === "systems") {
-    content = <Systems template={activeTemplate} />;
-  } else if (currentView === "customize") {
+  if (effectiveView === "customize") {
     content = (
       <Customize
+        key={editorContext.key}
         appState={appState}
         activeTemplate={activeTemplate}
         onSetActiveTemplate={setActiveTemplateId}
@@ -653,9 +690,16 @@ export default function App() {
         onResetAll={resetEverything}
         onRequestConfirmation={requestConfirmation}
         onUpdateAppAppearance={updateAppAppearance}
+        initialSection={editorContext.section}
+        initialMode={editorContext.section === "menu" ? "simple" : "advanced"}
+        entryIntent={editorContext.intent}
+        onBack={closeInternalEditor}
+        backLabel={editorContext.origin === "settings" ? "Back to Settings" : "Back to Dashboard"}
       />
     );
-  } else if (currentView === "history") {
+  } else if (effectiveView === "routines") {
+    content = <Routines routines={activeTemplate.routines} history={appState.history} />;
+  } else if (effectiveView === "history") {
     content = (
       <History
         history={appState.history}
@@ -664,7 +708,7 @@ export default function App() {
         onDeleteEntry={deleteHistoryEntry}
       />
     );
-  } else if (currentView === "settings") {
+  } else if (effectiveView === "settings") {
     content = (
       <Settings
         template={activeTemplate}
@@ -678,8 +722,7 @@ export default function App() {
         onUpdateAppAppearance={updateAppAppearance}
         onRestartOnboarding={restartOnboarding}
         onOpenHelp={() => setHelpOpen(true)}
-        onManageCustomize={() => setCurrentView("customize")}
-        onResetHiddenRecommendations={resetHiddenRecommendations}
+        onManageCustomize={() => openInternalEditor("profile", "settings")}
         onResetAll={resetEverything}
         onResetHistory={resetOnlyHistory}
       />
@@ -690,17 +733,26 @@ export default function App() {
         template={activeTemplate}
         history={appState.history}
         dailyRuleCompletions={appState.dailyRuleCompletions}
+        dashboardTodos={appState.dashboardTodos}
         activeSession={appState.activeSession}
-        backupDue={backupDue}
-        lastFullBackupExportedAt={appState.lastFullBackupExportedAt}
-        dismissedRecommendations={appState.dismissedRecommendations}
+        completionSummary={completionSummary}
+        selectedRoutineId={selectedRoutineId}
+        onSelectRoutine={setSelectedRoutineId}
         onToggleDailyRule={toggleDailyRule}
+        onAddDashboardTodo={addDashboardTodo}
+        onToggleDashboardTodo={toggleDashboardTodo}
+        onDeleteDashboardTodo={deleteDashboardTodo}
+        onClearCompletedDashboardTodos={clearCompletedDashboardTodos}
         onStartRoutine={startSession}
-        onDismissRecommendation={dismissRecommendation}
-        onResumeSession={() => setCurrentView("start")}
-        onFinishPartialSession={finishSession}
-        onDiscardSession={cancelSession}
-        onExportFullBackup={exportFullBackup}
+        onToggleTask={toggleTask}
+        onCompletePhase={completePhase}
+        onResetSession={resetSession}
+        onFinishSession={finishSession}
+        onCancelSession={cancelSession}
+        onUpdateNotes={updateSessionNotes}
+        onEditDailyRules={() => openInternalEditor("daily-rules", "dashboard")}
+        onEditRoutines={() => openInternalEditor("routines", "dashboard")}
+        onAddRoutine={() => openInternalEditor("routines", "dashboard", "add-routine")}
       />
     );
   }
@@ -708,8 +760,8 @@ export default function App() {
   return (
     <>
       <Layout
-        currentView={currentView}
-        onNavigate={setCurrentView}
+        currentView={publicView}
+        onNavigate={navigateTo}
         template={activeTemplate}
         onOpenHelp={() => setHelpOpen(true)}
         appAppearance={appState.appSettings}

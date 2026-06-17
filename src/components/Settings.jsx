@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { formatDateTime } from "../utils/dates.js";
+import Systems from "./Systems.jsx";
 
 const accentOptions = [
   { id: "forest", label: "Forest" },
@@ -33,7 +34,6 @@ export default function Settings({
   onRestartOnboarding,
   onOpenHelp,
   onManageCustomize,
-  onResetHiddenRecommendations,
   onResetAll,
   onResetHistory
 }) {
@@ -82,7 +82,7 @@ export default function Settings({
           <span>{template.profile.apartmentSizeText}</span>
         </div>
         <button className="button ghost" type="button" onClick={onManageCustomize}>
-          Manage in Customize
+          Edit system details
         </button>
       </section>
 
@@ -205,7 +205,7 @@ export default function Settings({
       <section className="panel settings-card">
         <p className="eyebrow">Help</p>
         <h2>{template.profile.appDisplayName}</h2>
-        <p>Open the short guide, restart onboarding, or restore Dashboard recommendations.</p>
+        <p>Open the short guide or restart onboarding.</p>
         <div className="settings-actions">
           <button className="button ghost" type="button" onClick={onOpenHelp}>
             Open help guide
@@ -213,11 +213,22 @@ export default function Settings({
           <button className="button ghost" type="button" onClick={onRestartOnboarding}>
             Restart onboarding
           </button>
-          <button className="button ghost" type="button" onClick={onResetHiddenRecommendations}>
-            Reset hidden recommendations
-          </button>
         </div>
       </section>
+
+      <details className="panel settings-systems-detail">
+        <summary className="simple-summary">
+          <span>
+            <span className="eyebrow">Reference</span>
+            <strong>Cleaning Systems</strong>
+            <small>Zones, priority order, and practical system notes.</small>
+          </span>
+          <span className="button ghost small">Open</span>
+        </summary>
+        <div className="settings-embedded-systems">
+          <Systems template={template} />
+        </div>
+      </details>
 
       <section className="panel settings-card">
         <p className="eyebrow">Install & Device</p>

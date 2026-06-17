@@ -106,9 +106,9 @@ export default function SimpleCustomizeSection({
       <section className="panel simple-intro-panel">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Simple Customize</p>
+            <p className="eyebrow">Simple Editor</p>
             <h2>Change the basics of your cleaning system.</h2>
-            <p>Deep routine steps, phases, systems, and appearance live in Advanced mode.</p>
+            <p>Deep routine steps, phases, systems, and appearance live in Advanced Editor.</p>
           </div>
         </div>
         {message ? <p className="form-message">{message}</p> : null}
@@ -316,7 +316,7 @@ export default function SimpleCustomizeSection({
       <details className="panel simple-detail">
         <summary className="simple-summary">
           <span>
-            <span className="eyebrow">Tiny Rules</span>
+            <span className="eyebrow">Daily Rules</span>
             <strong>{activeTemplate.dailyRules.length} dashboard habits</strong>
             <small>Compact daily checklist shown on Dashboard.</small>
           </span>
@@ -333,7 +333,7 @@ export default function SimpleCustomizeSection({
         </div>
 
         {!canEdit ? (
-          <p className="callout small">Duplicate the default template before editing Tiny Rules.</p>
+          <p className="callout small">Duplicate the default template before editing Daily Rules.</p>
         ) : null}
         {canEdit ? (
           <div className="simple-rule-editor">
@@ -507,7 +507,7 @@ export default function SimpleCustomizeSection({
           type="button"
           onClick={() => onOpenAdvancedCustomize("overview")}
         >
-          Open Advanced Customize
+          Open Advanced Editor
         </button>
       </section>
 

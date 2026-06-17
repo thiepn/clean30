@@ -1,18 +1,17 @@
 # Clean30
 
-Clean30 is a local-first apartment cleaning routine PWA for daily habits, reset sessions, cleaning systems, customization, history, and backups.
+Clean30 is a local-first apartment cleaning routine PWA for daily habits, custom dashboard tasks, reset sessions, cleaning systems, history, and backups.
 
 Live app: https://thiepn.github.io/clean30/
 
 ## Features
 
-- Dashboard with Tiny Rules and practical next-action guidance.
-- Start cleaning sessions with saved progress, notes, partial finish, and discard flows.
-- Systems page for apartment zones, priority order, and cleaning principles.
-- Routines page for comparing, preparing, and copying checklists.
-- Customize page with Simple and Advanced modes.
-- History page for completed resets, Tiny Rules, and practical patterns.
-- Settings with backup, privacy, help, appearance, reminder, and reset tools.
+- Dashboard with Daily Rules, custom to-dos, routine starting, and active sessions.
+- Cleaning sessions with saved progress, notes, partial finish, reset, and discard flows.
+- Routines reference library with collapsed phase checklists.
+- Internal editor for Daily Rules, routines, systems, schedule, templates, and profile settings.
+- History page for completed resets, Daily Rules, and practical patterns.
+- Settings with systems, backup, privacy, help, appearance, install, reminder, and reset tools.
 - PWA install support for phone home screens.
 - Local-only data storage in browser/PWA storage.
 - Full backup export/import for restoring or moving app data.
@@ -20,10 +19,12 @@ Live app: https://thiepn.github.io/clean30/
 ## How To Use
 
 1. Open the app.
-2. Complete Tiny Rules from the Dashboard.
-3. Start a reset session when the apartment needs one.
-4. Review History to see what has been completed.
-5. Export a full backup regularly from Settings.
+2. Complete Daily Rules from the Dashboard.
+3. Add one-off dashboard tasks when needed.
+4. Start or resume a reset session from the Dashboard.
+5. Use Routines as a reference library.
+6. Review History to see what has been completed.
+7. Export a full backup regularly from Settings.
 
 ## Mobile / PWA Install
 
@@ -71,9 +72,11 @@ Appearance preferences, such as accent and background color, are also stored loc
 
 ## Template Sharing
 
-Template export/import is for sharing a cleaning system with friends or family. Template files include routines, Tiny Rules, systems, zones, schedule, profile labels, and appearance settings.
+Template export/import is for sharing a cleaning system with friends or family. Template files include routines, Daily Rules, systems, zones, schedule, profile labels, and appearance settings.
 
 Template exports do not include personal history, active sessions, or daily completion data. Full backups do include personal app data and should be treated as private.
+
+Routine and Daily Rules editing is opened from the Dashboard. App-level settings, systems, appearance, and data controls live in Settings.
 
 ## Current Status
 

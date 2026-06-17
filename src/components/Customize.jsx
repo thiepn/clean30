@@ -46,7 +46,7 @@ const customizeSections = [
   {
     id: "systems",
     label: "Systems",
-    description: "Edit apartment laws, bottlenecks, priorities, and system notes."
+    description: "Edit bottlenecks, priorities, and system notes."
   },
   {
     id: "schedule",
@@ -108,12 +108,19 @@ export default function Customize({
   onResetHistory,
   onResetAll,
   onRequestConfirmation,
-  onUpdateAppAppearance
+  onUpdateAppAppearance,
+  initialSection = "menu",
+  initialMode,
+  entryIntent = null,
+  onBack,
+  backLabel = "Back"
 }) {
   const templateImportRef = useRef(null);
   const backupImportRef = useRef(null);
-  const [activeSection, setActiveSection] = useState("menu");
-  const [customizeMode, setCustomizeMode] = useState("simple");
+  const [activeSection, setActiveSection] = useState(initialSection);
+  const [customizeMode, setCustomizeMode] = useState(
+    initialMode || (initialSection === "menu" ? "simple" : "advanced")
+  );
   const [selectedRoutineId, setSelectedRoutineId] = useState(
     activeTemplate.routines[0]?.id || ""
   );
@@ -133,6 +140,11 @@ export default function Customize({
       setSelectedRoutineId(activeTemplate.routines[0].id);
     }
   }, [activeTemplate.routines, selectedRoutine]);
+
+  useEffect(() => {
+    setActiveSection(initialSection);
+    setCustomizeMode(initialMode || (initialSection === "menu" ? "simple" : "advanced"));
+  }, [initialMode, initialSection]);
 
   function editTemplate(mutator) {
     if (!canEdit) return;
@@ -237,6 +249,7 @@ export default function Customize({
           onSelectRoutine={setSelectedRoutineId}
           onEditTemplate={editTemplate}
           onConfirmEdit={confirmTemplateEdit}
+          autoAddRoutine={entryIntent === "add-routine"}
         />
       );
     }
@@ -306,16 +319,20 @@ export default function Customize({
       <section className="panel">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Customize</p>
-            <h2>Cleaning System Editor</h2>
+            <p className="eyebrow">Editor</p>
+            <h2>Edit Cleaning Plan</h2>
             <p>
-              Edit templates here. Cleaning screens are for doing; Customize is for changing the
-              system.
+              Edit routines, Daily Rules, schedule, systems, and template settings.
             </p>
           </div>
           <span className="pill">{activeTemplate.readOnly ? "Default" : "Custom"}</span>
         </div>
-        <div className="tab-row customize-mode-tabs" role="tablist" aria-label="Customize mode">
+        {onBack ? (
+          <button className="button ghost" type="button" onClick={onBack}>
+            {backLabel}
+          </button>
+        ) : null}
+        <div className="tab-row customize-mode-tabs" role="tablist" aria-label="Editor mode">
           <button
             className={customizeMode === "simple" ? "tab active" : "tab"}
             type="button"
@@ -328,12 +345,12 @@ export default function Customize({
             type="button"
             onClick={() => openAdvancedCustomize()}
           >
-            Advanced customization
+            Advanced editor
           </button>
         </div>
         {customizeMode === "advanced" ? (
           <p className="callout small">
-            Advanced customization is for editing routines, phases, tasks, systems, and template
+            Advanced editor is for editing routines, phases, tasks, systems, and template
             internals. Most users do not need this every day.
           </p>
         ) : null}
@@ -376,13 +393,13 @@ export default function Customize({
         <section className="panel advanced-menu-panel">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Advanced Customize</p>
+              <p className="eyebrow">Advanced Editor</p>
               <h2>Choose what to edit</h2>
-              <p>Open one category at a time. Cleaning screens are for doing; Customize is for editing.</p>
+              <p>Open one category at a time. Dashboard is for doing; the editor is for changing the plan.</p>
             </div>
             <span className="pill">{canEdit ? "Editable" : "Read-only"}</span>
           </div>
-          <div className="advanced-category-list" aria-label="Advanced customize categories">
+          <div className="advanced-category-list" aria-label="Advanced editor categories">
             {customizeSections.map((section) => (
               <button
                 className="advanced-category-card"
@@ -397,7 +414,7 @@ export default function Customize({
                 </span>
                 <span className="advanced-category-meta">
                   {getSectionCount(section.id, activeTemplate, templateGallery)}
-                  <span aria-hidden="true">›</span>
+                  <span aria-hidden="true">&gt;</span>
                 </span>
               </button>
             ))}
@@ -412,7 +429,7 @@ export default function Customize({
               Back to Advanced
             </button>
             <div>
-              <p className="eyebrow">Advanced Customize</p>
+              <p className="eyebrow">Advanced Editor</p>
               <h2>{activeSectionMeta?.label || "Category"}</h2>
               {activeSectionMeta?.description ? <p>{activeSectionMeta.description}</p> : null}
             </div>

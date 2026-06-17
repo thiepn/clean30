@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getRoutineTotalTasks } from "../../utils/calculations.js";
 import { createPhase, createRoutine, createTask, moveItem } from "../../utils/routineUtils.js";
 import { priorityOptions } from "../../utils/templateUtils.js";
@@ -19,8 +19,10 @@ export default function RoutinesSection({
   canEdit,
   onSelectRoutine,
   onEditTemplate,
-  onConfirmEdit
+  onConfirmEdit,
+  autoAddRoutine = false
 }) {
+  const autoAddHandled = useRef(false);
   const dailyRulesRoutineSelected = selectedRoutine?.id === "daily-rules";
   const [selectedPhaseId, setSelectedPhaseId] = useState(selectedRoutine?.phases[0]?.id || "");
   const selectedPhase = useMemo(() => {
@@ -43,6 +45,12 @@ export default function RoutinesSection({
       setSelectedPhaseId(selectedRoutine.phases[0].id);
     }
   }, [selectedRoutine, selectedPhase]);
+
+  useEffect(() => {
+    if (!autoAddRoutine || autoAddHandled.current || !canEdit) return;
+    autoAddHandled.current = true;
+    addRoutine();
+  }, [autoAddRoutine, canEdit]);
 
   function editSelectedRoutine(mutator) {
     if (!selectedRoutine) return;

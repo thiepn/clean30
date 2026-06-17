@@ -77,7 +77,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
           <div className="history-empty-panel">
             <div>
               <h3>No cleaning history yet.</h3>
-              <p>Complete Tiny Rules or finish a reset to start building history.</p>
+              <p>Complete Daily Rules or finish a reset to start building history.</p>
             </div>
             <div className="history-starter-stats">
               <div>
@@ -148,7 +148,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
         {history.length === 0 ? (
           <EmptyState
             title="No insights yet"
-            message="Complete Tiny Rules or finish a reset to reveal useful patterns."
+            message="Complete Daily Rules or finish a reset to reveal useful patterns."
           />
         ) : (
           <>
@@ -251,7 +251,7 @@ export default function History({ history, routines, template, onDeleteEntry }) 
           message={
             hasHistory
               ? "Try another filter to review completed entries."
-              : "Complete Tiny Rules or finish a reset to build cleaning history."
+              : "Complete Daily Rules or finish a reset to build cleaning history."
           }
         />
       ) : (

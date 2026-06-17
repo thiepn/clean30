@@ -60,12 +60,12 @@ export default function Onboarding({ template, onComplete }) {
                 <p>Tells you what matters today.</p>
               </article>
               <article className="guide-item">
-                <h3>Start Session</h3>
-                <p>Where the actual cleaning happens.</p>
+                <h3>Cleaning sessions</h3>
+                <p>Where Daily Rules, to-dos, and cleaning sessions happen.</p>
               </article>
               <article className="guide-item">
-                <h3>Customize</h3>
-                <p>Where routines and templates are edited.</p>
+                <h3>Edit plan</h3>
+                <p>Where routines and Daily Rules are edited when needed.</p>
               </article>
               <article className="guide-item">
                 <h3>Local data</h3>
@@ -83,7 +83,7 @@ export default function Onboarding({ template, onComplete }) {
               A template is your starting cleaning system. The Clean30 default is protected and
               read-only so it cannot be accidentally broken. You can duplicate a template if you
               want to edit routines, phases, or tasks, and you can change templates later in
-              Customize.
+              the editor.
             </p>
             <p className="muted">
               Most users should start with the default unless they already know they want changes.
@@ -111,7 +111,7 @@ export default function Onboarding({ template, onComplete }) {
                   onChange={() => setSetupMode("custom")}
                 />
                 <span>
-                  <strong>Duplicate default template to customize</strong>
+                  <strong>Duplicate default template to edit</strong>
                   <small>Create an editable copy immediately.</small>
                 </span>
               </label>

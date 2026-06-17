@@ -477,7 +477,7 @@ textarea {
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.3rem;
   margin-bottom: 24px;
   padding: 0.35rem;
@@ -522,51 +522,6 @@ textarea {
   background: var(--active-nav-bg);
   color: var(--active-nav-text);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
-}
-
-.more-nav {
-  position: relative;
-  display: flex;
-  align-items: stretch;
-  min-width: 0;
-}
-
-.more-nav > .nav-item {
-  width: 100%;
-  height: 100%;
-}
-
-.more-menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 0.55rem);
-  z-index: 20;
-  display: grid;
-  gap: 0.35rem;
-  width: min(220px, calc(100vw - 28px));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-  box-shadow: 0 18px 40px rgba(37, 34, 29, 0.22);
-  padding: 0.45rem;
-}
-
-.more-menu-item {
-  min-height: 44px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--text-soft);
-  padding: 0.65rem 0.8rem;
-  text-align: left;
-  font-weight: 680;
-}
-
-.more-menu-item:hover,
-.more-menu-item.active {
-  border-color: var(--active-nav-border);
-  background: var(--active-nav-bg);
-  color: var(--active-nav-text);
 }
 
 .app-main {
@@ -1051,10 +1006,6 @@ textarea {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.8rem;
-}
-
-.quick-start-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .gallery-grid {
@@ -1622,6 +1573,40 @@ details[open] > .phase-summary .phase-chevron::before {
 
 .daily-review-done {
   margin-top: 0.75rem;
+}
+
+.dashboard-todo-panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dashboard-todo-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.dashboard-todos .task-row {
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+}
+
+.danger-icon {
+  color: var(--danger);
+}
+
+.settings-systems-detail {
+  overflow: hidden;
+}
+
+.settings-embedded-systems {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.settings-embedded-systems > .screen-stack {
+  gap: 1rem;
 }
 
 .task-row {
@@ -3116,11 +3101,14 @@ details[open] > .phase-summary .phase-chevron::before {
 
   .navigation {
     position: fixed;
-    inset: auto 10px calc(10px + env(safe-area-inset-bottom));
+    inset: auto 0 0;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     margin: 0;
-    padding: 0.3rem;
-    border-radius: var(--radius-card);
+    padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom));
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
   }
 
   .desktop-navigation {
@@ -3133,8 +3121,7 @@ details[open] > .phase-summary .phase-chevron::before {
     min-height: var(--mobile-nav-height);
   }
 
-  .mobile-navigation > .nav-item,
-  .mobile-navigation > .more-nav {
+  .mobile-navigation > .nav-item {
     min-height: 40px;
     height: 100%;
   }
@@ -3144,11 +3131,6 @@ details[open] > .phase-summary .phase-chevron::before {
     height: 100%;
     padding: 0.35rem 0.2rem;
     font-size: 0.72rem;
-  }
-
-  .more-nav > .nav-item {
-    padding: 0.35rem 0.2rem;
-    line-height: 1.2;
   }
 
   .hero-status,

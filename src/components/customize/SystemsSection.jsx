@@ -13,7 +13,6 @@ function linesToList(value) {
 }
 
 export default function SystemsSection({ systems, canEdit, onEditTemplate, onConfirmEdit }) {
-  const apartmentLaws = systems.apartmentLaws || [];
   const bottlenecks = systems.bottlenecks || [];
   const priorityOrder = systems.priorityOrder || [];
   const systemSections = systems.systemSections || [];
@@ -21,35 +20,6 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
   function editSystems(mutator) {
     onEditTemplate((draft) => {
       mutator(draft.systems);
-    });
-  }
-
-  function addLaw() {
-    editSystems((draftSystems) => {
-      draftSystems.apartmentLaws.push("New apartment law");
-    });
-  }
-
-  function updateLaw(index, value) {
-    editSystems((draftSystems) => {
-      draftSystems.apartmentLaws[index] = value;
-    });
-  }
-
-  function moveLaw(index, direction) {
-    editSystems((draftSystems) => {
-      draftSystems.apartmentLaws = moveItem(draftSystems.apartmentLaws, index, direction);
-    });
-  }
-
-  function deleteLaw(index) {
-    onConfirmEdit({
-      title: "Delete apartment law?",
-      message: "This principle will be removed from the dashboard and systems page.",
-      confirmLabel: "Delete law",
-      edit: (draft) => {
-        draft.systems.apartmentLaws.splice(index, 1);
-      }
     });
   }
 
@@ -71,7 +41,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
   function deleteBottleneck(index) {
     onConfirmEdit({
       title: "Delete bottleneck?",
-      message: "This row will be removed from the systems page.",
+      message: "This row will be removed from the systems section.",
       confirmLabel: "Delete bottleneck",
       edit: (draft) => {
         draft.systems.bottlenecks.splice(index, 1);
@@ -100,7 +70,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
   function deletePriority(index) {
     onConfirmEdit({
       title: "Delete priority?",
-      message: "This priority step will be removed from the systems page.",
+      message: "This priority step will be removed from the systems section.",
       confirmLabel: "Delete priority",
       edit: (draft) => {
         draft.systems.priorityOrder.splice(index, 1);
@@ -137,7 +107,7 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
   function deleteSystemSection(section, index) {
     onConfirmEdit({
       title: "Delete system section?",
-      message: `"${section.title}" will be removed from the systems page.`,
+      message: `"${section.title}" will be removed from the systems section.`,
       confirmLabel: "Delete section",
       edit: (draft) => {
         draft.systems.systemSections.splice(index, 1);
@@ -147,61 +117,6 @@ export default function SystemsSection({ systems, canEdit, onEditTemplate, onCon
 
   return (
     <>
-      <section className="panel">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Systems</p>
-            <h2>Apartment Laws</h2>
-            <p>High-level rules that appear on the dashboard and Systems page.</p>
-          </div>
-          <button className="button primary" type="button" disabled={!canEdit} onClick={addLaw}>
-            Add law
-          </button>
-        </div>
-
-        <div className="editor-list">
-          {apartmentLaws.map((law, index) => (
-            <div className="editor-row" key={`${law}-${index}`}>
-              <label className="field-label" htmlFor={`law-${index}`}>
-                Law
-                <input
-                  id={`law-${index}`}
-                  value={law}
-                  disabled={!canEdit}
-                  onChange={(event) => updateLaw(index, event.target.value)}
-                />
-              </label>
-              <div className="row-actions">
-                <button
-                  className="button small ghost"
-                  type="button"
-                  disabled={!canEdit || index === 0}
-                  onClick={() => moveLaw(index, -1)}
-                >
-                  Move up
-                </button>
-                <button
-                  className="button small ghost"
-                  type="button"
-                  disabled={!canEdit || index === apartmentLaws.length - 1}
-                  onClick={() => moveLaw(index, 1)}
-                >
-                  Move down
-                </button>
-                <button
-                  className="button small danger-ghost"
-                  type="button"
-                  disabled={!canEdit}
-                  onClick={() => deleteLaw(index)}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="panel">
         <div className="section-heading">
           <div>

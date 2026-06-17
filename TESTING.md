@@ -10,141 +10,116 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Profile fields save after onboarding.
 - [ ] Restart onboarding from Settings works.
 
+## Navigation
+
+- [ ] Desktop nav shows only Dashboard, Routines, History, Settings.
+- [ ] Mobile bottom nav shows only Dashboard, Routines, History, Settings.
+- [ ] Mobile bottom nav is flush with the bottom and safe-area padding works.
+- [ ] No Start, Systems, Customize, or More public tab appears.
+- [ ] Old internal view references do not blank the app.
+
 ## Dashboard
 
-- [ ] Dashboard loads without history.
-- [ ] Tiny Rules can be checked and unchecked.
-- [ ] Completing all Tiny Rules logs one daily history entry.
-- [ ] Re-checking/reviewing Tiny Rules does not create duplicate daily history entries.
-- [ ] Recommended action appears when expected.
-- [ ] Dismissed recommendations disappear.
-- [ ] Reset hidden recommendations in Settings allows recommendations to return.
-- [ ] Backup reminder respects the selected reminder interval.
+- [ ] Daily Rules appear first.
+- [ ] Daily Rules can be checked and unchecked.
+- [ ] Completing all Daily Rules logs one daily history entry.
+- [ ] Re-checking or reviewing Daily Rules does not create duplicate daily history entries.
+- [ ] Edit Daily Rules opens the internal editor focused on Daily Rules.
+- [ ] Custom To-Do List appears in the main Dashboard task area.
+- [ ] To-do tasks can be added, checked, unchecked, removed, and cleared when complete.
+- [ ] To-do tasks persist after refresh.
+- [ ] To-do tasks do not create history entries.
+- [ ] No removed Dashboard action/status/reference cards appear.
+- [ ] Routine picker and selected routine summary appear in Dashboard.
+- [ ] Edit routines opens the internal editor focused on routines.
+- [ ] Add routine opens the internal editor and starts an add-routine flow for editable templates.
+- [ ] Protected default template behavior still prevents direct editing.
 
-## Quick Start
+## Sessions
 
-- [ ] Quick Start uses select-first, confirm-second behavior.
-- [ ] Starting a reset navigates to Start.
-- [ ] Existing active session requires confirmation before replacement.
-
-## Start Page
-
-- [ ] Routine picker excludes Daily Rules as a normal reset.
-- [ ] Pre-session summary is readable on mobile.
-- [ ] Session starts with an empty checklist.
+- [ ] Starting a routine keeps the user on Dashboard.
+- [ ] Active session checklist appears on Dashboard.
 - [ ] Active session persists after refresh.
 - [ ] Tasks and phases can be completed.
 - [ ] Notes save during the active session.
-- [ ] Finish saves history.
-- [ ] Finish partial saves current progress to history.
-- [ ] Discard requires confirmation and does not save history.
+- [ ] Reset session requires confirmation and clears progress.
+- [ ] Discard session requires confirmation and does not save history.
+- [ ] Finish session saves current progress to History, including partial progress.
+- [ ] Starting a new routine while a session exists requires confirmation.
+- [ ] Daily Rules special handling remains separate from normal session history.
 
-## Systems Page
+## Routines
 
-- [ ] Page starts with Apartment Map zones.
-- [ ] Zone chips change the selected zone.
-- [ ] Selected zone chip is visually clear.
-- [ ] Zone Focus shows frequency, watch-outs, supplies, and good-enough target.
-- [ ] Related tasks are limited by default and expandable.
-- [ ] Systems does not show a Start Weekly Reset button.
-- [ ] Priority Order is compact and readable on mobile.
-- [ ] Apartment Laws are available.
-- [ ] System accordions collapse and expand correctly.
-
-## Routines Page
-
-- [ ] Daily Rules is not shown as a normal reset routine.
-- [ ] Routine comparison cards are compact on mobile.
-- [ ] Selected routine guide shows purpose, metadata, supplies, related zones, and when-to-use.
-- [ ] Copy checklist works and shows feedback.
-- [ ] View checklist opens the checklist reference.
-- [ ] Checklist reference is collapsed by default.
-- [ ] Phase summaries show before task details.
-- [ ] Tasks appear only after expanding a phase.
-- [ ] Start this routine works and remains secondary.
-
-## Customize Simple Mode
-
-- [ ] Simple Customize opens as compact settings cards.
-- [ ] Protected default template is clearly read-only.
-- [ ] Duplicate to edit works.
-- [ ] Home display fields save for editable templates.
-- [ ] Reset timing fields save for editable templates.
-- [ ] Tiny Rules can be edited for editable templates.
-- [ ] Template preset browsing remains available.
-- [ ] Full backup shortcut works.
-- [ ] Danger Zone is collapsed.
-
-## Customize Advanced Mode
-
-- [ ] Advanced opens to a category menu.
-- [ ] Each category opens and has a Back to Advanced action.
-- [ ] Template Overview works.
-- [ ] Gallery Presets works.
-- [ ] Profile Fields works.
-- [ ] Zones editor works.
-- [ ] Daily Rules editor works.
-- [ ] Routines & Phases editor works.
-- [ ] Systems editor works.
-- [ ] Schedule uses "Fallback reset day" visibly.
-- [ ] Appearance editor works.
-- [ ] Import / Export category works.
-- [ ] Default template remains protected.
+- [ ] Routines tab is second.
+- [ ] Daily Rules are not shown as a normal reset routine.
+- [ ] Selecting a routine shows summary and checklist reference.
+- [ ] Checklist phases are collapsed by default.
+- [ ] Expanding a phase shows tasks.
+- [ ] No copy checklist buttons appear.
+- [ ] No preparation tools section appears.
+- [ ] No copy success/error message appears.
+- [ ] No copy or Start-tab wording remains.
 
 ## History
 
+- [ ] History tab is third.
 - [ ] Empty History shows a light starter state.
-- [ ] Tiny Rules history entries appear as Daily entries.
-- [ ] Reset stats are not distorted by Daily Rules entries.
+- [ ] Daily Rules history entries appear as Daily entries.
+- [ ] Routine/session entries render correctly.
+- [ ] Stats are not distorted by to-do tasks.
 - [ ] Filters work: All, Daily, Weekly, Minimal, Guest, Monthly, Initial.
-- [ ] Empty filter state is clear.
-- [ ] Existing entries render as compact cards.
 - [ ] Entry detail panel opens.
 - [ ] Delete entry requires confirmation.
 
 ## Settings
 
+- [ ] Settings tab is fourth.
 - [ ] Active system card is compact.
-- [ ] Manage in Customize navigates to Customize.
+- [ ] Edit system details opens the internal editor from Settings.
+- [ ] Appearance settings still work.
 - [ ] Backup export downloads a JSON file.
 - [ ] Backup import validates and asks for confirmation.
 - [ ] Backup reminder interval can be changed.
-- [ ] Setting reminder to Off hides backup reminders.
-- [ ] Privacy section is clear.
-- [ ] Open help guide opens the existing guide.
+- [ ] Privacy/local-only section is clear.
+- [ ] Help guide opens.
 - [ ] Restart onboarding works.
-- [ ] Reset hidden recommendations works.
+- [ ] Cleaning Systems content is available inside Settings.
 - [ ] Danger Zone is collapsed by default.
 - [ ] Reset history and reset all still require confirmation.
+- [ ] Reset hidden recommendations control is gone.
+
+## Internal Editor
+
+- [ ] Editor never appears as a public nav tab.
+- [ ] Back to Dashboard works when opened from Dashboard.
+- [ ] Back to Settings works when opened from Settings.
+- [ ] Routines editor can edit phases and tasks for editable templates.
+- [ ] Daily Rules editor can edit rules for editable templates.
+- [ ] Systems editor remains available through Settings/editor paths.
+- [ ] Default template remains protected and offers duplicate-to-edit.
+- [ ] Import/export category still works.
 
 ## PWA Install
 
 - [ ] Live URL opens at https://thiepn.github.io/clean30/.
+- [ ] Vite base remains `/clean30/`.
 - [ ] Manifest is detected by the browser.
 - [ ] Android Add to Home Screen / Install app is available.
 - [ ] Installed app uses Clean30 icons.
-- [ ] App loads after install.
+- [ ] Service worker syntax passes.
 
 ## Mobile Layout
 
-- [ ] Bottom navigation is usable.
-- [ ] Bottom navigation does not cover final page content.
 - [ ] Text does not overflow horizontally.
 - [ ] Buttons and checkboxes have usable tap targets.
-- [ ] Dashboard, Start, Systems, Routines, Customize, History, and Settings are readable on phone width.
-
-## Desktop Layout
-
-- [ ] Desktop navigation works.
-- [ ] Main content remains centered and readable.
-- [ ] Cards do not stretch awkwardly on wide screens.
-- [ ] Forms and long editors remain usable.
+- [ ] Bottom navigation does not cover final page content.
+- [ ] Dashboard, Routines, History, and Settings are readable on phone width.
 
 ## Compatibility
 
+- [ ] Old localStorage without `dashboardTodos` loads.
 - [ ] Old localStorage without `appSettings` loads.
-- [ ] Old localStorage without `dismissedRecommendations` loads.
+- [ ] Old localStorage with legacy dismissed-action data loads harmlessly.
 - [ ] Old history entries normalize safely.
-- [ ] Daily-rule history entries normalize safely.
-- [ ] Old full backups without new settings import safely.
-- [ ] Full backups include current settings after export.
+- [ ] Old full backups import safely.
+- [ ] New full backups include current app state, including dashboard to-dos.

@@ -322,23 +322,6 @@ export default function Systems({ template }) {
         </p>
       </section>
 
-      {systems.apartmentLaws?.length ? (
-        <details className="panel system-info-detail apartment-laws-detail">
-          <summary className="system-info-summary compact">
-            <span>
-              <span className="eyebrow">Principles</span>
-              <strong>Apartment Laws</strong>
-              <small>{systems.apartmentLaws.length} principles</small>
-            </span>
-          </summary>
-          <ul className="system-list compact law-list">
-            {systems.apartmentLaws.map((law) => (
-              <li key={law}>{law}</li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
-
       <div className="system-grid">
         {systems.systemSections.map((section) => (
           <details className="panel system-info-detail" key={section.id}>

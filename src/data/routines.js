@@ -431,7 +431,7 @@ export const routines = [
     id: "daily-rules",
     title: "Daily Rules",
     estimatedTime: "Maximum 5 minutes",
-    purpose: "Tiny rules, not daily cleaning.",
+    purpose: "Daily Rules, not daily cleaning.",
     whenToUse: "Use every day to stop the main bottlenecks from growing.",
     phases: [
       {

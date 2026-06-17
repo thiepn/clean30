@@ -112,6 +112,25 @@ function normalizeDismissedRecommendations(value) {
   );
 }
 
+function normalizeDashboardTodos(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((todo) => isPlainObject(todo) && typeof todo.text === "string" && todo.text.trim())
+    .map((todo, index) => {
+      const createdAt = normalizeDateString(todo.createdAt) || new Date().toISOString();
+      const completed = Boolean(todo.completed);
+      return {
+        id: typeof todo.id === "string" && todo.id
+          ? todo.id
+          : `dashboard-todo-${createdAt}-${index}`,
+        text: todo.text.trim(),
+        completed,
+        createdAt,
+        completedAt: completed ? normalizeDateString(todo.completedAt) || createdAt : null
+      };
+    });
+}
+
 function normalizeAppSettings(value) {
   const interval = Number(value?.backupReminderIntervalDays);
   const accentColor = typeof value?.accentColor === "string" ? value.accentColor : "forest";
@@ -231,6 +250,7 @@ function createLegacyState() {
       history: [],
       activeSession: null,
       dailyRuleCompletions: {},
+      dashboardTodos: [],
       dismissedRecommendations: {},
       appSettings: normalizeAppSettings(),
       onboardingCompleted: false,
@@ -253,6 +273,7 @@ function createLegacyState() {
       history: [],
       activeSession: null,
       dailyRuleCompletions: {},
+      dashboardTodos: [],
       dismissedRecommendations: {},
       appSettings: normalizeAppSettings(),
       onboardingCompleted: false,
@@ -282,6 +303,7 @@ function createLegacyState() {
       activeTemplateId
     ),
     dailyRuleCompletions,
+    dashboardTodos: [],
     dismissedRecommendations: {},
     appSettings: normalizeAppSettings(),
     onboardingCompleted: false,
@@ -313,6 +335,7 @@ export function normalizeAppState(value) {
     history,
     activeSession: normalizeActiveSession(value.activeSession, templates, activeTemplateId),
     dailyRuleCompletions,
+    dashboardTodos: normalizeDashboardTodos(value.dashboardTodos),
     dismissedRecommendations: normalizeDismissedRecommendations(value.dismissedRecommendations),
     appSettings: normalizeAppSettings(value.appSettings),
     onboardingCompleted: Boolean(value.onboardingCompleted),
@@ -364,6 +387,7 @@ export function resetToFreshState() {
     history: [],
     activeSession: null,
     dailyRuleCompletions: {},
+    dashboardTodos: [],
     dismissedRecommendations: {},
     appSettings: normalizeAppSettings(),
     onboardingCompleted: false,
