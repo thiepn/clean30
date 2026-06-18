@@ -12,12 +12,29 @@ export function parseDate(value) {
 }
 
 export function daysBetween(dateA, dateB = new Date()) {
-  const first = parseDate(dateA);
-  const second = parseDate(dateB);
-  if (!first || !second) return null;
-  const firstDay = new Date(first.getFullYear(), first.getMonth(), first.getDate());
-  const secondDay = new Date(second.getFullYear(), second.getMonth(), second.getDate());
-  return Math.floor((secondDay - firstDay) / 86400000);
+  function calendarDayNumber(value) {
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split("-").map(Number);
+      const exact = new Date(year, month - 1, day);
+      if (
+        exact.getFullYear() !== year ||
+        exact.getMonth() !== month - 1 ||
+        exact.getDate() !== day
+      ) {
+        return null;
+      }
+      return Date.UTC(year, month - 1, day) / 86400000;
+    }
+
+    const parsed = parseDate(value);
+    if (!parsed) return null;
+    return Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()) / 86400000;
+  }
+
+  const firstDay = calendarDayNumber(dateA);
+  const secondDay = calendarDayNumber(dateB);
+  if (firstDay === null || secondDay === null) return null;
+  return secondDay - firstDay;
 }
 
 export function isOlderThanDays(date, days) {

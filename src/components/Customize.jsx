@@ -118,7 +118,8 @@ export default function Customize({
   }
 
   function handleJsonFile(event, handler, fallbackMessage) {
-    const file = event.target.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
@@ -130,10 +131,24 @@ export default function Customize({
       } catch {
         setMessage("File is not valid JSON.");
       } finally {
-        event.target.value = "";
+        input.value = "";
       }
     };
-    reader.readAsText(file);
+    reader.onerror = () => {
+      setMessage("File could not be read. Current data was not changed.");
+      input.value = "";
+    };
+    try {
+      reader.readAsText(file);
+    } catch {
+      setMessage("File could not be read. Current data was not changed.");
+      input.value = "";
+    }
+  }
+
+  function handleExport(handler, fallbackMessage) {
+    const result = handler();
+    setMessage(result?.ok === false ? result.error : result?.message || fallbackMessage);
   }
 
   function renderSection() {
@@ -160,9 +175,11 @@ export default function Customize({
       return (
         <ImportExportSection
           message={message}
-          onExportTemplate={onExportTemplate}
+          onExportTemplate={() => handleExport(onExportTemplate, "Template download started.")}
           onImportTemplateClick={() => templateImportRef.current?.click()}
-          onExportFullBackup={onExportFullBackup}
+          onExportFullBackup={() =>
+            handleExport(onExportFullBackup, "Full backup download started.")
+          }
           onImportFullBackupClick={() => backupImportRef.current?.click()}
           onResetTemplate={onResetTemplate}
           onResetHistory={onResetHistory}

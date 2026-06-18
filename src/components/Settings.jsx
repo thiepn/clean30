@@ -111,7 +111,25 @@ export default function Settings({
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     };
-    reader.readAsText(file);
+    reader.onerror = () => {
+      setMessage("Backup file could not be read. Current data was not changed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+    try {
+      reader.readAsText(file);
+    } catch {
+      setMessage("Backup file could not be read. Current data was not changed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  function handleExportFullBackup() {
+    const result = onExportFullBackup();
+    setMessage(
+      result?.ok === false
+        ? result.error
+        : result?.message || "Full backup download started."
+    );
   }
 
   return (
@@ -229,7 +247,7 @@ export default function Settings({
         </div>
         <p>{health.detail}</p>
         <div className="settings-actions">
-          <button className="button primary" type="button" onClick={onExportFullBackup}>
+          <button className="button primary" type="button" onClick={handleExportFullBackup}>
             Export full backup
           </button>
           <button className="button ghost" type="button" onClick={() => fileInputRef.current?.click()}>

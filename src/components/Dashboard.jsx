@@ -38,7 +38,7 @@ function buildMonthCells(referenceDate) {
   const month = referenceDate.getMonth();
   const first = new Date(year, month, 1);
   const last = new Date(year, month + 1, 0);
-  const leading = first.getDay();
+  const leading = (first.getDay() + 6) % 7;
   const cells = Array.from({ length: leading }, (_, index) => ({
     id: `empty-${index}`,
     empty: true
@@ -69,6 +69,7 @@ export default function Dashboard({
   history = [],
   todayTasks = [],
   todayTasksByDate = {},
+  currentDateKey,
   activeSession,
   completionSummary,
   selectedRoutineId,
@@ -108,7 +109,7 @@ export default function Dashboard({
   const [selectedRoutineTaskIds, setSelectedRoutineTaskIds] = useState([]);
   const [customTagText, setCustomTagText] = useState("");
   const [timerNow, setTimerNow] = useState(Date.now());
-  const todayKey = getTodayKey();
+  const todayKey = currentDateKey || getTodayKey();
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [calendarDetailOpen, setCalendarDetailOpen] = useState(false);
   const displayTasks = useMemo(
@@ -138,7 +139,7 @@ export default function Dashboard({
     () => buildActivityByDate(history, todayTasksByDate),
     [history, todayTasksByDate]
   );
-  const calendarCells = useMemo(() => buildMonthCells(new Date()), []);
+  const calendarCells = useMemo(() => buildMonthCells(dateFromKey(todayKey)), [todayKey]);
   const selectedActivity = activityByDate[selectedDate] || {
     sessions: [],
     todayCompleted: 0,
@@ -178,6 +179,11 @@ export default function Dashboard({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [calendarDetailOpen]);
+
+  useEffect(() => {
+    setSelectedDate(todayKey);
+    setCalendarDetailOpen(false);
+  }, [todayKey]);
 
   function submitTask(event) {
     event.preventDefault();
@@ -559,11 +565,11 @@ export default function Dashboard({
       <section className="panel dashboard-calendar-panel">
         <div className="section-heading compact-heading">
           <h2>Calendar</h2>
-          <span className="status-pill compact">{formatDate(new Date())}</span>
+          <span className="status-pill compact">{formatDate(dateFromKey(todayKey))}</span>
         </div>
 
         <div className="mini-calendar" aria-label="Current month activity calendar">
-          {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+          {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
             <span className="calendar-weekday" key={`${day}-${index}`}>
               {day}
             </span>

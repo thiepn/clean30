@@ -47,6 +47,23 @@ function text(value, fallback = "") {
   return typeof value === "string" ? value : fallback;
 }
 
+function uniqueStableId(value, fallback, usedIds) {
+  const base = text(value).trim() || fallback;
+  if (!usedIds.has(base)) {
+    usedIds.add(base);
+    return base;
+  }
+
+  let suffix = 2;
+  let candidate = `${base}-${suffix}`;
+  while (usedIds.has(candidate)) {
+    suffix += 1;
+    candidate = `${base}-${suffix}`;
+  }
+  usedIds.add(candidate);
+  return candidate;
+}
+
 function numberInRange(value, fallback, min, max) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return fallback;
@@ -135,24 +152,45 @@ export function normalizeTask(task, fallbackTitle = "New task") {
   };
 }
 
-function normalizeTodayDefaults(value, fallback) {
-  const source = Array.isArray(value) ? value : fallback;
-  return (source || []).map((task) => normalizeTask(task, "Today task"));
+function normalizeTaskList(
+  value,
+  fallbackTitle = "New task",
+  idPrefix = "task",
+  usedIds = new Set()
+) {
+  const tasks = Array.isArray(value) ? value : [];
+  return tasks.map((task, index) => ({
+    ...normalizeTask(task, fallbackTitle),
+    id: uniqueStableId(task?.id, `${idPrefix}-${index + 1}`, usedIds)
+  }));
 }
 
-export function normalizePhase(phase, fallbackTitle = "New phase") {
+function normalizeTodayDefaults(value, fallback) {
+  const source = Array.isArray(value) ? value : fallback;
+  return normalizeTaskList(source || [], "Today task", "today-task");
+}
+
+export function normalizePhase(phase, fallbackTitle = "New phase", usedTaskIds = new Set()) {
   const saved = isPlainObject(phase) ? phase : {};
-  const tasks = Array.isArray(saved.tasks) ? saved.tasks : [];
   return {
     id: text(saved.id) || createId("phase"),
     title: text(saved.title, fallbackTitle) || fallbackTitle,
-    tasks: tasks.map((task) => normalizeTask(task))
+    tasks: normalizeTaskList(saved.tasks, "New task", "task", usedTaskIds)
   };
+}
+
+function normalizePhaseList(value) {
+  const phases = Array.isArray(value) ? value : [];
+  const usedIds = new Set();
+  const usedTaskIds = new Set();
+  return phases.map((phase, index) => ({
+    ...normalizePhase(phase, "New phase", usedTaskIds),
+    id: uniqueStableId(phase?.id, `phase-${index + 1}`, usedIds)
+  }));
 }
 
 export function normalizeRoutine(routine, fallbackTitle = "New routine") {
   const saved = isPlainObject(routine) ? routine : {};
-  const phases = Array.isArray(saved.phases) ? saved.phases : [];
   const estimatedMinutes = normalizeRoutineMinutes(saved);
   return {
     id: text(saved.id) || createId("routine"),
@@ -164,8 +202,17 @@ export function normalizeRoutine(routine, fallbackTitle = "New routine") {
     purpose: text(saved.purpose),
     whenToUse: text(saved.whenToUse),
     message: text(saved.message),
-    phases: phases.map((phase) => normalizePhase(phase))
+    phases: normalizePhaseList(saved.phases)
   };
+}
+
+function normalizeRoutineList(value) {
+  const routines = Array.isArray(value) ? value : [];
+  const usedIds = new Set();
+  return routines.map((routine, index) => ({
+    ...normalizeRoutine(routine, "Routine"),
+    id: uniqueStableId(routine?.id, `routine-${index + 1}`, usedIds)
+  }));
 }
 
 function normalizeZones(value) {
@@ -301,7 +348,7 @@ export function normalizeTemplate(template, options = {}) {
     todayWeekdayDefaultsEnabled: Boolean(saved.todayWeekdayDefaultsEnabled),
     todayWeekdayDefaults,
     dailyRules: cloneDeep(todayDefaults),
-    routines: routines.map((routine) => normalizeRoutine(routine, "Routine")),
+    routines: normalizeRoutineList(routines),
     systems: normalizeSystems(saved.systems || fallback.systems),
     schedule: {
       weeklyResetDay: text(schedule.weeklyResetDay, fallback.schedule?.weeklyResetDay || "Saturday"),

@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
-import { getHistoryStats, isDailyRulesHistoryEntry } from "../utils/calculations.js";
-import { formatDateTime, formatRelativeDays } from "../utils/dates.js";
+import {
+  getHistoryStats,
+  hasDailyRulesHistoryEntry,
+  isDailyRulesHistoryEntry
+} from "../utils/calculations.js";
+import { formatDateTime, formatRelativeDays, getTodayKey } from "../utils/dates.js";
 import {
   buildActivityByDate,
   getActivityStreaks,
@@ -41,7 +45,80 @@ function entryTitle(entry) {
   return isDailyRulesHistoryEntry(entry) ? "Today tasks" : entry.routineTitle;
 }
 
-export default function History({ history, todayTasksByDate = {}, routines, template, onDeleteEntry }) {
+function historyEntryDateKey(entry) {
+  if (typeof entry?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date)) {
+    return entry.date;
+  }
+  const idMatch = String(entry?.id || "").match(
+    /^(?:daily-rules|today-tasks)-(\d{4}-\d{2}-\d{2})$/
+  );
+  if (idMatch) return idMatch[1];
+  const finishedAt = new Date(entry?.finishedAt);
+  return Number.isNaN(finishedAt.getTime()) ? null : getTodayKey(finishedAt);
+}
+
+function mergeTodayCountsIntoHistory(history, todayTasksByDate) {
+  return history.map((entry) => {
+    if (!isDailyRulesHistoryEntry(entry)) return entry;
+    const dateKey = historyEntryDateKey(entry);
+    const tasks = dateKey ? todayTasksByDate?.[dateKey] : null;
+    if (!Array.isArray(tasks)) return entry;
+    const completedTasks = tasks.filter((task) => task.completed).length;
+    if (completedTasks === 0) return entry;
+    return {
+      ...entry,
+      completedTasks,
+      totalTasks: tasks.length,
+      percent: tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0
+    };
+  });
+}
+
+function buildDerivedTodayEntries(todayTasksByDate, history) {
+  const usedIds = new Set(history.map((entry) => entry.id));
+  return Object.entries(todayTasksByDate || {}).flatMap(([dateKey, tasks]) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || !Array.isArray(tasks)) return [];
+    const completedTasks = tasks.filter((task) => task.completed).length;
+    if (completedTasks === 0 || hasDailyRulesHistoryEntry(history, dateKey)) return [];
+    const timestamp = `${dateKey}T12:00:00`;
+    if (Number.isNaN(new Date(timestamp).getTime())) return [];
+    const baseId = `today-activity-${dateKey}`;
+    let id = baseId;
+    let suffix = 2;
+    while (usedIds.has(id)) {
+      id = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(id);
+    return [
+      {
+        id,
+        kind: "today",
+        source: "today",
+        date: dateKey,
+        routineId: "daily-rules",
+        routineTitle: "Today tasks",
+        startedAt: timestamp,
+        finishedAt: timestamp,
+        completedTasks,
+        totalTasks: tasks.length,
+        percent: tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0,
+        estimatedDurationMinutes: null,
+        notes: "",
+        derived: true
+      }
+    ];
+  });
+}
+
+export default function History({
+  history,
+  todayTasksByDate = {},
+  currentDateKey = getTodayKey(),
+  routines,
+  template,
+  onDeleteEntry
+}) {
   const [filter, setFilter] = useState("all");
   const [selectedId, setSelectedId] = useState(null);
   const stats = getHistoryStats(history);
@@ -50,10 +127,13 @@ export default function History({ history, todayTasksByDate = {}, routines, temp
     () => buildActivityByDate(history, todayTasksByDate),
     [history, todayTasksByDate]
   );
-  const streaks = useMemo(() => getActivityStreaks(activityByDate), [activityByDate]);
+  const streaks = useMemo(
+    () => getActivityStreaks(activityByDate, currentDateKey),
+    [activityByDate, currentDateKey]
+  );
   const weeklyActivity = useMemo(
-    () => getWeeklyActivitySummary(activityByDate),
-    [activityByDate]
+    () => getWeeklyActivitySummary(activityByDate, currentDateKey),
+    [activityByDate, currentDateKey]
   );
   const todayActivityDays = useMemo(
     () => Object.values(activityByDate).filter((item) => item.todayCompleted > 0).length,
@@ -63,15 +143,32 @@ export default function History({ history, todayTasksByDate = {}, routines, temp
     { id: "all", label: "All" },
     ...routines.map((routine) => ({ id: routine.id, label: filterLabel(routine) }))
   ];
-  const hasHistory = history.length > 0;
-  const mostRecent = [...history].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0];
+  const derivedTodayEntries = useMemo(
+    () => buildDerivedTodayEntries(todayTasksByDate, history),
+    [history, todayTasksByDate]
+  );
+  const displayHistoryEntries = useMemo(
+    () => mergeTodayCountsIntoHistory(history, todayTasksByDate),
+    [history, todayTasksByDate]
+  );
+  const displayEntries = useMemo(
+    () => [...displayHistoryEntries, ...derivedTodayEntries],
+    [derivedTodayEntries, displayHistoryEntries]
+  );
+  const hasActivity = displayEntries.length > 0;
+  const mostRecent = [...displayEntries].sort(
+    (a, b) => new Date(b.finishedAt) - new Date(a.finishedAt)
+  )[0];
 
   const filtered = useMemo(() => {
-    const items = filter === "all" ? history : history.filter((entry) => entry.routineId === filter);
+    const items =
+      filter === "all"
+        ? displayEntries
+        : displayEntries.filter((entry) => entry.routineId === filter);
     return [...items].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
-  }, [filter, history]);
+  }, [displayEntries, filter]);
 
-  const selected = history.find((entry) => entry.id === selectedId);
+  const selected = displayEntries.find((entry) => entry.id === selectedId);
   const selectedIsDailyRules = isDailyRulesHistoryEntry(selected);
   const selectedDuration = selectedIsDailyRules
     ? selected.estimatedDurationMinutes
@@ -88,7 +185,7 @@ export default function History({ history, todayTasksByDate = {}, routines, temp
             <h2>History</h2>
           </div>
         </div>
-        {!hasHistory ? (
+        {!hasActivity ? (
           <div className="history-empty-panel">
             <div>
               <h3>No history yet.</h3>
@@ -149,7 +246,7 @@ export default function History({ history, todayTasksByDate = {}, routines, temp
           </div>
         </div>
 
-        {history.length === 0 ? (
+        {stats.total === 0 ? (
           <EmptyState
             title="No insights yet"
             message="Finish a routine to reveal useful patterns."
@@ -251,9 +348,9 @@ export default function History({ history, todayTasksByDate = {}, routines, temp
 
       {filtered.length === 0 ? (
         <EmptyState
-          title={hasHistory ? "No entries for this filter." : "No cleaning history yet."}
+          title={hasActivity ? "No entries for this filter." : "No cleaning history yet."}
           message={
-            hasHistory
+            hasActivity
               ? "Try another filter to review completed entries."
               : "Complete Today tasks or finish a routine to build history."
           }
@@ -303,7 +400,7 @@ export default function History({ history, todayTasksByDate = {}, routines, temp
                   {selectedIsDailyRules ? (
                     <div>
                       <dt>Status</dt>
-                      <dd>Today tasks complete</dd>
+                      <dd>{selected.percent >= 100 ? "Today tasks complete" : "Today activity"}</dd>
                     </div>
                   ) : selected.percent < 100 ? (
                     <div>
@@ -351,13 +448,15 @@ export default function History({ history, todayTasksByDate = {}, routines, temp
                     <p>{selected.notes}</p>
                   </div>
                 ) : null}
-                <button
-                  className="button danger-ghost"
-                  type="button"
-                  onClick={() => onDeleteEntry(selected.id)}
-                >
-                  Delete entry
-                </button>
+                {!selected.derived ? (
+                  <button
+                    className="button danger-ghost"
+                    type="button"
+                    onClick={() => onDeleteEntry(selected.id)}
+                  >
+                    Delete entry
+                  </button>
+                ) : null}
               </>
             ) : (
               <EmptyState

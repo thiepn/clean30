@@ -1,4 +1,5 @@
-const CACHE_NAME = "clean30-app-shell-v5";
+const CACHE_PREFIX = "clean30-";
+const CACHE_NAME = `${CACHE_PREFIX}app-shell-v6`;
 const BASE_PATH = "/clean30/";
 
 const STATIC_SHELL = [
@@ -58,7 +59,11 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
       )
   );
   self.clients.claim();

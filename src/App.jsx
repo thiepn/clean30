@@ -46,9 +46,11 @@ function downloadJson(filename, payload) {
     anchor.click();
     anchor.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
   } catch (error) {
     if (url) URL.revokeObjectURL(url);
     console.warn("Clean30 could not start the JSON download.", error);
+    return false;
   }
 }
 
@@ -88,7 +90,7 @@ function createRoutineTodayTask({ routine, task, dateKey }) {
   };
 }
 
-function createBackupPreview(data, fileName = "") {
+function createBackupPreview(data, fileName = "", warnings = []) {
   const templates = Array.isArray(data?.templates) ? data.templates : [];
   const routines = templates.flatMap((template) =>
     (template.routines || []).filter((routine) => routine.id !== "daily-rules")
@@ -109,6 +111,7 @@ function createBackupPreview(data, fileName = "") {
     `${todayDateCount} Today dates.`,
     `${tagCount} task tags.`,
     data?.appSettings ? "App settings included." : "No app settings found.",
+    ...warnings.map((warning) => `Warning: ${warning}`),
     "Importing replaces current local data."
   ]
     .filter(Boolean)
@@ -117,6 +120,7 @@ function createBackupPreview(data, fileName = "") {
 
 export default function App() {
   const [appState, setAppState] = useState(() => loadAppState());
+  const [currentDateKey, setCurrentDateKey] = useState(() => getTodayKey());
   const [currentView, setCurrentView] = useState("dashboard");
   const [selectedRoutineId, setSelectedRoutineId] = useState("weekly-reset");
   const [completionSummary, setCompletionSummary] = useState(null);
@@ -141,6 +145,26 @@ export default function App() {
   useEffect(() => {
     saveAppState(appState);
   }, [appState]);
+
+  useEffect(() => {
+    function checkForDateRollover() {
+      const nextDateKey = getTodayKey();
+      setCurrentDateKey((current) => (current === nextDateKey ? current : nextDateKey));
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") checkForDateRollover();
+    }
+
+    const intervalId = window.setInterval(checkForDateRollover, 60000);
+    window.addEventListener("focus", checkForDateRollover);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", checkForDateRollover);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!deletedTodayTask) return;
@@ -203,7 +227,7 @@ export default function App() {
           ? "routines"
           : "dashboard"
       : effectiveView;
-  const todayKey = getTodayKey();
+  const todayKey = currentDateKey;
   const todayTasks = useMemo(
     () =>
       buildTodayTasksForDate(
@@ -215,6 +239,29 @@ export default function App() {
       ),
     [activeTemplate, appState.appSettings, appState.dailyRuleCompletions, appState.todayTasksByDate, todayKey]
   );
+
+  useEffect(() => {
+    setAppState((current) => {
+      if (Object.prototype.hasOwnProperty.call(current.todayTasksByDate || {}, todayKey)) {
+        return current;
+      }
+      const template = getTemplateFromState(current);
+      const tasks = buildTodayTasksForDate(
+        null,
+        template,
+        todayKey,
+        current.dailyRuleCompletions?.[todayKey] || [],
+        current.appSettings
+      );
+      return {
+        ...current,
+        todayTasksByDate: {
+          ...(current.todayTasksByDate || {}),
+          [todayKey]: tasks
+        }
+      };
+    });
+  }, [todayKey]);
 
   function markMeaningfulUse(state) {
     return state.firstMeaningfulUseAt
@@ -329,7 +376,13 @@ export default function App() {
   }
 
   function exportTemplate() {
-    downloadJson(`clean30-template-${getTodayKey()}.json`, createTemplateExport(activeTemplate));
+    const ok = downloadJson(
+      `clean30-template-${getTodayKey()}.json`,
+      createTemplateExport(activeTemplate)
+    );
+    return ok
+      ? { ok: true, message: "Template download started." }
+      : { ok: false, error: "Template export could not be prepared. No data was changed." };
   }
 
   function importTemplate(payload) {
@@ -347,21 +400,34 @@ export default function App() {
   function exportFullBackup() {
     const exportedAt = new Date().toISOString();
     const nextState = { ...appState, lastFullBackupExportedAt: exportedAt };
-    downloadJson(`clean30-full-backup-${getTodayKey()}.json`, createFullBackup(nextState));
+    const ok = downloadJson(
+      `clean30-full-backup-${getTodayKey()}.json`,
+      createFullBackup(nextState)
+    );
+    if (!ok) {
+      return {
+        ok: false,
+        error: "Full backup export could not be prepared. Backup health was not changed."
+      };
+    }
     setAppState(nextState);
+    return { ok: true, message: "Full backup download started." };
   }
 
   function importFullBackup(payload, metadata = {}) {
     const result = validateFullBackupPayload(payload);
     if (!result.ok) return result;
-    const previewData = payload?.data || payload;
     requestConfirmation({
       title: "Review backup before import",
-      message: createBackupPreview(previewData, metadata.fileName),
+      message: createBackupPreview(result.data, metadata.fileName, result.warnings),
       confirmLabel: "Import",
       onConfirm: () => {
+        const importedActiveTemplate =
+          result.data.templates.find(
+            (template) => template.id === result.data.activeTemplateId
+          ) || result.data.templates[0];
         setAppState(result.data);
-        setSelectedRoutineId(result.data.templates[0]?.routines[0]?.id || "weekly-reset");
+        setSelectedRoutineId(importedActiveTemplate?.routines[0]?.id || "weekly-reset");
         setCompletionSummary(null);
       }
     });
@@ -1014,6 +1080,7 @@ export default function App() {
       <History
         history={appState.history}
         todayTasksByDate={appState.todayTasksByDate}
+        currentDateKey={todayKey}
         routines={activeTemplate.routines}
         template={activeTemplate}
         onDeleteEntry={deleteHistoryEntry}
@@ -1046,6 +1113,7 @@ export default function App() {
         history={appState.history}
         todayTasks={todayTasks}
         todayTasksByDate={appState.todayTasksByDate}
+        currentDateKey={todayKey}
         activeSession={appState.activeSession}
         completionSummary={completionSummary}
         selectedRoutineId={selectedRoutineId}
