@@ -25,6 +25,8 @@ const guideSections = [
       "Completed tasks move below active tasks.",
       "Start, continue, pause, or finish cleaning routines from Dashboard.",
       "An unfinished session appears near the top with progress and elapsed time.",
+      "Clean Mode is an optional focused view with large controls; the normal checklist stays available.",
+      "Clean Mode uses the same timer, pause or resume state, task progress, and finish action.",
       "Calendar days open a compact activity detail, with a weekly summary kept inside Calendar.",
       "Use Edit when you want to change what appears each day."
     ]

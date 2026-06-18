@@ -5914,3 +5914,282 @@ html[data-font-size="large"] {
     padding: 0.52rem 0.62rem;
   }
 }
+
+body.clean-mode-open {
+  overflow: hidden;
+}
+
+.session-resume-actions {
+  align-items: center;
+}
+
+.clean-mode-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background:
+    linear-gradient(180deg, var(--bg-top, rgba(238, 246, 251, 0.98)), var(--bg)),
+    var(--bg);
+}
+
+.clean-mode-shell {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(260px, 1fr) auto auto;
+  gap: clamp(0.8rem, 1.5vh, 1.2rem);
+  width: min(820px, 100%);
+  min-height: calc(100dvh - 2rem);
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.clean-mode-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+}
+
+.clean-mode-header h1 {
+  margin-top: 0.15rem;
+  font-size: clamp(1.75rem, 1.35rem + 2vw, 2.8rem);
+  overflow-wrap: anywhere;
+}
+
+.clean-mode-exit {
+  min-width: 76px;
+}
+
+.clean-mode-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.clean-mode-status > div {
+  display: grid;
+  gap: 0.12rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 0.7rem 0.8rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  text-align: center;
+}
+
+.clean-mode-status span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 720;
+  text-transform: uppercase;
+}
+
+.clean-mode-status strong {
+  color: var(--text);
+  font-size: clamp(0.9rem, 0.82rem + 0.35vw, 1.08rem);
+  overflow-wrap: anywhere;
+}
+
+.clean-mode-progress {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-cool);
+}
+
+.clean-mode-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--progress-fill);
+  transition: width 180ms ease;
+}
+
+.clean-mode-focus {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(0.65rem, 1.8vh, 1.1rem);
+  min-width: 0;
+  border: 1px solid var(--selected-border);
+  border-radius: var(--radius-card);
+  padding: clamp(1.2rem, 3vw, 2.5rem);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.clean-mode-phase,
+.clean-mode-complete-label {
+  color: var(--accent-text);
+  font-size: 0.82rem;
+  font-weight: 780;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.clean-mode-complete-label {
+  border: 1px solid rgba(86, 117, 92, 0.32);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.clean-mode-task-title {
+  max-width: 18ch;
+  font-size: clamp(2rem, 1.35rem + 3.4vw, 4.4rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.clean-mode-task-detail {
+  max-width: 56ch;
+  color: var(--text-soft);
+  font-size: clamp(0.95rem, 0.88rem + 0.35vw, 1.15rem);
+}
+
+.clean-mode-complete-button {
+  width: min(100%, 430px);
+  min-height: 74px;
+  margin-top: 0.4rem;
+  padding: 1rem 1.4rem;
+  font-size: clamp(1.05rem, 0.98rem + 0.45vw, 1.3rem);
+}
+
+.clean-mode-complete-button.done {
+  border-color: rgba(86, 117, 92, 0.4);
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.clean-mode-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+}
+
+.clean-mode-navigation {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) auto minmax(90px, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.clean-mode-navigation .button:first-child {
+  justify-self: start;
+}
+
+.clean-mode-navigation .button:last-child {
+  justify-self: end;
+}
+
+.clean-mode-navigation span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 720;
+  text-align: center;
+}
+
+.clean-mode-footer {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding-top: 0.15rem;
+  background: linear-gradient(180deg, transparent, var(--bg) 22%);
+}
+
+.clean-mode-footer .button {
+  min-height: 54px;
+}
+
+@media (max-width: 680px) {
+  .session-resume-actions {
+    flex-direction: row;
+  }
+
+  .session-resume-actions .button {
+    flex: 1 1 100px;
+    width: auto;
+  }
+
+  .clean-mode-overlay {
+    padding:
+      max(0.65rem, env(safe-area-inset-top))
+      max(0.65rem, env(safe-area-inset-right))
+      max(0.65rem, env(safe-area-inset-bottom))
+      max(0.65rem, env(safe-area-inset-left));
+  }
+
+  .clean-mode-shell {
+    grid-template-rows: auto auto auto minmax(250px, 1fr) auto auto;
+    gap: 0.65rem;
+    min-height: calc(100dvh - 1.3rem);
+  }
+
+  .clean-mode-header {
+    gap: 0.65rem;
+  }
+
+  .clean-mode-header h1 {
+    font-size: clamp(1.45rem, 1.1rem + 3vw, 2.05rem);
+  }
+
+  .clean-mode-exit {
+    min-width: 64px;
+    min-height: 42px;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .clean-mode-status {
+    gap: 0.35rem;
+  }
+
+  .clean-mode-status > div {
+    padding: 0.5rem 0.35rem;
+  }
+
+  .clean-mode-status span {
+    font-size: 0.64rem;
+  }
+
+  .clean-mode-status strong {
+    font-size: 0.82rem;
+  }
+
+  .clean-mode-focus {
+    gap: 0.65rem;
+    padding: clamp(1rem, 5vw, 1.5rem);
+  }
+
+  .clean-mode-task-title {
+    max-width: 14ch;
+    font-size: clamp(1.8rem, 1.25rem + 5vw, 3rem);
+  }
+
+  .clean-mode-complete-button {
+    min-height: 70px;
+  }
+
+  .clean-mode-navigation {
+    grid-template-columns: minmax(78px, 1fr) auto minmax(78px, 1fr);
+    gap: 0.45rem;
+  }
+
+  .clean-mode-navigation .button {
+    min-height: 46px;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .clean-mode-footer {
+    gap: 0.5rem;
+    padding-bottom: max(0.1rem, env(safe-area-inset-bottom));
+  }
+}

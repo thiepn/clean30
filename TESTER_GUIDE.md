@@ -11,7 +11,7 @@ Recommended device: phone. Desktop testing is also useful.
 ## What To Test
 
 - First launch and onboarding.
-- Dashboard: Today tasks, routine starting, active-session resume card, timer, pause/resume, and Calendar day details.
+- Dashboard: Today tasks, routine starting, active-session resume card, optional focused Clean Mode, timer, pause/resume, and Calendar day details.
 - Routines: can you inspect routine checklists, understand last-done badges, and find edit/add controls without friction?
 - History: are Today entries, routine sessions, elapsed time, and subtle consistency stats understandable?
 - Settings: do font size, density, backup health/preview, privacy, help, install, onboarding, and reset tools make sense?
@@ -23,6 +23,7 @@ Recommended device: phone. Desktop testing is also useful.
 - Could you tell what to do from Dashboard?
 - Did Today tasks make sense?
 - Was starting, pausing, finishing, or discarding a session clear?
+- Did Clean Mode make the active routine easier to follow without replacing the normal checklist?
 - Did the completion summary and View History action make sense after finishing?
 - Did duplicate/archive/color labels make routines easier to manage without feeling busy?
 - Was the Calendar useful without being distracting?

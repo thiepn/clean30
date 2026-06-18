@@ -36,6 +36,14 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Starting a different routine with an active session asks before replacing it.
 - [ ] Dashboard shows a compact resume card when a session is active.
 - [ ] Active session checklist works and persists after refresh.
+- [ ] Clean Mode appears only for an active routine session, from both the resume card and active-session area.
+- [ ] Clean Mode opens on the first incomplete task and Previous/Next navigation preserves phase context.
+- [ ] Mark done and Undo done stay synchronized with the normal active-session checklist.
+- [ ] Exiting Clean Mode preserves progress and does not create History.
+- [ ] Clean Mode pause/resume and timer stay synchronized with the normal session view.
+- [ ] Clean Mode full and partial finish use the existing summary and create one History entry.
+- [ ] Clean Mode safely handles an empty routine, an all-complete routine, and a missing routine reference.
+- [ ] Clean Mode remains usable at 360px with long text, Large font, and Comfortable density.
 - [ ] Active session timer persists after refresh without constant storage writes.
 - [ ] Pause and resume keep elapsed time reasonable.
 - [ ] Completed active-session phases collapse and remain expandable.

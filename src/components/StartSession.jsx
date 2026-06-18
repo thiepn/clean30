@@ -39,7 +39,9 @@ export default function StartSession({
   onViewHistory,
   onClearCompletionSummary,
   onEditRoutines,
-  onAddRoutine
+  onAddRoutine,
+  onOpenCleanMode,
+  cleanModeOpen = false
 }) {
   const [timerNow, setTimerNow] = useState(Date.now());
   const startRoutines = useMemo(
@@ -61,13 +63,13 @@ export default function StartSession({
   );
 
   useEffect(() => {
-    if (!activeSession || activeSession.paused) return;
+    if (!activeSession || activeSession.paused || cleanModeOpen) return;
     setTimerNow(Date.now());
     const intervalId = window.setInterval(() => {
       setTimerNow(Date.now());
     }, 1000);
     return () => window.clearInterval(intervalId);
-  }, [activeSession?.id, activeSession?.paused]);
+  }, [activeSession?.id, activeSession?.paused, cleanModeOpen]);
 
   if (activeSession) {
     const routine =
@@ -101,6 +103,15 @@ export default function StartSession({
               <span className="status-pill compact">{activeSession.paused ? "Paused" : "Active"}</span>
               <span>{formatRoutineDuration(routine)}</span>
               <span>Started {formatDateTime(activeSession.startedAt)}</span>
+              {onOpenCleanMode && activeSession.routineId !== "daily-rules" ? (
+                <button
+                  className="button edit-action small"
+                  type="button"
+                  onClick={onOpenCleanMode}
+                >
+                  Clean Mode
+                </button>
+              ) : null}
             </div>
           </div>
           <ProgressBar

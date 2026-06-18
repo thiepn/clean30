@@ -7,6 +7,7 @@ import {
 } from "../utils/calculations.js";
 import { formatDate, getTodayKey } from "../utils/dates.js";
 import { buildActivityByDate, getWeeklyActivitySummary } from "../utils/activity.js";
+import CleanMode from "./CleanMode.jsx";
 import StartSession from "./StartSession.jsx";
 
 function dateFromKey(dateKey) {
@@ -109,6 +110,7 @@ export default function Dashboard({
   const [selectedRoutineTaskIds, setSelectedRoutineTaskIds] = useState([]);
   const [customTagText, setCustomTagText] = useState("");
   const [timerNow, setTimerNow] = useState(Date.now());
+  const [cleanModeOpen, setCleanModeOpen] = useState(false);
   const todayKey = currentDateKey || getTodayKey();
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [calendarDetailOpen, setCalendarDetailOpen] = useState(false);
@@ -152,9 +154,19 @@ export default function Dashboard({
   const activeRoutine = useMemo(
     () =>
       activeSession
-        ? activeSession.routineSnapshot || getRoutineById(template.routines, activeSession.routineId)
+        ? activeSession.routineSnapshot ||
+          getRoutineById(template.routines, activeSession.routineId) || {
+            id: activeSession.routineId,
+            title: "Routine",
+            estimatedTime: "",
+            estimatedMinutes: 30,
+            phases: []
+          }
         : null,
     [activeSession, template.routines]
+  );
+  const cleanModeAvailable = Boolean(
+    activeSession && activeSession.routineId !== "daily-rules"
   );
   const activeProgress = activeSession ? getSessionProgress(activeSession, activeRoutine) : null;
   const activeElapsed = activeSession ? getSessionElapsedMs(activeSession, new Date(timerNow)) : 0;
@@ -165,6 +177,7 @@ export default function Dashboard({
 
   useEffect(() => {
     if (!activeSession || activeSession.paused) return;
+    setTimerNow(Date.now());
     const intervalId = window.setInterval(() => {
       setTimerNow(Date.now());
     }, 1000);
@@ -184,6 +197,12 @@ export default function Dashboard({
     setSelectedDate(todayKey);
     setCalendarDetailOpen(false);
   }, [todayKey]);
+
+  useEffect(() => {
+    if (cleanModeOpen && !cleanModeAvailable) {
+      setCleanModeOpen(false);
+    }
+  }, [cleanModeAvailable, cleanModeOpen]);
 
   function submitTask(event) {
     event.preventDefault();
@@ -233,6 +252,15 @@ export default function Dashboard({
     scrollToSession();
   }
 
+  function openCleanMode() {
+    if (cleanModeAvailable) setCleanModeOpen(true);
+  }
+
+  function finishFromCleanMode() {
+    setCleanModeOpen(false);
+    onFinishSession();
+  }
+
   return (
     <div className="screen-stack">
       {activeSession && activeRoutine ? (
@@ -248,10 +276,15 @@ export default function Dashboard({
             </div>
             <span className="status-pill compact">{activeSession.paused ? "Paused" : "Active"}</span>
           </div>
-          <div className="card-actions compact-actions">
+          <div className="card-actions compact-actions session-resume-actions">
             <button className="button primary small" type="button" onClick={resumeAndScroll}>
               {activeSession.paused ? "Resume" : "Continue"}
             </button>
+            {cleanModeAvailable ? (
+              <button className="button edit-action small" type="button" onClick={openCleanMode}>
+                Clean Mode
+              </button>
+            ) : null}
             <button className="button ghost small" type="button" onClick={onFinishSession}>
               {activeFinishLabel}
             </button>
@@ -559,6 +592,8 @@ export default function Dashboard({
           onClearCompletionSummary={onClearCompletionSummary}
           onEditRoutines={onEditRoutines}
           onAddRoutine={onAddRoutine}
+          onOpenCleanMode={cleanModeAvailable ? openCleanMode : null}
+          cleanModeOpen={cleanModeOpen}
         />
       </div>
 
@@ -672,6 +707,18 @@ export default function Dashboard({
           </section>
         </div>
       ) : null}
+
+      <CleanMode
+        open={cleanModeOpen && cleanModeAvailable}
+        activeSession={activeSession}
+        routine={activeRoutine}
+        elapsedMs={activeElapsed}
+        onToggleTask={onToggleTask}
+        onPauseSession={onPauseSession}
+        onResumeSession={onResumeSession}
+        onFinishSession={finishFromCleanMode}
+        onExit={() => setCleanModeOpen(false)}
+      />
     </div>
   );
 }
