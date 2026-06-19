@@ -34,6 +34,7 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Routine picker and selected routine summary appear in Dashboard.
 - [ ] Starting a routine keeps the user on Dashboard.
 - [ ] Starting a different routine with an active session asks before replacing it.
+- [ ] Starting the same routine ID in a different template asks before replacing the original session.
 - [ ] Dashboard shows a compact resume card when a session is active.
 - [ ] Active session checklist works and persists after refresh.
 - [ ] Clean Mode appears only for an active routine session, from both the resume card and active-session area.
@@ -42,6 +43,7 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Exiting Clean Mode preserves progress and does not create History.
 - [ ] Clean Mode pause/resume and timer stay synchronized with the normal session view.
 - [ ] Clean Mode full and partial finish use the existing summary and create one History entry.
+- [ ] Rapid or repeated Finish actions across normal and Clean Mode create only one History entry.
 - [ ] Clean Mode safely handles an empty routine, an all-complete routine, and a missing routine reference.
 - [ ] Clean Mode remains usable at 360px with long text, Large font, and Comfortable density.
 - [ ] Active session timer persists after refresh without constant storage writes.
@@ -92,6 +94,8 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Stats are not distorted by one-off Today tasks.
 - [ ] Current/best streak and weekly consistency use completed activity only.
 - [ ] Entry cards show tasks and elapsed time when available.
+- [ ] Older elapsed-only entries show their measured duration.
+- [ ] Last 7/30 day insights exclude future entries and use exact inclusive-today boundaries.
 - [ ] Filters work.
 - [ ] Entry detail panel opens.
 - [ ] Delete entry requires confirmation.
@@ -104,7 +108,11 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Backup export downloads a JSON file.
 - [ ] Backup health updates after export.
 - [ ] Backup import previews file name and data counts before confirmation.
+- [ ] Complete current backups import; incomplete typed current backups are rejected without a preview.
+- [ ] Imported backup timestamps do not count as a local export; backup health recommends a new export.
 - [ ] Canceling import leaves current data unchanged.
+- [ ] A forced localStorage write failure shows a persistent warning with Export and Retry actions.
+- [ ] Today-only use (custom, completed, routine-added, noted, or tagged tasks) becomes backup-reminder eligible.
 - [ ] Backup reminder interval can be changed.
 - [ ] Font size Small/Normal/Large persists after refresh.
 - [ ] Compact/Comfortable density persists after refresh.
@@ -129,5 +137,6 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Old localStorage loads.
 - [ ] Old full backups import safely.
 - [ ] Existing active session loads.
+- [ ] Ambiguous or malformed imported active sessions warn and are safely discarded.
 - [ ] Existing appearance settings load or safely map to the new palette.
 - [ ] New full backups include Today data.

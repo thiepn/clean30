@@ -1,8 +1,16 @@
-import { daysBetween } from "./dates.js";
+import { daysBetween, parseDate } from "./dates.js";
 import { cloneDeep } from "./templateUtils.js";
 
 export function getRoutineById(routines, routineId) {
   return (routines || []).find((routine) => routine.id === routineId);
+}
+
+export function isSessionForRoutine(session, templateId, routineId) {
+  return Boolean(
+    session &&
+      session.templateId === templateId &&
+      session.routineId === routineId
+  );
 }
 
 export function getRoutineTaskIds(routine) {
@@ -93,17 +101,21 @@ export function getLastRoutineDoneLabel(history, routineId) {
   return `Last done ${elapsed} days ago`;
 }
 
-export function createHistoryEntry(session, template) {
-  const finishedAt = new Date().toISOString();
+export function createHistoryEntry(
+  session,
+  template,
+  finishedAt = new Date().toISOString()
+) {
   const routine = session.routineSnapshot;
   const progress = getSessionProgress(session, routine);
   const elapsedMs = getSessionElapsedMs(session, new Date(finishedAt));
   return {
-    id: `history-${Date.now()}`,
+    id: `session-history-${session.id}`,
+    sessionId: session.id,
     routineId: session.routineId,
     routineTitle: routine?.title || "Routine",
-    templateId: session.templateId || template?.id || null,
-    templateName: template?.name || "",
+    templateId: session.templateId || null,
+    templateName: session.templateId ? template?.name || "" : "",
     startedAt: session.startedAt,
     finishedAt,
     completedTasks: progress.completed,
@@ -122,8 +134,12 @@ function estimateTodayTaskMinutes(tasks) {
   }, 0);
 }
 
-export function createDailyRulesHistoryEntry({ dateKey, dailyRules, template }) {
-  const completedAt = new Date().toISOString();
+export function createDailyRulesHistoryEntry({
+  dateKey,
+  dailyRules,
+  template,
+  completedAt = new Date().toISOString()
+}) {
   const totalTasks = dailyRules.length;
   return {
     id: `today-tasks-${dateKey}`,
@@ -143,6 +159,119 @@ export function createDailyRulesHistoryEntry({ dateKey, dailyRules, template }) 
     estimatedDurationMinutes: estimateTodayTaskMinutes(dailyRules),
     notes: "Completed from Dashboard Today tasks."
   };
+}
+
+function settlePausedSession(session, finishedAt) {
+  if (!session?.paused) return session;
+  const pausedAt = parseDate(session.pausedAt);
+  const finished = parseDate(finishedAt);
+  const settledPausedMs =
+    pausedAt && finished ? Math.max(0, finished.getTime() - pausedAt.getTime()) : 0;
+  return {
+    ...session,
+    paused: false,
+    pausedAt: null,
+    totalPausedMs: Math.max(0, Number(session.totalPausedMs) || 0) + settledPausedMs
+  };
+}
+
+export function finishSessionState(
+  state,
+  sessionId,
+  finishedAt = new Date().toISOString()
+) {
+  const session = state?.activeSession;
+  if (!session || session.id !== sessionId) {
+    return { state, accepted: false, historyEntry: null };
+  }
+
+  const sessionTemplate =
+    state.templates.find((template) => template.id === session.templateId) ||
+    state.templates.find((template) => template.id === state.activeTemplateId) ||
+    state.templates[0];
+  const meaningfulUseAt = state.firstMeaningfulUseAt || finishedAt;
+
+  if (session.routineId === "daily-rules") {
+    const finishedDate = parseDate(finishedAt) || new Date();
+    const dateKey = [
+      finishedDate.getFullYear(),
+      String(finishedDate.getMonth() + 1).padStart(2, "0"),
+      String(finishedDate.getDate()).padStart(2, "0")
+    ].join("-");
+    const dailyRules = sessionTemplate?.dailyRules || [];
+    const validDailyRuleIds = new Set(dailyRules.map((rule) => rule.id));
+    const completedRuleIds = [
+      ...new Set((session.completedTaskIds || []).filter((id) => validDailyRuleIds.has(id)))
+    ];
+    const completedSet = new Set(completedRuleIds);
+    const allDailyRulesComplete =
+      dailyRules.length > 0 && dailyRules.every((rule) => completedSet.has(rule.id));
+    const dailyHistoryEntry =
+      allDailyRulesComplete && !hasDailyRulesHistoryEntry(state.history, dateKey)
+        ? createDailyRulesHistoryEntry({
+            dateKey,
+            dailyRules,
+            template: sessionTemplate,
+            completedAt: finishedAt
+          })
+        : null;
+    return {
+      accepted: true,
+      historyEntry: dailyHistoryEntry,
+      state: {
+        ...state,
+        history: dailyHistoryEntry ? [dailyHistoryEntry, ...state.history] : state.history,
+        activeSession: null,
+        dailyRuleCompletions: {
+          ...state.dailyRuleCompletions,
+          [dateKey]: completedRuleIds
+        },
+        firstMeaningfulUseAt: meaningfulUseAt
+      }
+    };
+  }
+
+  const settledSession = settlePausedSession(session, finishedAt);
+  const entry = createHistoryEntry(settledSession, sessionTemplate, finishedAt);
+  const existingEntry = state.history.find(
+    (item) => item.id === entry.id || item.sessionId === sessionId
+  );
+  return {
+    accepted: true,
+    historyEntry: existingEntry || entry,
+    state: {
+      ...state,
+      history: existingEntry ? state.history : [entry, ...state.history],
+      activeSession: null,
+      firstMeaningfulUseAt: meaningfulUseAt
+    }
+  };
+}
+
+function positiveFiniteNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
+
+export function getHistoryDurationMinutes(entry, { allowEstimate = true } = {}) {
+  const elapsedMs = positiveFiniteNumber(entry?.elapsedMs);
+  if (elapsedMs !== null) return Math.round(elapsedMs / 60000);
+
+  const elapsedMinutes = positiveFiniteNumber(entry?.elapsedMinutes);
+  if (elapsedMinutes !== null) return Math.round(elapsedMinutes);
+
+  const started = parseDate(entry?.startedAt);
+  const finished = parseDate(entry?.finishedAt);
+  if (started && finished && finished > started) {
+    return Math.round((finished - started) / 60000);
+  }
+
+  if (allowEstimate) {
+    const estimate = positiveFiniteNumber(entry?.estimatedDurationMinutes);
+    if (estimate !== null) return Math.round(estimate);
+  }
+  return null;
 }
 
 export function hasDailyRulesHistoryEntry(history, dateKey) {

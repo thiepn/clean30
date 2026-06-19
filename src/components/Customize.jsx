@@ -201,6 +201,7 @@ export default function Customize({
         onEditTemplate={editTemplate}
         onConfirmEdit={confirmTemplateEdit}
         activeSession={activeSession}
+        templateId={activeTemplate.id}
         autoAddRoutine={entryIntent === "add-routine"}
         initialEditorTab={entryIntent === "today" ? "today" : "routines"}
       />

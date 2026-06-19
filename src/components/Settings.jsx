@@ -35,7 +35,7 @@ const backgroundOptions = [
 function backupStatus(lastBackup, backupDue) {
   if (!lastBackup) {
     return {
-      label: "No backup yet",
+      label: "No local backup yet",
       detail: "Export a backup to protect your local routines and history.",
       tone: "due"
     };

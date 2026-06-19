@@ -15,6 +15,7 @@ Recommended device: phone. Desktop testing is also useful.
 - Routines: can you inspect routine checklists, understand last-done badges, and find edit/add controls without friction?
 - History: are Today entries, routine sessions, elapsed time, and subtle consistency stats understandable?
 - Settings: do font size, density, backup health/preview, privacy, help, install, onboarding, and reset tools make sense?
+- Recovery: does an incomplete backup stay rejected, and does a simulated storage failure clearly explain the reload risk?
 - PWA install: can you add it to your phone home screen?
 
 ## Feedback Questions
@@ -40,3 +41,6 @@ Recommended device: phone. Desktop testing is also useful.
 Clean30 has no account, no cloud sync, no analytics, and no ads. Your data stays in your browser or installed PWA storage.
 
 If you care about the test data you create, export a full backup from Settings. Clearing browser/app data may delete Clean30 data.
+
+After importing a backup, Clean30 recommends a new local export. The imported file's historical
+export time does not count as a backup made by this browser installation.

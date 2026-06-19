@@ -94,6 +94,7 @@ export default function RoutinesSection({
   onEditTemplate,
   onConfirmEdit,
   activeSession,
+  templateId,
   autoAddRoutine = false,
   initialEditorTab = "routines"
 }) {
@@ -225,7 +226,10 @@ export default function RoutinesSection({
 
   function archiveRoutine(routine) {
     if (!routine || !canEdit) return;
-    if (activeSession?.routineId === routine.id) {
+    if (
+      activeSession?.templateId === templateId &&
+      activeSession?.routineId === routine.id
+    ) {
       onConfirmEdit({
         title: "Routine is in use",
         message: `"${routine.title}" is used by the active session. Finish or discard that session before archiving this routine.`,
@@ -270,7 +274,10 @@ export default function RoutinesSection({
   }
 
   function deleteRoutine(routine, index = visibleRoutines.findIndex((item) => item.id === routine?.id)) {
-    if (activeSession?.routineId === routine.id) {
+    if (
+      activeSession?.templateId === templateId &&
+      activeSession?.routineId === routine.id
+    ) {
       onConfirmEdit({
         title: "Routine is in use",
         message: `"${routine.title}" is used by the active session. Finish or discard that session before deleting this routine.`,

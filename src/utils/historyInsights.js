@@ -1,5 +1,8 @@
 import { daysBetween, parseDate } from "./dates.js";
-import { isDailyRulesHistoryEntry } from "./calculations.js";
+import {
+  getHistoryDurationMinutes,
+  isDailyRulesHistoryEntry
+} from "./calculations.js";
 
 export const importantRoutineIds = [
   "weekly-reset",
@@ -79,12 +82,12 @@ export function getHistoryInsights(history, routines, template) {
 
   const recent7 = sessionEntries.filter((entry) => {
     const elapsed = daysBetween(entry.finishedAt, now);
-    return elapsed !== null && elapsed <= 7;
+    return elapsed !== null && elapsed >= 0 && elapsed < 7;
   }).length;
 
   const recent30 = sessionEntries.filter((entry) => {
     const elapsed = daysBetween(entry.finishedAt, now);
-    return elapsed !== null && elapsed <= 30;
+    return elapsed !== null && elapsed >= 0 && elapsed < 30;
   }).length;
 
   const averageCompletion = average(sessionEntries.map((entry) => Number(entry.percent) || 0));
@@ -144,10 +147,5 @@ export function getHistoryInsights(history, routines, template) {
 }
 
 export function getSessionDurationMinutes(entry) {
-  const savedDuration = Number(entry?.estimatedDurationMinutes);
-  if (Number.isFinite(savedDuration)) return Math.max(0, Math.round(savedDuration));
-  const started = validDate(entry?.startedAt);
-  const finished = validDate(entry?.finishedAt);
-  if (!started || !finished || finished < started) return null;
-  return Math.max(0, Math.round((finished - started) / 60000));
+  return getHistoryDurationMinutes(entry);
 }

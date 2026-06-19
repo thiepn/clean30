@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Customize from "./components/Customize.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import History from "./components/History.jsx";
@@ -10,18 +10,23 @@ import HelpGuide from "./components/HelpGuide.jsx";
 import Onboarding from "./components/Onboarding.jsx";
 import {
   createDailyRulesHistoryEntry,
-  createHistoryEntry,
   createSession,
+  finishSessionState,
   getRoutineById,
-  hasDailyRulesHistoryEntry
+  hasDailyRulesHistoryEntry,
+  isSessionForRoutine
 } from "./utils/calculations.js";
 import { daysBetween, getTodayKey } from "./utils/dates.js";
 import {
   buildTodayTasksForDate,
   createFullBackup,
+  getStorageHealth,
+  hasMeaningfulTodayData,
   loadAppState,
+  prepareImportedAppState,
   resetToFreshState,
   saveAppState,
+  subscribeStorageHealth,
   validateFullBackupPayload
 } from "./utils/storage.js";
 import {
@@ -124,10 +129,13 @@ export default function App() {
   const [currentView, setCurrentView] = useState("dashboard");
   const [selectedRoutineId, setSelectedRoutineId] = useState("weekly-reset");
   const [completionSummary, setCompletionSummary] = useState(null);
+  const [pendingCompletionSessionId, setPendingCompletionSessionId] = useState(null);
+  const finishRequestTimesRef = useRef(new Map());
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [deletedTodayTask, setDeletedTodayTask] = useState(null);
+  const [storageHealth, setStorageHealth] = useState(() => getStorageHealth());
   const [editorContext, setEditorContext] = useState({
     origin: "dashboard",
     section: "routines",
@@ -143,8 +151,29 @@ export default function App() {
   }, [appState.activeTemplateId, appState.templates]);
 
   useEffect(() => {
+    return subscribeStorageHealth(setStorageHealth);
+  }, []);
+
+  useEffect(() => {
     saveAppState(appState);
   }, [appState]);
+
+  useEffect(() => {
+    if (!pendingCompletionSessionId) return;
+    if (appState.activeSession?.id === pendingCompletionSessionId) return;
+    const expectedFinishedAt = finishRequestTimesRef.current.get(
+      pendingCompletionSessionId
+    );
+    const entry = appState.history.find(
+      (item) =>
+        (item.id === `session-history-${pendingCompletionSessionId}` ||
+          item.sessionId === pendingCompletionSessionId) &&
+        item.finishedAt === expectedFinishedAt
+    );
+    if (entry) setCompletionSummary(entry);
+    finishRequestTimesRef.current.delete(pendingCompletionSessionId);
+    setPendingCompletionSessionId(null);
+  }, [appState.activeSession?.id, appState.history, pendingCompletionSessionId]);
 
   useEffect(() => {
     function checkForDateRollover() {
@@ -195,10 +224,12 @@ export default function App() {
   const hasCustomTemplate = appState.templates.some(
     (template) => template.id !== "clean30-default" && !template.readOnly
   );
+  const hasMeaningfulToday = hasMeaningfulTodayData(appState.todayTasksByDate);
   const onboardingAge = daysBetween(appState.onboardingCompletedAt);
   const hasMeaningfulData =
     appState.history.length > 0 ||
     hasCompletedDailyRules ||
+    hasMeaningfulToday ||
     hasCustomTemplate ||
     (onboardingAge !== null && onboardingAge > 30);
   const backupReferenceDate =
@@ -417,18 +448,24 @@ export default function App() {
   function importFullBackup(payload, metadata = {}) {
     const result = validateFullBackupPayload(payload);
     if (!result.ok) return result;
+    const importedState = prepareImportedAppState(result.data);
     requestConfirmation({
       title: "Review backup before import",
-      message: createBackupPreview(result.data, metadata.fileName, result.warnings),
+      message: createBackupPreview(importedState, metadata.fileName, [
+        ...(result.warnings || []),
+        "A new local full backup is recommended after import."
+      ]),
       confirmLabel: "Import",
       onConfirm: () => {
         const importedActiveTemplate =
-          result.data.templates.find(
-            (template) => template.id === result.data.activeTemplateId
-          ) || result.data.templates[0];
-        setAppState(result.data);
+          importedState.templates.find(
+            (template) => template.id === importedState.activeTemplateId
+          ) || importedState.templates[0];
+        setAppState(importedState);
         setSelectedRoutineId(importedActiveTemplate?.routines[0]?.id || "weekly-reset");
         setCompletionSummary(null);
+        setPendingCompletionSessionId(null);
+        finishRequestTimesRef.current.clear();
       }
     });
     return { ok: true, message: "Backup validated. Review the preview before importing." };
@@ -441,7 +478,7 @@ export default function App() {
     setSelectedRoutineId(routineId);
 
     if (appState.activeSession) {
-      if (appState.activeSession.routineId === routineId) {
+      if (isSessionForRoutine(appState.activeSession, activeTemplate.id, routineId)) {
         setCompletionSummary(null);
         setCurrentView("dashboard");
         return;
@@ -579,71 +616,15 @@ export default function App() {
   }
 
   function finishSession() {
-    const activeSession = appState.activeSession;
-    if (!activeSession) return;
-    const pausedAt = new Date(activeSession.pausedAt);
-    const settledPausedMs =
-      activeSession.paused && !Number.isNaN(pausedAt.getTime())
-        ? Math.max(0, Date.now() - pausedAt.getTime())
-        : 0;
-    const sessionForHistory = activeSession.paused
-      ? {
-          ...activeSession,
-          paused: false,
-          pausedAt: null,
-          totalPausedMs: Math.max(0, Number(activeSession.totalPausedMs) || 0) + settledPausedMs
-        }
-      : activeSession;
-    const sessionTemplate =
-      appState.templates.find((template) => template.id === activeSession.templateId) ||
-      activeTemplate;
-
-    if (activeSession.routineId === "daily-rules") {
-      const todayKey = getTodayKey();
-      const dailyRules = sessionTemplate.dailyRules || [];
-      const validDailyRuleIds = new Set(dailyRules.map((rule) => rule.id));
-      const completedRuleIds = [
-        ...new Set((activeSession.completedTaskIds || []).filter((id) => validDailyRuleIds.has(id)))
-      ];
-      const completedSet = new Set(completedRuleIds);
-      const allDailyRulesComplete =
-        dailyRules.length > 0 && dailyRules.every((rule) => completedSet.has(rule.id));
-      const dailyHistoryEntry =
-        allDailyRulesComplete && !hasDailyRulesHistoryEntry(appState.history, todayKey)
-          ? createDailyRulesHistoryEntry({
-              dateKey: todayKey,
-              dailyRules,
-              template: sessionTemplate
-            })
-          : null;
-
-      setAppState((current) =>
-        markMeaningfulUse({
-          ...current,
-          history: dailyHistoryEntry ? [dailyHistoryEntry, ...current.history] : current.history,
-          activeSession: null,
-          dailyRuleCompletions: {
-            ...current.dailyRuleCompletions,
-            [todayKey]: completedRuleIds
-          }
-        })
-      );
-      setCompletionSummary(null);
-      return;
-    }
-
-    const entry = createHistoryEntry(sessionForHistory, sessionTemplate);
-
-    setAppState((current) => {
-      const next = {
-        ...current,
-        history: [entry, ...current.history],
-        activeSession: null
-      };
-
-      return markMeaningfulUse(next);
-    });
-    setCompletionSummary(entry);
+    const sessionId = appState.activeSession?.id;
+    if (!sessionId) return;
+    const finishedAt =
+      finishRequestTimesRef.current.get(sessionId) || new Date().toISOString();
+    finishRequestTimesRef.current.set(sessionId, finishedAt);
+    const expectsSummary = appState.activeSession?.routineId !== "daily-rules";
+    setAppState((current) => finishSessionState(current, sessionId, finishedAt).state);
+    setCompletionSummary(null);
+    setPendingCompletionSessionId(expectsSummary ? sessionId : null);
   }
 
   function viewCompletionHistory() {
@@ -898,6 +879,8 @@ export default function App() {
         setAppState(resetToFreshState());
         setSelectedRoutineId("weekly-reset");
         setCompletionSummary(null);
+        setPendingCompletionSessionId(null);
+        finishRequestTimesRef.current.clear();
       }
     });
   }
@@ -1149,6 +1132,29 @@ export default function App() {
 
   return (
     <>
+      {storageHealth.status === "error" ? (
+        <div className="storage-warning-banner" role="alert">
+          <div>
+            <strong>Changes could not be saved.</strong>
+            <span>
+              Export a backup and check your browser storage.{" "}
+              {storageHealth.errorMessage}
+            </span>
+          </div>
+          <div className="storage-warning-actions">
+            <button className="button primary small" type="button" onClick={exportFullBackup}>
+              Export backup
+            </button>
+            <button
+              className="button ghost small"
+              type="button"
+              onClick={() => saveAppState(appState)}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : null}
       <Layout
         currentView={publicView}
         onNavigate={navigateTo}

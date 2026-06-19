@@ -1,5 +1,8 @@
 import { getTodayKey, parseDate } from "./dates.js";
-import { isDailyRulesHistoryEntry } from "./calculations.js";
+import {
+  getHistoryDurationMinutes,
+  isDailyRulesHistoryEntry
+} from "./calculations.js";
 
 function entryDateKey(entry) {
   if (typeof entry?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date)) {
@@ -10,12 +13,7 @@ function entryDateKey(entry) {
 }
 
 function entryDurationMinutes(entry) {
-  const saved = Number(entry?.estimatedDurationMinutes);
-  if (Number.isFinite(saved)) return Math.max(0, saved);
-  const started = parseDate(entry?.startedAt);
-  const finished = parseDate(entry?.finishedAt);
-  if (!started || !finished || finished < started) return 0;
-  return Math.max(0, Math.round((finished - started) / 60000));
+  return getHistoryDurationMinutes(entry) || 0;
 }
 
 export function buildActivityByDate(history = [], todayTasksByDate = {}) {
