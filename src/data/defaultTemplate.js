@@ -18,13 +18,13 @@ const defaultZones = [
 ];
 
 const emptyWeekdayDefaults = {
-  sunday: [],
-  monday: [],
-  tuesday: [],
-  wednesday: [],
-  thursday: [],
-  friday: [],
-  saturday: []
+  sunday: null,
+  monday: null,
+  tuesday: null,
+  wednesday: null,
+  thursday: null,
+  friday: null,
+  saturday: null
 };
 
 function priorityFromLabel(label = "") {
@@ -80,6 +80,7 @@ export const clean30DefaultTemplate = {
   })),
   todayDefaults: dailyRuleItems.map(normalizeTask),
   todayWeekdayDefaultsEnabled: false,
+  todayWeekdayDefaultsExplicit: true,
   todayWeekdayDefaults: emptyWeekdayDefaults,
   dailyRules: dailyRuleItems.map(normalizeTask),
   routines: routines.map(normalizeRoutine),

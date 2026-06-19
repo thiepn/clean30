@@ -9,8 +9,7 @@ export const importantRoutineIds = [
   "minimal-reset",
   "monthly-deep-clean",
   "guest-reset",
-  "initial-reset",
-  "daily-rules"
+  "initial-reset"
 ];
 
 function validDate(value) {
@@ -147,5 +146,5 @@ export function getHistoryInsights(history, routines, template) {
 }
 
 export function getSessionDurationMinutes(entry) {
-  return getHistoryDurationMinutes(entry);
+  return getHistoryDurationMinutes(entry, { allowEstimate: false });
 }

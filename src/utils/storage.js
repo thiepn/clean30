@@ -4,6 +4,7 @@ import {
   createDefaultTemplate,
   densityOptions,
   duplicateTemplate,
+  getTodayDefaultsForDate,
   normalizeRoutine,
   normalizeTemplate,
   priorityOptions,
@@ -18,7 +19,7 @@ export const STORAGE_KEYS = {
   history: "clean30_history"
 };
 
-export const CURRENT_BACKUP_VERSION = 2;
+export const CURRENT_BACKUP_VERSION = 3;
 
 const storageHealthListeners = new Set();
 let storageHealth = {
@@ -159,19 +160,6 @@ function cleanTags(value) {
     .map((tag) => tag.trim())
     .filter(Boolean)
     .slice(0, 24);
-}
-
-function getWeekdayKey(dateKey) {
-  const parsed = new Date(`${dateKey}T00:00:00`);
-  return WEEKDAY_KEYS[Number.isNaN(parsed.getTime()) ? 0 : parsed.getDay()];
-}
-
-function getTemplateTodayDefaults(template, dateKey) {
-  if (template?.todayWeekdayDefaultsEnabled) {
-    const weekdayTasks = template?.todayWeekdayDefaults?.[getWeekdayKey(dateKey)];
-    if (Array.isArray(weekdayTasks) && weekdayTasks.length) return weekdayTasks;
-  }
-  return template?.todayDefaults || template?.dailyRules || [];
 }
 
 function normalizeDateString(value) {
@@ -372,7 +360,7 @@ function normalizeTodayTask(value, index, dateKey, templateDefaults = [], comple
 
 export function buildTodayTasksForDate(existingTasks, template, dateKey, completedDefaultIds = [], appSettings = {}) {
   if (Array.isArray(existingTasks)) {
-    const templateDefaults = getTemplateTodayDefaults(template, dateKey);
+    const templateDefaults = getTodayDefaultsForDate(template, dateKey);
     const usedIds = new Set();
     return existingTasks
       .map((task, index) =>
@@ -388,7 +376,7 @@ export function buildTodayTasksForDate(existingTasks, template, dateKey, complet
   if (appSettings?.startTodayEmpty) return [];
 
   const completed = new Set(uniqueStrings(completedDefaultIds));
-  const defaults = getTemplateTodayDefaults(template, dateKey);
+  const defaults = getTodayDefaultsForDate(template, dateKey);
   return defaults.map((task, index) => {
     const isCompleted = completed.has(task.id);
     return {
@@ -1114,7 +1102,9 @@ function isValidTemplateBackupShape(template) {
     Array.isArray(todayDefaults) &&
     todayDefaults.every(isValidTaskBackupShape) &&
     weekdayDefaults.every(
-      (tasks) => Array.isArray(tasks) && tasks.every(isValidTaskBackupShape)
+      (tasks) =>
+        tasks === null ||
+        (Array.isArray(tasks) && tasks.every(isValidTaskBackupShape))
     )
   );
 }
@@ -1264,6 +1254,7 @@ const CURRENT_TEMPLATE_FIELDS = [
   "zones",
   "todayDefaults",
   "todayWeekdayDefaultsEnabled",
+  "todayWeekdayDefaultsExplicit",
   "todayWeekdayDefaults",
   "dailyRules",
   "routines",
@@ -1304,11 +1295,13 @@ function isValidCurrentTemplateBackupShape(template) {
     Array.isArray(template.todayDefaults) &&
     template.todayDefaults.every(isValidCurrentTaskBackupShape) &&
     typeof template.todayWeekdayDefaultsEnabled === "boolean" &&
+    template.todayWeekdayDefaultsExplicit === true &&
     hasOwnFields(template.todayWeekdayDefaults, WEEKDAY_KEYS) &&
     WEEKDAY_KEYS.every(
       (day) =>
-        Array.isArray(template.todayWeekdayDefaults[day]) &&
-        template.todayWeekdayDefaults[day].every(isValidCurrentTaskBackupShape)
+        template.todayWeekdayDefaults[day] === null ||
+        (Array.isArray(template.todayWeekdayDefaults[day]) &&
+          template.todayWeekdayDefaults[day].every(isValidCurrentTaskBackupShape))
     ) &&
     Array.isArray(template.dailyRules) &&
     template.dailyRules.every(isValidCurrentTaskBackupShape) &&

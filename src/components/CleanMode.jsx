@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatElapsedTime, getSessionProgress } from "../utils/calculations.js";
+import useDialogFocus from "../hooks/useDialogFocus.js";
 
 function flattenRoutineTasks(routine) {
   return (routine?.phases || []).flatMap((phase) =>
@@ -43,6 +44,11 @@ export default function CleanMode({
   const taskSignature = tasks.map((task) => task.id).join("|");
 
   onExitRef.current = onExit;
+  const dialogRef = useDialogFocus({
+    open: Boolean(open && activeSession),
+    onClose: onExit,
+    initialFocusRef: exitButtonRef
+  });
 
   useEffect(() => {
     if (!open || !activeSession) return;
@@ -50,30 +56,8 @@ export default function CleanMode({
   }, [activeSession?.id, open, taskSignature]);
 
   useEffect(() => {
-    if (!open) return;
-    if (!activeSession) {
-      onExitRef.current?.();
-      return;
-    }
-
-    const previousFocus = document.activeElement;
-    document.body.classList.add("clean-mode-open");
-    const frameId = window.requestAnimationFrame(() => {
-      exitButtonRef.current?.focus?.({ preventScroll: true });
-    });
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") onExitRef.current?.();
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      window.removeEventListener("keydown", handleKeyDown);
-      document.body.classList.remove("clean-mode-open");
-      previousFocus?.focus?.({ preventScroll: true });
-    };
-  }, [activeSession?.id, open]);
+    if (open && !activeSession) onExitRef.current?.();
+  }, [activeSession, open]);
 
   useEffect(() => {
     if (currentIndex >= tasks.length) {
@@ -107,6 +91,8 @@ export default function CleanMode({
         aria-modal="true"
         className="clean-mode-shell"
         role="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <header className="clean-mode-header">
           <div>

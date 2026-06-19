@@ -28,8 +28,10 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] User can remove custom Today tasks.
 - [ ] Today tasks persist after refresh.
 - [ ] Today initializes fresh by date.
-- [ ] Completing default Today tasks logs one Today history entry.
-- [ ] Re-checking Today tasks does not create duplicate date entries.
+- [ ] Completing Today tasks creates one derived Today activity display without persisting a routine session.
+- [ ] Routine-imported Today tasks remain Today activity.
+- [ ] Resetting or unchecking dated Today tasks predictably updates derived Today activity.
+- [ ] Add-from-routine Cancel, Close, successful Add, and Escape clear transient selections.
 - [ ] Edit defaults opens the internal editor focused on Today defaults.
 - [ ] Routine picker and selected routine summary appear in Dashboard.
 - [ ] Starting a routine keeps the user on Dashboard.
@@ -51,10 +53,11 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Completed active-session phases collapse and remain expandable.
 - [ ] Finish, partial finish, reset, and discard still work.
 - [ ] Finishing a routine shows a compact completion summary with View History and Close.
-- [ ] Mini calendar renders.
+- [ ] Calendar renders.
 - [ ] Calendar marks days with session or Today activity.
 - [ ] Selecting a calendar day opens a closeable detail sheet.
-- [ ] Day details clearly separate Today tasks, routine sessions, and cleaning time.
+- [ ] Calendar buttons announce the full date and activity counts to a screen reader.
+- [ ] Day details clearly separate Today tasks, routine sessions, measured routine time, and estimated Today time.
 - [ ] Calendar weekly summary updates from real activity.
 
 ## Routines
@@ -74,6 +77,9 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] No mode toggle appears.
 - [ ] No duplicate-before-edit requirement appears.
 - [ ] Today defaults live inside the Routines editor area.
+- [ ] Each weekday clearly shows Using General, Custom, or Empty.
+- [ ] Use General, Copy General, and Start empty preserve the intended weekday behavior.
+- [ ] Clearing the last custom weekday task leaves an explicit empty weekday.
 - [ ] Routines can be added and edited.
 - [ ] Routine duration validates as 1-600 minutes.
 - [ ] Routines can be duplicated with independent IDs.
@@ -89,7 +95,8 @@ Use this checklist before sharing a tester build or deploying a release.
 
 - [ ] History tab is third.
 - [ ] Empty History shows a light starter state.
-- [ ] Today entries appear as Today entries.
+- [ ] Derived Today activity appears as Today activity and has no Delete action.
+- [ ] Legacy Today History remains as a non-deletable fallback when dated Today data is absent.
 - [ ] Routine/session entries render correctly.
 - [ ] Stats are not distorted by one-off Today tasks.
 - [ ] Current/best streak and weekly consistency use completed activity only.
@@ -99,6 +106,7 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Filters work.
 - [ ] Entry detail panel opens.
 - [ ] Delete entry requires confirmation.
+- [ ] Deleting a routine session leaves same-day Today activity intact.
 
 ## Settings
 
@@ -120,6 +128,8 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Privacy/local-only section is clear.
 - [ ] Help guide opens.
 - [ ] Restart onboarding works.
+- [ ] Confirmations, Help, onboarding, Add-from-routine, Calendar detail, and Clean Mode trap focus and restore it after closing.
+- [ ] Escape dismisses allowed dialogs without confirming destructive actions.
 - [ ] Danger Zone is collapsed by default.
 - [ ] Reset history and reset all still require confirmation.
 
@@ -140,3 +150,12 @@ Use this checklist before sharing a tester build or deploying a release.
 - [ ] Ambiguous or malformed imported active sessions warn and are safely discarded.
 - [ ] Existing appearance settings load or safely map to the new palette.
 - [ ] New full backups include Today data.
+- [ ] Version 2 backups migrate empty weekday arrays to General fallback.
+- [ ] Version 3 backup round-trips preserve explicit empty weekdays.
+
+## Mobile Accessibility
+
+- [ ] Today checkboxes announce their task text.
+- [ ] Bottom navigation, Today row actions, weekday selectors, and modal close controls have usable touch targets.
+- [ ] 320px and 360px widths have no horizontal overflow.
+- [ ] Large font with Comfortable density remains usable.

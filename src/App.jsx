@@ -9,11 +9,10 @@ import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import HelpGuide from "./components/HelpGuide.jsx";
 import Onboarding from "./components/Onboarding.jsx";
 import {
-  createDailyRulesHistoryEntry,
   createSession,
   finishSessionState,
   getRoutineById,
-  hasDailyRulesHistoryEntry,
+  isDailyRulesHistoryEntry,
   isSessionForRoutine
 } from "./utils/calculations.js";
 import { daysBetween, getTodayKey } from "./utils/dates.js";
@@ -675,33 +674,6 @@ export default function App() {
     };
   }
 
-  function addTodayCompletionHistory(state, tasks, dateKey) {
-    const defaultTasks = tasks.filter((task) => task.source === "default");
-    const allDefaultsComplete =
-      defaultTasks.length > 0 && defaultTasks.every((task) => task.completed);
-    if (!allDefaultsComplete || hasDailyRulesHistoryEntry(state.history, dateKey)) {
-      return state;
-    }
-
-    const historyTasks = defaultTasks.map((task) => ({
-      id: task.defaultTaskId || task.id,
-      title: task.text,
-      duration: "",
-      detail: "",
-      priority: "normal"
-    }));
-    const todayHistoryEntry = createDailyRulesHistoryEntry({
-      dateKey,
-      dailyRules: historyTasks,
-      template: getTemplateFromState(state)
-    });
-
-    return {
-      ...state,
-      history: [todayHistoryEntry, ...state.history]
-    };
-  }
-
   function toggleTodayTask(taskId) {
     const dateKey = getTodayKey();
     setAppState((current) => {
@@ -715,7 +687,7 @@ export default function App() {
         };
       });
       const next = applyTodayTasksToState(current, dateKey, tasks);
-      return markMeaningfulUse(addTodayCompletionHistory(next, tasks, dateKey));
+      return markMeaningfulUse(next);
     });
   }
 
@@ -1013,7 +985,9 @@ export default function App() {
       onConfirm: () => {
         setAppState((current) => ({
           ...current,
-          history: current.history.filter((entry) => entry.id !== entryId)
+          history: current.history.filter(
+            (entry) => entry.id !== entryId || isDailyRulesHistoryEntry(entry)
+          )
         }));
       }
     });

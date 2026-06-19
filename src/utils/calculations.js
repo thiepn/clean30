@@ -203,24 +203,12 @@ export function finishSessionState(
     const completedRuleIds = [
       ...new Set((session.completedTaskIds || []).filter((id) => validDailyRuleIds.has(id)))
     ];
-    const completedSet = new Set(completedRuleIds);
-    const allDailyRulesComplete =
-      dailyRules.length > 0 && dailyRules.every((rule) => completedSet.has(rule.id));
-    const dailyHistoryEntry =
-      allDailyRulesComplete && !hasDailyRulesHistoryEntry(state.history, dateKey)
-        ? createDailyRulesHistoryEntry({
-            dateKey,
-            dailyRules,
-            template: sessionTemplate,
-            completedAt: finishedAt
-          })
-        : null;
     return {
       accepted: true,
-      historyEntry: dailyHistoryEntry,
+      historyEntry: null,
       state: {
         ...state,
-        history: dailyHistoryEntry ? [dailyHistoryEntry, ...state.history] : state.history,
+        history: state.history,
         activeSession: null,
         dailyRuleCompletions: {
           ...state.dailyRuleCompletions,

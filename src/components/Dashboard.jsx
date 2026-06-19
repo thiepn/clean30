@@ -7,6 +7,15 @@ import {
 } from "../utils/calculations.js";
 import { formatDate, getTodayKey } from "../utils/dates.js";
 import { buildActivityByDate, getWeeklyActivitySummary } from "../utils/activity.js";
+import { formatCalendarDayLabel } from "../utils/accessibility.js";
+import useDialogFocus from "../hooks/useDialogFocus.js";
+import {
+  closedRoutinePickerState,
+  openRoutinePickerState,
+  reconcileRoutinePickerState,
+  selectRoutinePickerSource,
+  toggleRoutinePickerTask
+} from "../utils/routinePickerState.js";
 import CleanMode from "./CleanMode.jsx";
 import StartSession from "./StartSession.jsx";
 
@@ -105,15 +114,25 @@ export default function Dashboard({
   const [taskText, setTaskText] = useState("");
   const [expandedTaskId, setExpandedTaskId] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
-  const [routinePickerOpen, setRoutinePickerOpen] = useState(false);
-  const [routineSourceId, setRoutineSourceId] = useState("");
-  const [selectedRoutineTaskIds, setSelectedRoutineTaskIds] = useState([]);
+  const [routinePicker, setRoutinePicker] = useState(closedRoutinePickerState);
   const [customTagText, setCustomTagText] = useState("");
   const [timerNow, setTimerNow] = useState(Date.now());
   const [cleanModeOpen, setCleanModeOpen] = useState(false);
   const todayKey = currentDateKey || getTodayKey();
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [calendarDetailOpen, setCalendarDetailOpen] = useState(false);
+  const routinePickerCloseRef = useRef(null);
+  const calendarCloseRef = useRef(null);
+  const routinePickerDialogRef = useDialogFocus({
+    open: routinePicker.open,
+    onClose: closeRoutinePicker,
+    initialFocusRef: routinePickerCloseRef
+  });
+  const calendarDialogRef = useDialogFocus({
+    open: calendarDetailOpen,
+    onClose: closeCalendarDetail,
+    initialFocusRef: calendarCloseRef
+  });
   const displayTasks = useMemo(
     () => [...todayTasks].sort((first, second) => Number(first.completed) - Number(second.completed)),
     [todayTasks]
@@ -123,7 +142,7 @@ export default function Dashboard({
     [template.routines]
   );
   const selectedRoutineForImport =
-    routineOptions.find((routine) => routine.id === routineSourceId) || routineOptions[0] || null;
+    routineOptions.find((routine) => routine.id === routinePicker.routineId) || null;
   const routineTaskOptions = useMemo(
     () => getRoutineTasks(selectedRoutineForImport),
     [selectedRoutineForImport]
@@ -138,14 +157,15 @@ export default function Dashboard({
     [todayTasks]
   );
   const activityByDate = useMemo(
-    () => buildActivityByDate(history, todayTasksByDate),
-    [history, todayTasksByDate]
+    () => buildActivityByDate(history, todayTasksByDate, template),
+    [history, template, todayTasksByDate]
   );
   const calendarCells = useMemo(() => buildMonthCells(dateFromKey(todayKey)), [todayKey]);
   const selectedActivity = activityByDate[selectedDate] || {
     sessions: [],
     todayCompleted: 0,
-    cleaningMinutes: 0
+    routineElapsedMinutes: 0,
+    estimatedTodayMinutes: 0
   };
   const weeklySummary = useMemo(
     () => getWeeklyActivitySummary(activityByDate, selectedDate),
@@ -185,15 +205,6 @@ export default function Dashboard({
   }, [activeSession?.id, activeSession?.paused]);
 
   useEffect(() => {
-    if (!calendarDetailOpen) return;
-    function handleKeyDown(event) {
-      if (event.key === "Escape") setCalendarDetailOpen(false);
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [calendarDetailOpen]);
-
-  useEffect(() => {
     setSelectedDate(todayKey);
     setCalendarDetailOpen(false);
   }, [todayKey]);
@@ -204,6 +215,12 @@ export default function Dashboard({
     }
   }, [cleanModeAvailable, cleanModeOpen]);
 
+  useEffect(() => {
+    setRoutinePicker((current) =>
+      reconcileRoutinePickerState(current, routineOptions)
+    );
+  }, [routineOptions]);
+
   function submitTask(event) {
     event.preventDefault();
     const trimmed = taskText.trim();
@@ -213,16 +230,16 @@ export default function Dashboard({
   }
 
   function toggleRoutineTask(taskId) {
-    setSelectedRoutineTaskIds((current) =>
-      current.includes(taskId) ? current.filter((id) => id !== taskId) : [...current, taskId]
-    );
+    setRoutinePicker((current) => toggleRoutinePickerTask(current, taskId));
   }
 
   function addSelectedRoutineTasks() {
-    if (!selectedRoutineForImport || !selectedRoutineTaskIds.length) return;
-    onAddRoutineTasksToToday(selectedRoutineForImport.id, selectedRoutineTaskIds);
-    setSelectedRoutineTaskIds([]);
-    setRoutinePickerOpen(false);
+    if (!selectedRoutineForImport || !routinePicker.selectedTaskIds.length) return;
+    onAddRoutineTasksToToday(
+      selectedRoutineForImport.id,
+      routinePicker.selectedTaskIds
+    );
+    closeRoutinePicker();
   }
 
   function addTagToTask(task, tag) {
@@ -239,8 +256,15 @@ export default function Dashboard({
   }
 
   function openRoutinePicker() {
-    setRoutinePickerOpen(true);
-    if (!routineSourceId && routineOptions[0]) setRoutineSourceId(routineOptions[0].id);
+    setRoutinePicker(openRoutinePickerState(routineOptions));
+  }
+
+  function closeRoutinePicker() {
+    setRoutinePicker(closedRoutinePickerState());
+  }
+
+  function closeCalendarDetail() {
+    setCalendarDetailOpen(false);
   }
 
   function scrollToSession() {
@@ -335,13 +359,21 @@ export default function Dashboard({
           ) : null}
         </div>
 
-        {routinePickerOpen ? (
-          <div className="dialog-backdrop compact-backdrop" role="presentation">
+        {routinePicker.open ? (
+          <div
+            className="dialog-backdrop compact-backdrop"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) closeRoutinePicker();
+            }}
+          >
             <section
               aria-labelledby="routine-import-title"
               aria-modal="true"
               className="dialog routine-import-dialog"
               role="dialog"
+              ref={routinePickerDialogRef}
+              tabIndex={-1}
             >
               <div className="dialog-header">
                 <div>
@@ -352,7 +384,8 @@ export default function Dashboard({
                   className="icon-button"
                   type="button"
                   aria-label="Close routine picker"
-                  onClick={() => setRoutinePickerOpen(false)}
+                  onClick={closeRoutinePicker}
+                  ref={routinePickerCloseRef}
                 >
                   X
                 </button>
@@ -364,9 +397,11 @@ export default function Dashboard({
                   id="routine-import-select"
                   value={selectedRoutineForImport?.id || ""}
                   onChange={(event) => {
-                    setRoutineSourceId(event.target.value);
-                    setSelectedRoutineTaskIds([]);
+                    setRoutinePicker((current) =>
+                      selectRoutinePickerSource(current, event.target.value)
+                    );
                   }}
+                  disabled={!routineOptions.length}
                 >
                   {routineOptions.map((routine) => (
                     <option key={routine.id} value={routine.id}>
@@ -377,7 +412,13 @@ export default function Dashboard({
               </label>
             </div>
             <div className="routine-import-list">
-              {routineTaskOptions.map((task) => {
+              {!routineOptions.length ? (
+                <p className="muted compact-empty">No active routines are available.</p>
+              ) : !routineTaskOptions.length ? (
+                <p className="muted compact-empty">
+                  This routine has no tasks available to add.
+                </p>
+              ) : routineTaskOptions.map((task) => {
                 const alreadyAdded = existingRoutineTaskKeys.has(
                   `${selectedRoutineForImport.id}:${task.id}`
                 );
@@ -385,7 +426,7 @@ export default function Dashboard({
                   <label className={alreadyAdded ? "routine-import-row disabled" : "routine-import-row"} key={task.id}>
                     <input
                       type="checkbox"
-                      checked={selectedRoutineTaskIds.includes(task.id)}
+                      checked={routinePicker.selectedTaskIds.includes(task.id)}
                       disabled={alreadyAdded}
                       onChange={() => toggleRoutineTask(task.id)}
                     />
@@ -401,12 +442,12 @@ export default function Dashboard({
               <button
                 className="button primary small"
                 type="button"
-                disabled={!selectedRoutineTaskIds.length}
+                disabled={!routinePicker.selectedTaskIds.length}
                 onClick={addSelectedRoutineTasks}
               >
                 Add selected
               </button>
-              <button className="button ghost small" type="button" onClick={() => setRoutinePickerOpen(false)}>
+              <button className="button ghost small" type="button" onClick={closeRoutinePicker}>
                 Cancel
               </button>
             </div>
@@ -427,11 +468,21 @@ export default function Dashboard({
 
               return (
                 <div className={task.completed ? "task-row today-task-row checked" : "task-row today-task-row"} key={task.id}>
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => onToggleTodayTask(task.id)}
-                  />
+                  <label
+                    className="today-check-control"
+                    htmlFor={`today-task-${task.id}`}
+                  >
+                    <input
+                      id={`today-task-${task.id}`}
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={() => onToggleTodayTask(task.id)}
+                    />
+                    <span className="sr-only">
+                      {task.completed ? "Mark incomplete: " : "Mark complete: "}
+                      {task.text}
+                    </span>
+                  </label>
                   <span className="task-copy">
                     <span className="task-title-line">
                       <strong>{task.text}</strong>
@@ -468,6 +519,7 @@ export default function Dashboard({
                     <button
                       className="button text-button small"
                       type="button"
+                      aria-label={`${expanded ? "Hide" : "Show"} details for ${task.text}`}
                       onClick={() => setExpandedTaskId(expanded ? "" : task.id)}
                     >
                       More
@@ -593,7 +645,7 @@ export default function Dashboard({
           onEditRoutines={onEditRoutines}
           onAddRoutine={onAddRoutine}
           onOpenCleanMode={cleanModeAvailable ? openCleanMode : null}
-          cleanModeOpen={cleanModeOpen}
+          elapsedMs={activeElapsed}
         />
       </div>
 
@@ -627,6 +679,11 @@ export default function Dashboard({
                   .join(" ")}
                 key={cell.id}
                 type="button"
+                aria-label={formatCalendarDayLabel(
+                  cell.dateKey,
+                  activityByDate[cell.dateKey],
+                  todayKey
+                )}
                 onClick={() => {
                   setSelectedDate(cell.dateKey);
                   setCalendarDetailOpen(true);
@@ -643,8 +700,16 @@ export default function Dashboard({
           <span>{weeklySummary.activeDays}/7 active days</span>
           <span>{countLabel(weeklySummary.todayCompleted, "Today task")}</span>
           <span>{countLabel(weeklySummary.routines, "routine")}</span>
-          {weeklySummary.cleaningMinutes > 0 ? (
-            <span>{displayMinutes(weeklySummary.cleaningMinutes)} cleaning</span>
+          {weeklySummary.routineElapsedMinutes > 0 ? (
+            <span>
+              Routine time: {displayMinutes(weeklySummary.routineElapsedMinutes)}
+            </span>
+          ) : null}
+          {weeklySummary.estimatedTodayMinutes > 0 ? (
+            <span>
+              Estimated Today tasks:{" "}
+              {displayMinutes(weeklySummary.estimatedTodayMinutes)}
+            </span>
           ) : null}
         </div>
       </section>
@@ -654,7 +719,7 @@ export default function Dashboard({
           className="dialog-backdrop calendar-sheet-backdrop"
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setCalendarDetailOpen(false);
+            if (event.target === event.currentTarget) closeCalendarDetail();
           }}
         >
           <section
@@ -662,6 +727,8 @@ export default function Dashboard({
             aria-modal="true"
             className="dialog calendar-day-sheet"
             role="dialog"
+            ref={calendarDialogRef}
+            tabIndex={-1}
           >
             <div className="dialog-header">
               <div>
@@ -672,7 +739,8 @@ export default function Dashboard({
                 className="icon-button"
                 type="button"
                 aria-label="Close calendar day details"
-                onClick={() => setCalendarDetailOpen(false)}
+                onClick={closeCalendarDetail}
+                ref={calendarCloseRef}
               >
                 X
               </button>
@@ -683,8 +751,17 @@ export default function Dashboard({
                 <div className="calendar-day-metrics">
                   <span>{countLabel(selectedActivity.todayCompleted, "Today task")}</span>
                   <span>{countLabel(selectedActivity.sessions.length, "routine")}</span>
-                  {selectedActivity.cleaningMinutes > 0 ? (
-                    <span>{displayMinutes(selectedActivity.cleaningMinutes)} cleaning</span>
+                  {selectedActivity.routineElapsedMinutes > 0 ? (
+                    <span>
+                      Routine time:{" "}
+                      {displayMinutes(selectedActivity.routineElapsedMinutes)}
+                    </span>
+                  ) : null}
+                  {selectedActivity.estimatedTodayMinutes > 0 ? (
+                    <span>
+                      Estimated Today tasks:{" "}
+                      {displayMinutes(selectedActivity.estimatedTodayMinutes)}
+                    </span>
                   ) : null}
                 </div>
                 {selectedActivity.sessions.length ? (

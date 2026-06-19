@@ -35,6 +35,13 @@ export function cloneDeep(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+export function cloneTasksWithNewIds(tasks) {
+  return cloneDeep(tasks || []).map((task) => ({
+    ...task,
+    id: createId("task")
+  }));
+}
+
 export function createId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -230,15 +237,35 @@ function normalizeZones(value) {
     .filter((zone) => zone.name.trim());
 }
 
-function normalizeWeekdayDefaults(value, fallback = {}) {
+function normalizeWeekdayDefaults(value, fallback = {}, explicitSemantics = false) {
   const saved = isPlainObject(value) ? value : {};
   const fallbackSource = isPlainObject(fallback) ? fallback : {};
   return Object.fromEntries(
-    weekdayKeys.map((day) => [
-      day,
-      normalizeTodayDefaults(saved[day], Array.isArray(fallbackSource[day]) ? fallbackSource[day] : [])
-    ])
+    weekdayKeys.map((day) => {
+      const hasSavedValue = Object.prototype.hasOwnProperty.call(saved, day);
+      const savedValue = hasSavedValue ? saved[day] : undefined;
+      if (savedValue === null || savedValue === undefined) return [day, null];
+      if (Array.isArray(savedValue)) {
+        if (!explicitSemantics && savedValue.length === 0) return [day, null];
+        return [day, normalizeTodayDefaults(savedValue, [])];
+      }
+      const fallbackValue = fallbackSource[day];
+      return [
+        day,
+        Array.isArray(fallbackValue) ? normalizeTodayDefaults(fallbackValue, []) : null
+      ];
+    })
   );
+}
+
+export function getTodayDefaultsForDate(template, dateKey) {
+  const general = template?.todayDefaults || template?.dailyRules || [];
+  if (!template?.todayWeekdayDefaultsEnabled) return general;
+  const parsed = new Date(`${dateKey}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return general;
+  const day = weekdayKeys[parsed.getDay()];
+  const weekdayValue = template?.todayWeekdayDefaults?.[day];
+  return Array.isArray(weekdayValue) ? weekdayValue : general;
 }
 
 function normalizeSystems(value) {
@@ -316,7 +343,8 @@ export function normalizeTemplate(template, options = {}) {
   );
   const todayWeekdayDefaults = normalizeWeekdayDefaults(
     saved.todayWeekdayDefaults,
-    fallback.todayWeekdayDefaults
+    fallback.todayWeekdayDefaults,
+    saved.todayWeekdayDefaultsExplicit === true
   );
   const profile = isPlainObject(saved.profile) ? saved.profile : {};
   const schedule = isPlainObject(saved.schedule) ? saved.schedule : {};
@@ -346,6 +374,7 @@ export function normalizeTemplate(template, options = {}) {
     zones: normalizeZones(saved.zones || fallback.zones),
     todayDefaults,
     todayWeekdayDefaultsEnabled: Boolean(saved.todayWeekdayDefaultsEnabled),
+    todayWeekdayDefaultsExplicit: true,
     todayWeekdayDefaults,
     dailyRules: cloneDeep(todayDefaults),
     routines: normalizeRoutineList(routines),
@@ -433,7 +462,7 @@ export function createTemplateExport(template) {
   return {
     app: "Clean30",
     type: "template",
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     template: {
       ...normalized,

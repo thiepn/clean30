@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import {
   getHistoryStats,
-  hasDailyRulesHistoryEntry,
   isDailyRulesHistoryEntry
 } from "../utils/calculations.js";
 import { formatDateTime, formatRelativeDays, getTodayKey } from "../utils/dates.js";
 import {
   buildActivityByDate,
+  buildHistoryDisplayEntries,
   getActivityStreaks,
   getWeeklyActivitySummary
 } from "../utils/activity.js";
@@ -45,72 +45,6 @@ function entryTitle(entry) {
   return isDailyRulesHistoryEntry(entry) ? "Today tasks" : entry.routineTitle;
 }
 
-function historyEntryDateKey(entry) {
-  if (typeof entry?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date)) {
-    return entry.date;
-  }
-  const idMatch = String(entry?.id || "").match(
-    /^(?:daily-rules|today-tasks)-(\d{4}-\d{2}-\d{2})$/
-  );
-  if (idMatch) return idMatch[1];
-  const finishedAt = new Date(entry?.finishedAt);
-  return Number.isNaN(finishedAt.getTime()) ? null : getTodayKey(finishedAt);
-}
-
-function mergeTodayCountsIntoHistory(history, todayTasksByDate) {
-  return history.map((entry) => {
-    if (!isDailyRulesHistoryEntry(entry)) return entry;
-    const dateKey = historyEntryDateKey(entry);
-    const tasks = dateKey ? todayTasksByDate?.[dateKey] : null;
-    if (!Array.isArray(tasks)) return entry;
-    const completedTasks = tasks.filter((task) => task.completed).length;
-    if (completedTasks === 0) return entry;
-    return {
-      ...entry,
-      completedTasks,
-      totalTasks: tasks.length,
-      percent: tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0
-    };
-  });
-}
-
-function buildDerivedTodayEntries(todayTasksByDate, history) {
-  const usedIds = new Set(history.map((entry) => entry.id));
-  return Object.entries(todayTasksByDate || {}).flatMap(([dateKey, tasks]) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || !Array.isArray(tasks)) return [];
-    const completedTasks = tasks.filter((task) => task.completed).length;
-    if (completedTasks === 0 || hasDailyRulesHistoryEntry(history, dateKey)) return [];
-    const timestamp = `${dateKey}T12:00:00`;
-    if (Number.isNaN(new Date(timestamp).getTime())) return [];
-    const baseId = `today-activity-${dateKey}`;
-    let id = baseId;
-    let suffix = 2;
-    while (usedIds.has(id)) {
-      id = `${baseId}-${suffix}`;
-      suffix += 1;
-    }
-    usedIds.add(id);
-    return [
-      {
-        id,
-        kind: "today",
-        source: "today",
-        date: dateKey,
-        routineId: "daily-rules",
-        routineTitle: "Today tasks",
-        startedAt: timestamp,
-        finishedAt: timestamp,
-        completedTasks,
-        totalTasks: tasks.length,
-        percent: tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0,
-        estimatedDurationMinutes: null,
-        notes: "",
-        derived: true
-      }
-    ];
-  });
-}
-
 export default function History({
   history,
   todayTasksByDate = {},
@@ -124,8 +58,8 @@ export default function History({
   const stats = getHistoryStats(history);
   const insights = getHistoryInsights(history, routines, template);
   const activityByDate = useMemo(
-    () => buildActivityByDate(history, todayTasksByDate),
-    [history, todayTasksByDate]
+    () => buildActivityByDate(history, todayTasksByDate, template),
+    [history, template, todayTasksByDate]
   );
   const streaks = useMemo(
     () => getActivityStreaks(activityByDate, currentDateKey),
@@ -143,17 +77,9 @@ export default function History({
     { id: "all", label: "All" },
     ...routines.map((routine) => ({ id: routine.id, label: filterLabel(routine) }))
   ];
-  const derivedTodayEntries = useMemo(
-    () => buildDerivedTodayEntries(todayTasksByDate, history),
-    [history, todayTasksByDate]
-  );
-  const displayHistoryEntries = useMemo(
-    () => mergeTodayCountsIntoHistory(history, todayTasksByDate),
-    [history, todayTasksByDate]
-  );
   const displayEntries = useMemo(
-    () => [...displayHistoryEntries, ...derivedTodayEntries],
-    [derivedTodayEntries, displayHistoryEntries]
+    () => buildHistoryDisplayEntries(activityByDate),
+    [activityByDate]
   );
   const hasActivity = displayEntries.length > 0;
   const mostRecent = [...displayEntries].sort(
@@ -422,7 +348,7 @@ export default function History({
                     <dd>{formatDateTime(selected.finishedAt)}</dd>
                   </div>
                   <div>
-                    <dt>Duration</dt>
+                    <dt>{selectedIsDailyRules ? "Estimated time" : "Duration"}</dt>
                     <dd>{displayDuration(selectedDuration)}</dd>
                   </div>
                   <div>
@@ -448,7 +374,14 @@ export default function History({
                     <p>{selected.notes}</p>
                   </div>
                 ) : null}
-                {!selected.derived ? (
+                {selectedIsDailyRules ? (
+                  <p className="callout small">
+                    {selected.legacyFallback
+                      ? "Legacy Today activity is retained for compatibility and is not deleted like a routine session."
+                      : "Today activity follows the dated Today task list and may change when that list is reset or unchecked."}
+                  </p>
+                ) : null}
+                {selected.deletable ? (
                   <button
                     className="button danger-ghost"
                     type="button"

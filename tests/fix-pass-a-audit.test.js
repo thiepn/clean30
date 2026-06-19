@@ -71,7 +71,7 @@ function currentSessionBackup() {
   return backup;
 }
 
-test("canonical exporter output passes strict current-v2 validation", () => {
+test("canonical exporter output passes strict current-version validation", () => {
   const emptyBackup = completeBackup();
   const emptyResult = validateFullBackupPayload(emptyBackup);
   assert.equal(emptyResult.ok, true);
@@ -83,7 +83,7 @@ test("canonical exporter output passes strict current-v2 validation", () => {
   assert.deepEqual(historyResult.data, historyBackup.data);
 });
 
-test("current-v2 History requires every canonical field and valid counts", () => {
+test("current History requires every canonical field and valid counts", () => {
   const missingHistory = backupWithSessionHistory();
   delete missingHistory.data.history;
   assert.equal(validateFullBackupPayload(missingHistory).ok, false);
@@ -110,7 +110,7 @@ test("current-v2 History requires every canonical field and valid counts", () =>
   assert.equal(validateFullBackupPayload(invalidDuration).ok, false);
 });
 
-test("current-v2 app settings reject missing keys, invalid enums, and malformed tags", () => {
+test("current app settings reject missing keys, invalid enums, and malformed tags", () => {
   const missingSettings = completeBackup();
   delete missingSettings.data.appSettings;
   assert.equal(validateFullBackupPayload(missingSettings).ok, false);
@@ -140,7 +140,7 @@ test("current-v2 app settings reject missing keys, invalid enums, and malformed 
   assert.equal(validateFullBackupPayload(invalidBoolean).ok, false);
 });
 
-test("current-v2 templates require complete retained systems and canonical sections", () => {
+test("current templates require complete retained systems and canonical sections", () => {
   const incompleteSystems = completeBackup();
   delete incompleteSystems.data.templates[0].systems.systemSections;
   assert.equal(validateFullBackupPayload(incompleteSystems).ok, false);
@@ -163,7 +163,7 @@ test("current-v2 templates require complete retained systems and canonical secti
   assert.equal(validateFullBackupPayload(invalidAppearance).ok, false);
 });
 
-test("malformed current-v2 data is not downgraded to legacy and validation is non-mutating", () => {
+test("malformed current data is not downgraded to legacy and validation is non-mutating", () => {
   const localState = resetToFreshState();
   const localSnapshot = clone(localState);
   const malformed = completeBackup();

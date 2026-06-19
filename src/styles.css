@@ -853,14 +853,14 @@ textarea {
 }
 
 .help-button {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   font-size: 1.05rem;
 }
 
 .icon-button {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   font-size: 0.9rem;
 }
 
@@ -2218,7 +2218,7 @@ details[open] > .phase-summary .phase-chevron::before {
 
 .dashboard-todos .task-row,
 .today-task-list .task-row {
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
 }
 
 .today-task-list .task-row {
@@ -2229,7 +2229,7 @@ details[open] > .phase-summary .phase-chevron::before {
 }
 
 .today-task-row {
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
 }
 
 .today-task-row.checked {
@@ -2246,8 +2246,18 @@ details[open] > .phase-summary .phase-chevron::before {
   color: #817c72;
 }
 
-.today-task-list .task-row input {
-  margin-top: 0;
+.today-check-control {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+}
+
+.today-check-control input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
 }
 
 .today-task-list .task-title-line strong {
@@ -2275,9 +2285,9 @@ details[open] > .phase-summary .phase-chevron::before {
 }
 
 .today-task-list .icon-button.small {
-  width: 32px;
-  height: 32px;
-  min-height: 32px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
 }
 
 .today-row-actions {
@@ -2288,8 +2298,8 @@ details[open] > .phase-summary .phase-chevron::before {
 }
 
 .today-row-actions .button.small {
-  min-height: 30px;
-  padding: 0.22rem 0.4rem;
+  min-height: 44px;
+  padding: 0.42rem 0.5rem;
 }
 
 .today-task-details {
@@ -2456,7 +2466,7 @@ details[open] > .phase-summary .phase-chevron::before {
 }
 
 .weekday-selector .tab {
-  min-height: 34px;
+  min-height: 44px;
   padding: 0.35rem 0.55rem;
 }
 
@@ -2466,6 +2476,12 @@ details[open] > .phase-summary .phase-chevron::before {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+}
+
+.weekday-default-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .compact-empty {
@@ -2497,7 +2513,17 @@ details[open] > .phase-summary .phase-chevron::before {
 .calendar-empty,
 .calendar-day {
   aspect-ratio: 1;
-  min-height: 38px;
+  min-height: clamp(36px, 10vw, 44px);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .calendar-day {
@@ -4480,12 +4506,12 @@ html[data-font-size="large"] {
   }
 
   .mobile-navigation > .nav-item {
-    min-height: 40px;
+    min-height: 44px;
     height: 100%;
   }
 
   .nav-item {
-    min-height: 40px;
+    min-height: 44px;
     height: 100%;
     padding: 0.35rem 0.2rem;
     font-size: 0.72rem;
@@ -4723,7 +4749,7 @@ html[data-font-size="large"] {
   }
 
   .today-task-list .task-row {
-    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
     min-height: 44px;
     gap: 0.48rem;
     padding: 0.46rem 0.52rem;
@@ -4731,8 +4757,8 @@ html[data-font-size="large"] {
   }
 
   .today-task-list .task-row input {
-    width: 21px;
-    height: 21px;
+    width: 22px;
+    height: 22px;
   }
 
   .today-task-list .task-title-line strong {
@@ -4741,9 +4767,9 @@ html[data-font-size="large"] {
   }
 
   .today-task-list .icon-button.small {
-    width: 30px;
-    height: 30px;
-    min-height: 30px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
   }
 
   .today-panel .text-button {
@@ -5836,7 +5862,7 @@ html[data-font-size="large"] {
 
   .routine-editor-toolbar .button {
     width: auto;
-    min-height: 34px;
+    min-height: 44px;
     padding: 0.4rem 0.58rem;
   }
 
@@ -5889,13 +5915,13 @@ html[data-font-size="large"] {
   }
 
   .today-secondary-actions .button.small {
-    min-height: 32px;
+    min-height: 44px;
     padding: 0.28rem 0.46rem;
     font-size: 0.76rem;
   }
 
   .today-task-list .task-row {
-    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
     min-height: 44px;
     gap: 0.48rem;
     padding: 0.46rem 0.52rem;
@@ -5914,8 +5940,8 @@ html[data-font-size="large"] {
   }
 
   .today-row-actions .button.small {
-    min-height: 28px;
-    padding: 0.16rem 0.32rem;
+    min-height: 44px;
+    padding: 0.36rem 0.45rem;
     font-size: 0.72rem;
   }
 
@@ -5942,7 +5968,7 @@ html[data-font-size="large"] {
   }
 
   .weekday-selector .tab {
-    min-height: 32px;
+    min-height: 44px;
     padding: 0.28rem 0.45rem;
     font-size: 0.78rem;
   }
@@ -5959,10 +5985,6 @@ html[data-font-size="large"] {
     min-height: 52px;
     padding: 0.52rem 0.62rem;
   }
-}
-
-body.clean-mode-open {
-  overflow: hidden;
 }
 
 .session-resume-actions {
@@ -6190,7 +6212,7 @@ body.clean-mode-open {
 
   .clean-mode-exit {
     min-width: 64px;
-    min-height: 42px;
+    min-height: 44px;
     padding: 0.55rem 0.7rem;
   }
 

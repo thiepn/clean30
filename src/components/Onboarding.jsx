@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import useDialogFocus from "../hooks/useDialogFocus.js";
 
 const steps = [
   {
@@ -23,7 +24,8 @@ const steps = [
   {
     eyebrow: "History",
     title: "See what got done",
-    body: "History shows which days you cleaned and what you completed."
+    body:
+      "History derives Today activity from dated tasks and stores finished routine sessions separately."
   },
   {
     eyebrow: "Local data",
@@ -44,6 +46,13 @@ const steps = [
 ];
 
 export default function Onboarding({ onComplete }) {
+  const nextButtonRef = useRef(null);
+  const dialogRef = useDialogFocus({
+    open: true,
+    onClose: null,
+    initialFocusRef: nextButtonRef,
+    dismissible: false
+  });
   const [stepIndex, setStepIndex] = useState(0);
   const [setupMode, setSetupMode] = useState("starter");
   const step = steps[stepIndex];
@@ -62,6 +71,7 @@ export default function Onboarding({ onComplete }) {
         className="dialog onboarding-dialog"
         role="dialog"
         tabIndex={-1}
+        ref={dialogRef}
       >
         <div className="onboarding-progress" aria-label="Onboarding progress">
           {steps.map((item, index) => (
@@ -155,6 +165,7 @@ export default function Onboarding({ onComplete }) {
             <button
               className="button primary"
               type="button"
+              ref={nextButtonRef}
               onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))}
             >
               Next

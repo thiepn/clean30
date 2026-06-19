@@ -11,9 +11,9 @@ Recommended device: phone. Desktop testing is also useful.
 ## What To Test
 
 - First launch and onboarding.
-- Dashboard: Today tasks, routine starting, active-session resume card, optional focused Clean Mode, timer, pause/resume, and Calendar day details.
+- Dashboard: Today tasks, Add-from-routine reset behavior, routine starting, active-session resume card, optional focused Clean Mode, timer, pause/resume, and Calendar day details.
 - Routines: can you inspect routine checklists, understand last-done badges, and find edit/add controls without friction?
-- History: are Today entries, routine sessions, elapsed time, and subtle consistency stats understandable?
+- History: is it clear that Today activity follows dated Today tasks while routine sessions are stored and deletable?
 - Settings: do font size, density, backup health/preview, privacy, help, install, onboarding, and reset tools make sense?
 - Recovery: does an incomplete backup stay rejected, and does a simulated storage failure clearly explain the reload risk?
 - PWA install: can you add it to your phone home screen?
@@ -28,7 +28,10 @@ Recommended device: phone. Desktop testing is also useful.
 - Did the completion summary and View History action make sense after finishing?
 - Did duplicate/archive/color labels make routines easier to manage without feeling busy?
 - Was the Calendar useful without being distracting?
-- Were Calendar day details and the weekly summary useful without feeling like gamification?
+- Did Calendar clearly separate measured routine time from estimated Today-task time?
+- Could you set a weekday to use General, custom tasks, or explicitly start empty?
+- Did Canceling Add-from-routine clear the previous selections?
+- Could you use Tab, Shift+Tab, and Escape in dialogs without focus moving behind them?
 - Was the editor easy enough to find and use?
 - Did backup/privacy make sense?
 - Did the backup preview make restoring data feel safer?

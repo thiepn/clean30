@@ -1,20 +1,5 @@
-import { useEffect, useRef } from "react";
-
-function focusElement(element) {
-  try {
-    element?.focus?.({ preventScroll: true });
-  } catch {
-    // Some mobile browsers can reject programmatic focus during tap handling.
-  }
-}
-
-function scheduleFocus(callback) {
-  if (typeof window.requestAnimationFrame === "function") {
-    window.requestAnimationFrame(callback);
-    return;
-  }
-  window.setTimeout(callback, 0);
-}
+import { useRef } from "react";
+import useDialogFocus from "../hooks/useDialogFocus.js";
 
 const guideSections = [
   {
@@ -27,7 +12,7 @@ const guideSections = [
       "An unfinished session appears near the top with progress and elapsed time.",
       "Clean Mode is an optional focused view with large controls; the normal checklist stays available.",
       "Clean Mode uses the same timer, pause or resume state, task progress, and finish action.",
-      "Calendar days open a compact activity detail, with a weekly summary kept inside Calendar.",
+      "Calendar days open a compact activity detail, with measured routine time separate from estimated Today-task time.",
       "Use Edit when you want to change what appears each day."
     ]
   },
@@ -44,11 +29,19 @@ const guideSections = [
     title: "Editing",
     items: [
       "Today defaults live inside the routine editor.",
-      "Weekday-specific defaults are optional.",
+      "Weekdays can use General defaults, custom tasks, or explicitly start empty.",
       "Routines can be edited from Dashboard or Routines.",
       "Routine edits include duration, duplicate, archive, and optional color labels.",
       "App details and schedule are also in the editor.",
       "Appearance is changed from Settings."
+    ]
+  },
+  {
+    title: "History",
+    items: [
+      "Today activity is derived from dated Today tasks, so resetting or unchecking those tasks can update it.",
+      "Finished routine sessions are stored as History entries and can be deleted.",
+      "Legacy Today entries remain visible when no dated Today task data exists for that date."
     ]
   },
   {
@@ -79,25 +72,12 @@ const guideSections = [
 ];
 
 export default function HelpGuide({ open, onClose }) {
-  const dialogRef = useRef(null);
   const closeButtonRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    scheduleFocus(() => {
-      focusElement(closeButtonRef.current || dialogRef.current);
-    });
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, open]);
+  const dialogRef = useDialogFocus({
+    open,
+    onClose,
+    initialFocusRef: closeButtonRef
+  });
 
   if (!open) return null;
 

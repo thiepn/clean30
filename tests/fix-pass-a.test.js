@@ -11,6 +11,7 @@ import {
 import { daysBetween } from "../src/utils/dates.js";
 import { getHistoryInsights } from "../src/utils/historyInsights.js";
 import {
+  CURRENT_BACKUP_VERSION,
   createFullBackup,
   getStorageHealth,
   hasMeaningfulTodayData,
@@ -35,7 +36,7 @@ function addDays(date, amount) {
   return next;
 }
 
-test("complete current backup is accepted and incomplete typed v2 backups are rejected", () => {
+test("complete current backup is accepted and incomplete current backups are rejected", () => {
   const backup = completeBackup();
   assert.equal(validateFullBackupPayload(backup).ok, true);
 
@@ -50,7 +51,7 @@ test("complete current backup is accepted and incomplete typed v2 backups are re
   const templatesOnly = {
     app: "Clean30",
     type: "full-backup",
-    version: 2,
+    version: CURRENT_BACKUP_VERSION,
     data: { templates: backup.data.templates }
   };
   assert.equal(validateFullBackupPayload(templatesOnly).ok, false);

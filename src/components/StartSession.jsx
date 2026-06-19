@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   formatElapsedTime,
   formatRoutineDuration,
   getLastRoutineDoneLabel,
   getRoutineById,
   getRoutineTotalTasks,
-  getSessionElapsedMs,
   getSessionProgress
 } from "../utils/calculations.js";
 import { formatDateTime } from "../utils/dates.js";
@@ -41,9 +40,8 @@ export default function StartSession({
   onEditRoutines,
   onAddRoutine,
   onOpenCleanMode,
-  cleanModeOpen = false
+  elapsedMs = 0
 }) {
-  const [timerNow, setTimerNow] = useState(Date.now());
   const startRoutines = useMemo(
     () => {
       const activeRoutines = routines.filter(
@@ -62,15 +60,6 @@ export default function StartSession({
     [startRoutines, selectedRoutineId]
   );
 
-  useEffect(() => {
-    if (!activeSession || activeSession.paused || cleanModeOpen) return;
-    setTimerNow(Date.now());
-    const intervalId = window.setInterval(() => {
-      setTimerNow(Date.now());
-    }, 1000);
-    return () => window.clearInterval(intervalId);
-  }, [activeSession?.id, activeSession?.paused, cleanModeOpen]);
-
   if (activeSession) {
     const routine =
       activeSession.routineSnapshot ||
@@ -82,7 +71,6 @@ export default function StartSession({
         phases: []
       };
     const progress = getSessionProgress(activeSession, routine);
-    const elapsed = getSessionElapsedMs(activeSession, new Date(timerNow));
     const finishLabel =
       progress.total > 0 && progress.completed === progress.total ? "Finish" : "Finish partial";
 
@@ -127,7 +115,7 @@ export default function StartSession({
             </div>
             <div className="metric-card">
               <span>Elapsed</span>
-              <strong>{formatElapsedTime(elapsed)}</strong>
+              <strong>{formatElapsedTime(elapsedMs)}</strong>
             </div>
             <div className="metric-card">
               <span>Status</span>
@@ -198,7 +186,10 @@ export default function StartSession({
               <span>Elapsed {formatElapsedTime(Number(completionSummary.elapsedMs))}</span>
             ) : Number.isFinite(Number(completionSummary.estimatedDurationMinutes)) ? (
               <span>
-                Elapsed {formatElapsedTime(Number(completionSummary.estimatedDurationMinutes) * 60000)}
+                Estimated{" "}
+                {formatElapsedTime(
+                  Number(completionSummary.estimatedDurationMinutes) * 60000
+                )}
               </span>
             ) : null}
           </div>
@@ -226,7 +217,7 @@ export default function StartSession({
           </div>
         </div>
         <div className="routine-picker">
-          {startRoutines.map((routine) => (
+          {startRoutines.length ? startRoutines.map((routine) => (
             <button
               className={selectedRoutine?.id === routine.id ? "picker-item active" : "picker-item"}
               key={routine.id}
@@ -238,7 +229,11 @@ export default function StartSession({
               <span>{formatRoutineDuration(routine)}</span>
               <small>{getLastRoutineDoneLabel(history, routine.id)}</small>
             </button>
-          ))}
+          )) : (
+            <p className="muted compact-empty">
+              No active routines yet. Add or unarchive a routine to start cleaning.
+            </p>
+          )}
         </div>
       </section>
 

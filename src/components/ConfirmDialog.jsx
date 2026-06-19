@@ -1,41 +1,13 @@
-import { useEffect, useRef } from "react";
-
-function focusElement(element) {
-  try {
-    element?.focus?.({ preventScroll: true });
-  } catch {
-    // Some mobile browsers can reject programmatic focus during tap handling.
-  }
-}
-
-function scheduleFocus(callback) {
-  if (typeof window.requestAnimationFrame === "function") {
-    window.requestAnimationFrame(callback);
-    return;
-  }
-  window.setTimeout(callback, 0);
-}
+import { useRef } from "react";
+import useDialogFocus from "../hooks/useDialogFocus.js";
 
 export default function ConfirmDialog({ title, message, confirmLabel = "Confirm", onConfirm, onCancel }) {
-  const dialogRef = useRef(null);
   const cancelButtonRef = useRef(null);
-
-  useEffect(() => {
-    if (!title) return;
-
-    scheduleFocus(() => {
-      focusElement(cancelButtonRef.current || dialogRef.current);
-    });
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onCancel();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onCancel, title]);
+  const dialogRef = useDialogFocus({
+    open: Boolean(title),
+    onClose: onCancel,
+    initialFocusRef: cancelButtonRef
+  });
 
   if (!title) return null;
 
@@ -43,7 +15,7 @@ export default function ConfirmDialog({ title, message, confirmLabel = "Confirm"
     <div className="dialog-backdrop" role="presentation">
       <div
         className="dialog"
-        role="dialog"
+        role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
         ref={dialogRef}
