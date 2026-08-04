@@ -120,18 +120,9 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
             </span>
             <h3>Today&apos;s list is complete</h3>
             <p>Every task currently on the list is marked done.</p>
-            <div className="today-cleaning-complete-actions">
-              <button className="button primary" onClick={onExit} type="button">
-                Finish
-              </button>
-              <button
-                className="button ghost"
-                onClick={() => setCurrentTaskId(orderedTasks[0]?.id || "")}
-                type="button"
-              >
-                Review tasks
-              </button>
-            </div>
+            <button className="button primary" onClick={onExit} type="button">
+              Finish
+            </button>
           </div>
         ) : (
           <>
