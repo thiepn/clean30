@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   formatElapsedTime,
+  formatRoutineDuration,
+  getLastRoutineDoneLabel,
   getRoutineById,
+  getRoutineTotalTasks,
   getSessionElapsedMs,
   getSessionProgress
 } from "../utils/calculations.js";
-import { formatDate, getTodayKey } from "../utils/dates.js";
-import { buildActivityByDate, getWeeklyActivitySummary } from "../utils/activity.js";
-import { formatCalendarDayLabel } from "../utils/accessibility.js";
+import { formatDate, formatDateTime, getTodayKey } from "../utils/dates.js";
 import useDialogFocus from "../hooks/useDialogFocus.js";
 import {
   closedRoutinePickerState,
@@ -18,67 +19,27 @@ import {
 } from "../utils/routinePickerState.js";
 import CleanMode from "./CleanMode.jsx";
 import StartSession from "./StartSession.jsx";
+import TodayCleaningMode from "./TodayCleaningMode.jsx";
 
 function dateFromKey(dateKey) {
   return new Date(`${dateKey}T00:00:00`);
 }
 
-function displayShortDate(dateKey) {
-  return new Intl.DateTimeFormat("en-DE", {
-    month: "short",
-    day: "numeric"
-  }).format(dateFromKey(dateKey));
-}
-
-function countLabel(count, singular, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
 function getRoutineTasks(routine) {
-  return routine?.phases?.flatMap((phase) =>
-    phase.tasks.map((task) => ({
-      ...task,
-      phaseTitle: phase.title
-    }))
-  ) || [];
-}
-
-function buildMonthCells(referenceDate) {
-  const year = referenceDate.getFullYear();
-  const month = referenceDate.getMonth();
-  const first = new Date(year, month, 1);
-  const last = new Date(year, month + 1, 0);
-  const leading = (first.getDay() + 6) % 7;
-  const cells = Array.from({ length: leading }, (_, index) => ({
-    id: `empty-${index}`,
-    empty: true
-  }));
-
-  for (let day = 1; day <= last.getDate(); day += 1) {
-    const date = new Date(year, month, day);
-    cells.push({
-      id: getTodayKey(date),
-      dateKey: getTodayKey(date),
-      day
-    });
-  }
-
-  return cells;
-}
-
-function displayMinutes(minutes) {
-  const rounded = Math.round(Number(minutes) || 0);
-  if (rounded < 60) return `${rounded} min`;
-  const hours = Math.floor(rounded / 60);
-  const remainder = rounded % 60;
-  return remainder ? `${hours} hr ${remainder} min` : `${hours} hr`;
+  return (
+    routine?.phases?.flatMap((phase) =>
+      phase.tasks.map((task) => ({
+        ...task,
+        phaseTitle: phase.title
+      }))
+    ) || []
+  );
 }
 
 export default function Dashboard({
   template,
   history = [],
   todayTasks = [],
-  todayTasksByDate = {},
   currentDateKey,
   activeSession,
   completionSummary,
@@ -111,34 +72,46 @@ export default function Dashboard({
   onAddRoutine
 }) {
   const sessionAnchorRef = useRef(null);
+  const routinePickerCloseRef = useRef(null);
+  const routineStartCloseRef = useRef(null);
   const [taskText, setTaskText] = useState("");
   const [expandedTaskId, setExpandedTaskId] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
+  const [completedOpen, setCompletedOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [routinePicker, setRoutinePicker] = useState(closedRoutinePickerState);
+  const [routineStartOpen, setRoutineStartOpen] = useState(false);
+  const [routineStartId, setRoutineStartId] = useState("");
   const [customTagText, setCustomTagText] = useState("");
   const [timerNow, setTimerNow] = useState(Date.now());
   const [cleanModeOpen, setCleanModeOpen] = useState(false);
+  const [todayCleaningOpen, setTodayCleaningOpen] = useState(false);
   const todayKey = currentDateKey || getTodayKey();
-  const [selectedDate, setSelectedDate] = useState(todayKey);
-  const [calendarDetailOpen, setCalendarDetailOpen] = useState(false);
-  const routinePickerCloseRef = useRef(null);
-  const calendarCloseRef = useRef(null);
+
   const routinePickerDialogRef = useDialogFocus({
     open: routinePicker.open,
     onClose: closeRoutinePicker,
     initialFocusRef: routinePickerCloseRef
   });
-  const calendarDialogRef = useDialogFocus({
-    open: calendarDetailOpen,
-    onClose: closeCalendarDetail,
-    initialFocusRef: calendarCloseRef
+  const routineStartDialogRef = useDialogFocus({
+    open: routineStartOpen,
+    onClose: closeRoutineStart,
+    initialFocusRef: routineStartCloseRef
   });
-  const displayTasks = useMemo(
-    () => [...todayTasks].sort((first, second) => Number(first.completed) - Number(second.completed)),
+
+  const incompleteTasks = useMemo(
+    () => todayTasks.filter((task) => !task.completed),
+    [todayTasks]
+  );
+  const completedTasks = useMemo(
+    () => todayTasks.filter((task) => task.completed),
     [todayTasks]
   );
   const routineOptions = useMemo(
-    () => template.routines.filter((routine) => routine.id !== "daily-rules" && !routine.archived),
+    () =>
+      template.routines.filter(
+        (routine) => routine.id !== "daily-rules" && !routine.archived
+      ),
     [template.routines]
   );
   const selectedRoutineForImport =
@@ -151,26 +124,17 @@ export default function Dashboard({
     () =>
       new Set(
         todayTasks
-          .filter((task) => task.source === "routine" && task.routineId && task.originalTaskId)
+          .filter(
+            (task) => task.source === "routine" && task.routineId && task.originalTaskId
+          )
           .map((task) => `${task.routineId}:${task.originalTaskId}`)
       ),
     [todayTasks]
   );
-  const activityByDate = useMemo(
-    () => buildActivityByDate(history, todayTasksByDate, template),
-    [history, template, todayTasksByDate]
-  );
-  const calendarCells = useMemo(() => buildMonthCells(dateFromKey(todayKey)), [todayKey]);
-  const selectedActivity = activityByDate[selectedDate] || {
-    sessions: [],
-    todayCompleted: 0,
-    routineElapsedMinutes: 0,
-    estimatedTodayMinutes: 0
-  };
-  const weeklySummary = useMemo(
-    () => getWeeklyActivitySummary(activityByDate, selectedDate),
-    [activityByDate, selectedDate]
-  );
+  const selectedRoutineForStart =
+    routineOptions.find((routine) => routine.id === routineStartId) ||
+    routineOptions[0] ||
+    null;
   const activeRoutine = useMemo(
     () =>
       activeSession
@@ -188,10 +152,16 @@ export default function Dashboard({
   const cleanModeAvailable = Boolean(
     activeSession && activeSession.routineId !== "daily-rules"
   );
-  const activeProgress = activeSession ? getSessionProgress(activeSession, activeRoutine) : null;
-  const activeElapsed = activeSession ? getSessionElapsedMs(activeSession, new Date(timerNow)) : 0;
+  const activeProgress = activeSession
+    ? getSessionProgress(activeSession, activeRoutine)
+    : null;
+  const activeElapsed = activeSession
+    ? getSessionElapsedMs(activeSession, new Date(timerNow))
+    : 0;
   const activeFinishLabel =
-    activeProgress && activeProgress.total > 0 && activeProgress.completed === activeProgress.total
+    activeProgress &&
+    activeProgress.total > 0 &&
+    activeProgress.completed === activeProgress.total
       ? "Finish"
       : "Finish partial";
 
@@ -205,11 +175,6 @@ export default function Dashboard({
   }, [activeSession?.id, activeSession?.paused]);
 
   useEffect(() => {
-    setSelectedDate(todayKey);
-    setCalendarDetailOpen(false);
-  }, [todayKey]);
-
-  useEffect(() => {
     if (cleanModeOpen && !cleanModeAvailable) {
       setCleanModeOpen(false);
     }
@@ -220,6 +185,20 @@ export default function Dashboard({
       reconcileRoutinePickerState(current, routineOptions)
     );
   }, [routineOptions]);
+
+  useEffect(() => {
+    if (
+      routineStartId &&
+      routineOptions.some((routine) => routine.id === routineStartId)
+    ) {
+      return;
+    }
+    setRoutineStartId(
+      routineOptions.find((routine) => routine.id === selectedRoutineId)?.id ||
+        routineOptions[0]?.id ||
+        ""
+    );
+  }, [routineOptions, routineStartId, selectedRoutineId]);
 
   function submitTask(event) {
     event.preventDefault();
@@ -244,9 +223,16 @@ export default function Dashboard({
 
   function addTagToTask(task, tag) {
     const cleaned = tag.trim();
-    if (!cleaned || task.tags?.some((item) => item.toLowerCase() === cleaned.toLowerCase())) return;
+    if (
+      !cleaned ||
+      task.tags?.some((item) => item.toLowerCase() === cleaned.toLowerCase())
+    ) {
+      return;
+    }
     onAddTaskTag(cleaned);
-    onUpdateTodayTaskDetails(task.id, { tags: [...(task.tags || []), cleaned] });
+    onUpdateTodayTaskDetails(task.id, {
+      tags: [...(task.tags || []), cleaned]
+    });
   }
 
   function removeTagFromTask(task, tag) {
@@ -256,6 +242,7 @@ export default function Dashboard({
   }
 
   function openRoutinePicker() {
+    setMoreOpen(false);
     setRoutinePicker(openRoutinePickerState(routineOptions));
   }
 
@@ -263,12 +250,32 @@ export default function Dashboard({
     setRoutinePicker(closedRoutinePickerState());
   }
 
-  function closeCalendarDetail() {
-    setCalendarDetailOpen(false);
+  function openRoutineStart() {
+    const initialId =
+      routineOptions.find((routine) => routine.id === selectedRoutineId)?.id ||
+      routineOptions[0]?.id ||
+      "";
+    setRoutineStartId(initialId);
+    setMoreOpen(false);
+    setRoutineStartOpen(true);
+  }
+
+  function closeRoutineStart() {
+    setRoutineStartOpen(false);
+  }
+
+  function startSelectedRoutine() {
+    if (!selectedRoutineForStart) return;
+    onSelectRoutine?.(selectedRoutineForStart.id);
+    closeRoutineStart();
+    onStartRoutine(selectedRoutineForStart.id);
   }
 
   function scrollToSession() {
-    sessionAnchorRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    sessionAnchorRef.current?.scrollIntoView?.({
+      behavior: "smooth",
+      block: "start"
+    });
   }
 
   function resumeAndScroll() {
@@ -285,123 +292,511 @@ export default function Dashboard({
     onFinishSession();
   }
 
+  function renderTaskRow(task, groupTasks) {
+    const groupIndex = groupTasks.findIndex((item) => item.id === task.id);
+    const expanded = expandedTaskId === task.id;
+    const tags = task.tags || [];
+    const firstTag = tags[0] || "";
+
+    return (
+      <div
+        className={
+          task.completed
+            ? "task-row today-task-row checked"
+            : "task-row today-task-row"
+        }
+        key={task.id}
+      >
+        <label className="today-check-control" htmlFor={`today-task-${task.id}`}>
+          <input
+            checked={task.completed}
+            id={`today-task-${task.id}`}
+            onChange={() => onToggleTodayTask(task.id)}
+            type="checkbox"
+          />
+          <span className="sr-only">
+            {task.completed ? "Mark incomplete: " : "Mark complete: "}
+            {task.text}
+          </span>
+        </label>
+        <span className="task-copy">
+          <span className="task-title-line">
+            <strong>{task.text}</strong>
+            <span className="task-inline-meta">
+              {task.note?.trim() ? <span className="mini-chip">Note</span> : null}
+              {firstTag ? <span className="mini-chip">{firstTag}</span> : null}
+              {tags.length > 1 ? (
+                <span className="mini-chip">+{tags.length - 1}</span>
+              ) : null}
+            </span>
+          </span>
+        </span>
+        <div className="today-row-actions">
+          {reorderMode ? (
+            <>
+              <button
+                aria-label={`Move ${task.text} up`}
+                className="icon-button small"
+                disabled={groupIndex === 0}
+                onClick={() => onMoveTodayTask(task.id, -1)}
+                type="button"
+              >
+                ↑
+              </button>
+              <button
+                aria-label={`Move ${task.text} down`}
+                className="icon-button small"
+                disabled={groupIndex === groupTasks.length - 1}
+                onClick={() => onMoveTodayTask(task.id, 1)}
+                type="button"
+              >
+                ↓
+              </button>
+            </>
+          ) : null}
+          <button
+            aria-label={`${expanded ? "Hide" : "Show"} details for ${task.text}`}
+            className="button text-button small"
+            onClick={() => setExpandedTaskId(expanded ? "" : task.id)}
+            type="button"
+          >
+            More
+          </button>
+          <button
+            aria-label={`Remove ${task.text}`}
+            className="icon-button small danger-icon"
+            onClick={() => onDeleteTodayTask(task.id)}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        {expanded ? (
+          <div className="today-task-details">
+            {task.source === "routine" && task.routineName ? (
+              <p className="muted compact-source">From {task.routineName}</p>
+            ) : null}
+            <label className="field-label" htmlFor={`today-note-${task.id}`}>
+              Note
+              <textarea
+                className="textarea-small"
+                id={`today-note-${task.id}`}
+                onChange={(event) =>
+                  onUpdateTodayTaskDetails(task.id, {
+                    note: event.target.value
+                  })
+                }
+                placeholder="Optional note"
+                value={task.note || ""}
+              />
+            </label>
+            <div className="tag-editor">
+              <span className="field-label">Tags</span>
+              <div className="tag-chip-row">
+                {tags.map((tag) => (
+                  <button
+                    className="tag-chip removable"
+                    key={tag}
+                    onClick={() => removeTagFromTask(task, tag)}
+                    type="button"
+                  >
+                    {tag} ×
+                  </button>
+                ))}
+              </div>
+              <div className="tag-suggestion-row">
+                {taskTags
+                  .filter(
+                    (tag) =>
+                      !tags.some(
+                        (current) => current.toLowerCase() === tag.toLowerCase()
+                      )
+                  )
+                  .map((tag) => (
+                    <button
+                      className="button ghost small"
+                      key={tag}
+                      onClick={() => addTagToTask(task, tag)}
+                      type="button"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+              </div>
+              <form
+                className="custom-tag-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addTagToTask(task, customTagText);
+                  setCustomTagText("");
+                }}
+              >
+                <input
+                  onChange={(event) => setCustomTagText(event.target.value)}
+                  placeholder="Custom tag"
+                  type="text"
+                  value={customTagText}
+                />
+                <button className="button ghost small" type="submit">
+                  Add tag
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <div className="screen-stack">
+    <div className="screen-stack today-screen">
       {activeSession && activeRoutine ? (
         <section className="panel session-resume-panel">
           <div className="section-heading compact-heading">
             <div>
-              <p className="eyebrow">Unfinished session</p>
+              <p className="eyebrow">Unfinished routine</p>
               <h2>{activeRoutine.title}</h2>
               <p>
                 {activeProgress.completed}/{activeProgress.total} tasks complete. Elapsed{" "}
                 {formatElapsedTime(activeElapsed)}.
               </p>
             </div>
-            <span className="status-pill compact">{activeSession.paused ? "Paused" : "Active"}</span>
+            <span className="status-pill compact">
+              {activeSession.paused ? "Paused" : "Active"}
+            </span>
           </div>
           <div className="card-actions compact-actions session-resume-actions">
-            <button className="button primary small" type="button" onClick={resumeAndScroll}>
+            <button
+              className="button primary small"
+              onClick={resumeAndScroll}
+              type="button"
+            >
               {activeSession.paused ? "Resume" : "Continue"}
             </button>
             {cleanModeAvailable ? (
-              <button className="button edit-action small" type="button" onClick={openCleanMode}>
+              <button
+                className="button edit-action small"
+                onClick={openCleanMode}
+                type="button"
+              >
                 Clean Mode
               </button>
             ) : null}
-            <button className="button ghost small" type="button" onClick={onFinishSession}>
+            <button
+              className="button ghost small"
+              onClick={onFinishSession}
+              type="button"
+            >
               {activeFinishLabel}
             </button>
-            <button className="button danger-ghost small" type="button" onClick={onCancelSession}>
+            <button
+              className="button danger-ghost small"
+              onClick={onCancelSession}
+              type="button"
+            >
               Discard
             </button>
           </div>
         </section>
       ) : null}
 
-      <section className="panel today-panel">
-        <div className="section-heading compact-heading">
-          <h2>Today</h2>
-          <button className="button edit-action small" type="button" onClick={onEditToday}>
-            Edit
-          </button>
+      <section className="panel today-panel today-primary-panel">
+        <div className="today-title-row">
+          <div>
+            <p className="eyebrow">{formatDate(dateFromKey(todayKey))}</p>
+            <h2>Today</h2>
+          </div>
+          <span className="today-count-summary">
+            {incompleteTasks.length} left · {completedTasks.length} done
+          </span>
         </div>
 
-        <form className="dashboard-todo-form" onSubmit={submitTask}>
-          <input
-            type="text"
-            value={taskText}
-            placeholder="Add a task for today"
-            onChange={(event) => setTaskText(event.target.value)}
-          />
-          <button className="button primary" type="submit">
-            Add
-          </button>
-        </form>
-
-        <div className="today-secondary-actions">
-          <button className="button ghost small" type="button" onClick={openRoutinePicker}>
-            Add from routine
-          </button>
-          {todayTasks.length ? (
-            <>
-              <button
-                className={reorderMode ? "button edit-action small" : "button ghost small"}
-                type="button"
-                onClick={() => setReorderMode((enabled) => !enabled)}
-              >
-                Reorder
-              </button>
-              <button className="button text-button small" type="button" onClick={onResetTodayTasks}>
-                Reset list
-              </button>
-            </>
-          ) : null}
-        </div>
-
-        {routinePicker.open ? (
-          <div
-            className="dialog-backdrop compact-backdrop"
-            role="presentation"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) closeRoutinePicker();
-            }}
+        <div className="today-focus-card">
+          <div>
+            <strong>
+              {incompleteTasks.length
+                ? `${incompleteTasks.length} task${
+                    incompleteTasks.length === 1 ? "" : "s"
+                  } ready`
+                : todayTasks.length
+                  ? "Everything is done"
+                  : "Start with one small task"}
+            </strong>
+            <p>
+              {incompleteTasks.length
+                ? "Work through today’s list one task at a time."
+                : todayTasks.length
+                  ? "You can review completed tasks or add something new."
+                  : "Add a task below, then begin focused cleaning."}
+            </p>
+          </div>
+          <button
+            className="button primary today-start-cleaning"
+            disabled={!incompleteTasks.length}
+            onClick={() => setTodayCleaningOpen(true)}
+            type="button"
           >
-            <section
-              aria-labelledby="routine-import-title"
-              aria-modal="true"
-              className="dialog routine-import-dialog"
-              role="dialog"
-              ref={routinePickerDialogRef}
-              tabIndex={-1}
+            {incompleteTasks.length ? "Start cleaning" : "All done for today"}
+          </button>
+        </div>
+
+        <div className="today-add-toolbar">
+          <form className="dashboard-todo-form" onSubmit={submitTask}>
+            <input
+              aria-label="New Today task"
+              onChange={(event) => setTaskText(event.target.value)}
+              placeholder="Add a task for today"
+              type="text"
+              value={taskText}
+            />
+            <button className="button primary" type="submit">
+              Add
+            </button>
+          </form>
+          <button
+            aria-expanded={moreOpen}
+            className={moreOpen ? "button edit-action" : "button ghost"}
+            onClick={() => setMoreOpen((open) => !open)}
+            type="button"
+          >
+            More
+          </button>
+        </div>
+
+        {moreOpen ? (
+          <div className="today-more-panel" aria-label="More Today actions">
+            <button className="button ghost" onClick={openRoutinePicker} type="button">
+              Add from routine
+            </button>
+            <button
+              className="button ghost"
+              disabled={!routineOptions.length}
+              onClick={openRoutineStart}
+              type="button"
             >
-              <div className="dialog-header">
-                <div>
-                  <p className="eyebrow">Today</p>
-                  <h2 id="routine-import-title">Add from routine</h2>
-                </div>
-                <button
-                  className="icon-button"
-                  type="button"
-                  aria-label="Close routine picker"
-                  onClick={closeRoutinePicker}
-                  ref={routinePickerCloseRef}
-                >
-                  X
-                </button>
+              Start a routine
+            </button>
+            {todayTasks.length ? (
+              <button
+                className={reorderMode ? "button edit-action" : "button ghost"}
+                onClick={() => setReorderMode((enabled) => !enabled)}
+                type="button"
+              >
+                {reorderMode ? "Done reordering" : "Reorder tasks"}
+              </button>
+            ) : null}
+            <button
+              className="button ghost"
+              onClick={() => {
+                setMoreOpen(false);
+                onEditToday();
+              }}
+              type="button"
+            >
+              Edit Today defaults
+            </button>
+            {todayTasks.length ? (
+              <button
+                className="button danger-ghost"
+                onClick={() => {
+                  setMoreOpen(false);
+                  onResetTodayTasks();
+                }}
+                type="button"
+              >
+                Reset today&apos;s list
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {reorderMode ? (
+          <div className="today-reorder-notice" role="status">
+            Reorder mode is on. Tasks move within their To do or Completed group.
+          </div>
+        ) : null}
+
+        {incompleteTasks.length ? (
+          <section className="today-task-group" aria-labelledby="today-todo-heading">
+            <div className="today-group-heading">
+              <h3 id="today-todo-heading">To do</h3>
+              <span>{incompleteTasks.length}</span>
+            </div>
+            <div className="task-list today-task-list">
+              {incompleteTasks.map((task) => renderTaskRow(task, incompleteTasks))}
+            </div>
+          </section>
+        ) : todayTasks.length ? (
+          <div className="today-all-done-message">
+            <strong>Today&apos;s list is complete.</strong>
+            <p>Completed tasks are grouped below.</p>
+          </div>
+        ) : (
+          <div className="today-empty-state">
+            <h3>No tasks yet</h3>
+            <p>Add one task above or use More to pull tasks from a routine.</p>
+          </div>
+        )}
+
+        {completedTasks.length ? (
+          <section className="today-completed-group">
+            <button
+              aria-controls="today-completed-list"
+              aria-expanded={completedOpen}
+              className="today-completed-toggle"
+              onClick={() => setCompletedOpen((open) => !open)}
+              type="button"
+            >
+              <span>
+                <strong>Completed</strong>
+                <small>{completedTasks.length} finished today</small>
+              </span>
+              <span aria-hidden="true">{completedOpen ? "−" : "+"}</span>
+            </button>
+            {completedOpen ? (
+              <div
+                className="task-list today-task-list today-completed-list"
+                id="today-completed-list"
+              >
+                {completedTasks.map((task) =>
+                  renderTaskRow(task, completedTasks)
+                )}
               </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {deletedTodayTask ? (
+          <div className="undo-toast" role="status">
+            <span>Task deleted</span>
+            <button
+              className="button ghost small"
+              onClick={onUndoDeleteTodayTask}
+              type="button"
+            >
+              Undo
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      {!activeSession && completionSummary ? (
+        <section className="panel completion-panel completion-summary-panel">
+          <div>
+            <p className="eyebrow">Saved to Progress</p>
+            <h2>{completionSummary.routineTitle}</h2>
+            <p>
+              {completionSummary.completedTasks}/{completionSummary.totalTasks} tasks complete,{" "}
+              {completionSummary.percent}% total.
+            </p>
+          </div>
+          <div className="completion-summary-meta">
+            <span>Finished {formatDateTime(completionSummary.finishedAt)}</span>
+            {Number.isFinite(Number(completionSummary.elapsedMs)) ? (
+              <span>
+                Elapsed {formatElapsedTime(Number(completionSummary.elapsedMs))}
+              </span>
+            ) : Number.isFinite(
+                Number(completionSummary.estimatedDurationMinutes)
+              ) ? (
+              <span>
+                Estimated{" "}
+                {formatElapsedTime(
+                  Number(completionSummary.estimatedDurationMinutes) * 60000
+                )}
+              </span>
+            ) : null}
+          </div>
+          <div className="card-actions compact-actions">
+            <button
+              className="button primary small"
+              onClick={onViewHistory}
+              type="button"
+            >
+              View Progress
+            </button>
+            <button
+              className="button ghost small"
+              onClick={onClearCompletionSummary}
+              type="button"
+            >
+              Close
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {activeSession ? (
+        <div ref={sessionAnchorRef}>
+          <StartSession
+            activeSession={activeSession}
+            completionSummary={completionSummary}
+            elapsedMs={activeElapsed}
+            history={history}
+            onAddRoutine={onAddRoutine}
+            onCancelSession={onCancelSession}
+            onClearCompletionSummary={onClearCompletionSummary}
+            onCompletePhase={onCompletePhase}
+            onEditRoutines={onEditRoutines}
+            onFinishSession={onFinishSession}
+            onOpenCleanMode={cleanModeAvailable ? openCleanMode : null}
+            onPauseSession={onPauseSession}
+            onResetSession={onResetSession}
+            onResumeSession={onResumeSession}
+            onSelectRoutine={onSelectRoutine}
+            onStartSession={onStartRoutine}
+            onToggleTask={onToggleTask}
+            onUpdateNotes={onUpdateNotes}
+            onViewHistory={onViewHistory}
+            routines={template.routines}
+            selectedRoutineId={selectedRoutineId}
+          />
+        </div>
+      ) : null}
+
+      {routinePicker.open ? (
+        <div
+          className="dialog-backdrop compact-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeRoutinePicker();
+          }}
+          role="presentation"
+        >
+          <section
+            aria-labelledby="routine-import-title"
+            aria-modal="true"
+            className="dialog routine-import-dialog"
+            ref={routinePickerDialogRef}
+            role="dialog"
+            tabIndex={-1}
+          >
+            <div className="dialog-header">
+              <div>
+                <p className="eyebrow">Today</p>
+                <h2 id="routine-import-title">Add from routine</h2>
+              </div>
+              <button
+                aria-label="Close routine picker"
+                className="icon-button"
+                onClick={closeRoutinePicker}
+                ref={routinePickerCloseRef}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
             <div className="routine-import-topline">
               <label className="field-label" htmlFor="routine-import-select">
                 Routine
                 <select
+                  disabled={!routineOptions.length}
                   id="routine-import-select"
-                  value={selectedRoutineForImport?.id || ""}
                   onChange={(event) => {
                     setRoutinePicker((current) =>
                       selectRoutinePickerSource(current, event.target.value)
                     );
                   }}
-                  disabled={!routineOptions.length}
+                  value={selectedRoutineForImport?.id || ""}
                 >
                   {routineOptions.map((routine) => (
                     <option key={routine.id} value={routine.id}>
@@ -413,388 +808,198 @@ export default function Dashboard({
             </div>
             <div className="routine-import-list">
               {!routineOptions.length ? (
-                <p className="muted compact-empty">No active routines are available.</p>
+                <p className="muted compact-empty">
+                  No active routines are available.
+                </p>
               ) : !routineTaskOptions.length ? (
                 <p className="muted compact-empty">
                   This routine has no tasks available to add.
                 </p>
-              ) : routineTaskOptions.map((task) => {
-                const alreadyAdded = existingRoutineTaskKeys.has(
-                  `${selectedRoutineForImport.id}:${task.id}`
-                );
-                return (
-                  <label className={alreadyAdded ? "routine-import-row disabled" : "routine-import-row"} key={task.id}>
-                    <input
-                      type="checkbox"
-                      checked={routinePicker.selectedTaskIds.includes(task.id)}
-                      disabled={alreadyAdded}
-                      onChange={() => toggleRoutineTask(task.id)}
-                    />
-                    <span>
-                      <strong>{task.title}</strong>
-                      <small>{alreadyAdded ? "Already in Today" : task.phaseTitle}</small>
-                    </span>
-                  </label>
-                );
-              })}
+              ) : (
+                routineTaskOptions.map((task) => {
+                  const alreadyAdded = existingRoutineTaskKeys.has(
+                    `${selectedRoutineForImport.id}:${task.id}`
+                  );
+                  return (
+                    <label
+                      className={
+                        alreadyAdded
+                          ? "routine-import-row disabled"
+                          : "routine-import-row"
+                      }
+                      key={task.id}
+                    >
+                      <input
+                        checked={routinePicker.selectedTaskIds.includes(task.id)}
+                        disabled={alreadyAdded}
+                        onChange={() => toggleRoutineTask(task.id)}
+                        type="checkbox"
+                      />
+                      <span>
+                        <strong>{task.title}</strong>
+                        <small>
+                          {alreadyAdded ? "Already in Today" : task.phaseTitle}
+                        </small>
+                      </span>
+                    </label>
+                  );
+                })
+              )}
             </div>
             <div className="card-actions compact-actions">
               <button
                 className="button primary small"
-                type="button"
                 disabled={!routinePicker.selectedTaskIds.length}
                 onClick={addSelectedRoutineTasks}
+                type="button"
               >
                 Add selected
               </button>
-              <button className="button ghost small" type="button" onClick={closeRoutinePicker}>
+              <button
+                className="button ghost small"
+                onClick={closeRoutinePicker}
+                type="button"
+              >
                 Cancel
               </button>
             </div>
-            </section>
-          </div>
-        ) : null}
-
-        {todayTasks.length ? (
-          <div className="task-list today-task-list">
-            {displayTasks.map((task) => {
-              const sameGroup = displayTasks.filter(
-                (item) => Boolean(item.completed) === Boolean(task.completed)
-              );
-              const groupIndex = sameGroup.findIndex((item) => item.id === task.id);
-              const expanded = expandedTaskId === task.id;
-              const tags = task.tags || [];
-              const firstTag = tags[0] || "";
-
-              return (
-                <div className={task.completed ? "task-row today-task-row checked" : "task-row today-task-row"} key={task.id}>
-                  <label
-                    className="today-check-control"
-                    htmlFor={`today-task-${task.id}`}
-                  >
-                    <input
-                      id={`today-task-${task.id}`}
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => onToggleTodayTask(task.id)}
-                    />
-                    <span className="sr-only">
-                      {task.completed ? "Mark incomplete: " : "Mark complete: "}
-                      {task.text}
-                    </span>
-                  </label>
-                  <span className="task-copy">
-                    <span className="task-title-line">
-                      <strong>{task.text}</strong>
-                      <span className="task-inline-meta">
-                        {task.note?.trim() ? <span className="mini-chip">Note</span> : null}
-                        {firstTag ? <span className="mini-chip">{firstTag}</span> : null}
-                        {tags.length > 1 ? <span className="mini-chip">+{tags.length - 1}</span> : null}
-                      </span>
-                    </span>
-                  </span>
-                  <div className="today-row-actions">
-                    {reorderMode ? (
-                      <>
-                        <button
-                          className="icon-button small"
-                          type="button"
-                          aria-label={`Move ${task.text} up`}
-                          disabled={groupIndex === 0}
-                          onClick={() => onMoveTodayTask(task.id, -1)}
-                        >
-                          ^
-                        </button>
-                        <button
-                          className="icon-button small"
-                          type="button"
-                          aria-label={`Move ${task.text} down`}
-                          disabled={groupIndex === sameGroup.length - 1}
-                          onClick={() => onMoveTodayTask(task.id, 1)}
-                        >
-                          v
-                        </button>
-                      </>
-                    ) : null}
-                    <button
-                      className="button text-button small"
-                      type="button"
-                      aria-label={`${expanded ? "Hide" : "Show"} details for ${task.text}`}
-                      onClick={() => setExpandedTaskId(expanded ? "" : task.id)}
-                    >
-                      More
-                    </button>
-                    <button
-                      className="icon-button small danger-icon"
-                      type="button"
-                      aria-label={`Remove ${task.text}`}
-                      onClick={() => onDeleteTodayTask(task.id)}
-                    >
-                      X
-                    </button>
-                  </div>
-                  {expanded ? (
-                    <div className="today-task-details">
-                      {task.source === "routine" && task.routineName ? (
-                        <p className="muted compact-source">From {task.routineName}</p>
-                      ) : null}
-                      <label className="field-label" htmlFor={`today-note-${task.id}`}>
-                        Note
-                        <textarea
-                          id={`today-note-${task.id}`}
-                          className="textarea-small"
-                          value={task.note || ""}
-                          placeholder="Optional note"
-                          onChange={(event) =>
-                            onUpdateTodayTaskDetails(task.id, { note: event.target.value })
-                          }
-                        />
-                      </label>
-                      <div className="tag-editor">
-                        <span className="field-label">Tags</span>
-                        <div className="tag-chip-row">
-                          {(task.tags || []).map((tag) => (
-                            <button
-                              className="tag-chip removable"
-                              key={tag}
-                              type="button"
-                              onClick={() => removeTagFromTask(task, tag)}
-                            >
-                              {tag} X
-                            </button>
-                          ))}
-                        </div>
-                        <div className="tag-suggestion-row">
-                          {taskTags
-                            .filter(
-                              (tag) =>
-                                !(task.tags || []).some(
-                                  (current) => current.toLowerCase() === tag.toLowerCase()
-                                )
-                            )
-                            .map((tag) => (
-                              <button
-                                className="button ghost small"
-                                key={tag}
-                                type="button"
-                                onClick={() => addTagToTask(task, tag)}
-                              >
-                                {tag}
-                              </button>
-                            ))}
-                        </div>
-                        <form
-                          className="custom-tag-form"
-                          onSubmit={(event) => {
-                            event.preventDefault();
-                            addTagToTask(task, customTagText);
-                            setCustomTagText("");
-                          }}
-                        >
-                          <input
-                            type="text"
-                            value={customTagText}
-                            placeholder="Custom tag"
-                            onChange={(event) => setCustomTagText(event.target.value)}
-                          />
-                          <button className="button ghost small" type="submit">
-                            Add tag
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="muted compact-empty">No tasks yet.</p>
-        )}
-
-        {deletedTodayTask ? (
-          <div className="undo-toast" role="status">
-            <span>Task deleted</span>
-            <button className="button ghost small" type="button" onClick={onUndoDeleteTodayTask}>
-              Undo
-            </button>
-          </div>
-        ) : null}
-
-      </section>
-
-      <div ref={sessionAnchorRef}>
-        <StartSession
-          routines={template.routines}
-          history={history}
-          selectedRoutineId={selectedRoutineId}
-          onSelectRoutine={onSelectRoutine}
-          activeSession={activeSession}
-          completionSummary={completionSummary}
-          onStartSession={onStartRoutine}
-          onToggleTask={onToggleTask}
-          onCompletePhase={onCompletePhase}
-          onResetSession={onResetSession}
-          onFinishSession={onFinishSession}
-          onCancelSession={onCancelSession}
-          onPauseSession={onPauseSession}
-          onResumeSession={onResumeSession}
-          onUpdateNotes={onUpdateNotes}
-          onViewHistory={onViewHistory}
-          onClearCompletionSummary={onClearCompletionSummary}
-          onEditRoutines={onEditRoutines}
-          onAddRoutine={onAddRoutine}
-          onOpenCleanMode={cleanModeAvailable ? openCleanMode : null}
-          elapsedMs={activeElapsed}
-        />
-      </div>
-
-      <section className="panel dashboard-calendar-panel">
-        <div className="section-heading compact-heading">
-          <h2>Calendar</h2>
-          <span className="status-pill compact">{formatDate(dateFromKey(todayKey))}</span>
+          </section>
         </div>
+      ) : null}
 
-        <div className="mini-calendar" aria-label="Current month activity calendar">
-          {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
-            <span className="calendar-weekday" key={`${day}-${index}`}>
-              {day}
-            </span>
-          ))}
-          {calendarCells.map((cell) =>
-            cell.empty ? (
-              <span className="calendar-empty" key={cell.id} />
-            ) : (
-              <button
-                className={[
-                  "calendar-day",
-                  cell.dateKey === todayKey ? "today" : "",
-                  cell.dateKey === selectedDate ? "selected" : "",
-                  activityByDate[cell.dateKey]?.sessions.length ||
-                  activityByDate[cell.dateKey]?.todayCompleted
-                    ? "has-activity"
-                    : ""
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                key={cell.id}
-                type="button"
-                aria-label={formatCalendarDayLabel(
-                  cell.dateKey,
-                  activityByDate[cell.dateKey],
-                  todayKey
-                )}
-                onClick={() => {
-                  setSelectedDate(cell.dateKey);
-                  setCalendarDetailOpen(true);
-                }}
-              >
-                <span>{cell.day}</span>
-              </button>
-            )
-          )}
-        </div>
-
-        <div className="calendar-week-summary" aria-label="Selected week summary">
-          <strong>This week:</strong>
-          <span>{weeklySummary.activeDays}/7 active days</span>
-          <span>{countLabel(weeklySummary.todayCompleted, "Today task")}</span>
-          <span>{countLabel(weeklySummary.routines, "routine")}</span>
-          {weeklySummary.routineElapsedMinutes > 0 ? (
-            <span>
-              Routine time: {displayMinutes(weeklySummary.routineElapsedMinutes)}
-            </span>
-          ) : null}
-          {weeklySummary.estimatedTodayMinutes > 0 ? (
-            <span>
-              Estimated Today tasks:{" "}
-              {displayMinutes(weeklySummary.estimatedTodayMinutes)}
-            </span>
-          ) : null}
-        </div>
-      </section>
-
-      {calendarDetailOpen ? (
+      {routineStartOpen ? (
         <div
-          className="dialog-backdrop calendar-sheet-backdrop"
-          role="presentation"
+          className="dialog-backdrop compact-backdrop"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeCalendarDetail();
+            if (event.target === event.currentTarget) closeRoutineStart();
           }}
+          role="presentation"
         >
           <section
-            aria-labelledby="calendar-detail-title"
+            aria-labelledby="routine-start-title"
             aria-modal="true"
-            className="dialog calendar-day-sheet"
+            className="dialog today-routine-start-dialog"
+            ref={routineStartDialogRef}
             role="dialog"
-            ref={calendarDialogRef}
             tabIndex={-1}
           >
             <div className="dialog-header">
               <div>
-                <p className="eyebrow">Calendar</p>
-                <h2 id="calendar-detail-title">{displayShortDate(selectedDate)}</h2>
+                <p className="eyebrow">Routine</p>
+                <h2 id="routine-start-title">Start a routine</h2>
               </div>
               <button
+                aria-label="Close routine start dialog"
                 className="icon-button"
+                onClick={closeRoutineStart}
+                ref={routineStartCloseRef}
                 type="button"
-                aria-label="Close calendar day details"
-                onClick={closeCalendarDetail}
-                ref={calendarCloseRef}
               >
-                X
+                ×
               </button>
             </div>
 
-            {selectedActivity.sessions.length || selectedActivity.todayCompleted ? (
+            {routineOptions.length ? (
               <>
-                <div className="calendar-day-metrics">
-                  <span>{countLabel(selectedActivity.todayCompleted, "Today task")}</span>
-                  <span>{countLabel(selectedActivity.sessions.length, "routine")}</span>
-                  {selectedActivity.routineElapsedMinutes > 0 ? (
-                    <span>
-                      Routine time:{" "}
-                      {displayMinutes(selectedActivity.routineElapsedMinutes)}
-                    </span>
-                  ) : null}
-                  {selectedActivity.estimatedTodayMinutes > 0 ? (
-                    <span>
-                      Estimated Today tasks:{" "}
-                      {displayMinutes(selectedActivity.estimatedTodayMinutes)}
-                    </span>
-                  ) : null}
+                <div className="today-routine-choice-list" role="list">
+                  {routineOptions.map((routine) => (
+                    <button
+                      className={
+                        selectedRoutineForStart?.id === routine.id
+                          ? "today-routine-choice active"
+                          : "today-routine-choice"
+                      }
+                      key={routine.id}
+                      onClick={() => {
+                        setRoutineStartId(routine.id);
+                        onSelectRoutine?.(routine.id);
+                      }}
+                      type="button"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`routine-color-dot color-${
+                          routine.colorLabel || "none"
+                        }`}
+                      />
+                      <span>
+                        <strong>{routine.title}</strong>
+                        <small>
+                          {formatRoutineDuration(routine)} ·{" "}
+                          {getRoutineTotalTasks(routine)} tasks
+                        </small>
+                        <small>{getLastRoutineDoneLabel(history, routine.id)}</small>
+                      </span>
+                    </button>
+                  ))}
                 </div>
-                {selectedActivity.sessions.length ? (
-                  <div className="calendar-session-list">
-                    <p className="field-label">Routine sessions</p>
-                    {selectedActivity.sessions.map((entry) => (
-                      <div key={entry.id}>
-                        <strong>{entry.routineTitle || "Routine"}</strong>
-                        <span>
-                          {entry.completedTasks}/{entry.totalTasks} tasks
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="card-actions today-routine-start-actions">
+                  <button
+                    className="button primary"
+                    onClick={startSelectedRoutine}
+                    type="button"
+                  >
+                    Start {selectedRoutineForStart?.title || "routine"}
+                  </button>
+                  <button
+                    className="button ghost"
+                    onClick={() => {
+                      closeRoutineStart();
+                      onEditRoutines();
+                    }}
+                    type="button"
+                  >
+                    Manage routines
+                  </button>
+                  <button
+                    className="button ghost"
+                    onClick={() => {
+                      closeRoutineStart();
+                      onAddRoutine();
+                    }}
+                    type="button"
+                  >
+                    Add routine
+                  </button>
+                </div>
               </>
             ) : (
-              <p className="muted">No activity</p>
+              <div className="today-empty-state">
+                <h3>No active routines</h3>
+                <p>Add a routine before starting a reusable cleaning session.</p>
+                <button
+                  className="button primary"
+                  onClick={() => {
+                    closeRoutineStart();
+                    onAddRoutine();
+                  }}
+                  type="button"
+                >
+                  Add routine
+                </button>
+              </div>
             )}
           </section>
         </div>
       ) : null}
 
+      <TodayCleaningMode
+        onExit={() => setTodayCleaningOpen(false)}
+        onToggleTask={onToggleTodayTask}
+        open={todayCleaningOpen}
+        tasks={todayTasks}
+      />
+
       <CleanMode
-        open={cleanModeOpen && cleanModeAvailable}
         activeSession={activeSession}
-        routine={activeRoutine}
         elapsedMs={activeElapsed}
-        onToggleTask={onToggleTask}
+        onExit={() => setCleanModeOpen(false)}
+        onFinishSession={finishFromCleanMode}
         onPauseSession={onPauseSession}
         onResumeSession={onResumeSession}
-        onFinishSession={finishFromCleanMode}
-        onExit={() => setCleanModeOpen(false)}
+        onToggleTask={onToggleTask}
+        open={cleanModeOpen && cleanModeAvailable}
+        routine={activeRoutine}
       />
     </div>
   );
