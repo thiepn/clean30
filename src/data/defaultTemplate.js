@@ -1,21 +1,11 @@
-import { dailyRuleItems, routines } from "./routines.js";
-import { apartmentLaws, bottlenecks, priorityOrder, systemSections } from "./systems.js";
+import {
+  starterDailyRuleItems,
+  starterRoutines,
+  starterSystems,
+  starterZones
+} from "./starterData.js";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
-
-const defaultZones = [
-  "Trash",
-  "Dishes",
-  "Laundry/clothes",
-  "Bathroom/toilet",
-  "Kitchen",
-  "Bedroom",
-  "Living room",
-  "Entrance/corridor",
-  "Floors",
-  "Windows/glass",
-  "Monthly deep-clean zones"
-];
 
 const emptyWeekdayDefaults = {
   sunday: null,
@@ -65,37 +55,32 @@ function normalizeRoutine(routine) {
 
 export const clean30DefaultTemplate = {
   id: "clean30-default",
-  name: "Clean30 Default",
+  name: "Clean30 Starter Plan",
   readOnly: false,
   profile: {
     appDisplayName: "Clean30",
-    homeName: "30 m2 apartment",
-    apartmentSizeText: "30 m2",
-    apartmentTypeText: "Erdgeschoss / ground floor",
-    goalText: "Guest-ready within 10 minutes"
+    homeName: "My home",
+    apartmentSizeText: "Not set",
+    apartmentTypeText: "Home",
+    goalText: "A cleaner home, one task at a time"
   },
-  zones: defaultZones.map((name, index) => ({
+  zones: starterZones.map((name, index) => ({
     id: `zone-${index + 1}`,
     name
   })),
-  todayDefaults: dailyRuleItems.map(normalizeTask),
+  todayDefaults: starterDailyRuleItems.map(normalizeTask),
   todayWeekdayDefaultsEnabled: false,
   todayWeekdayDefaultsExplicit: true,
   todayWeekdayDefaults: emptyWeekdayDefaults,
-  dailyRules: dailyRuleItems.map(normalizeTask),
-  routines: routines.map(normalizeRoutine),
-  systems: {
-    apartmentLaws: clone(apartmentLaws),
-    bottlenecks: clone(bottlenecks),
-    priorityOrder: clone(priorityOrder),
-    systemSections: clone(systemSections)
-  },
+  dailyRules: starterDailyRuleItems.map(normalizeTask),
+  routines: starterRoutines.map(normalizeRoutine),
+  systems: clone(starterSystems),
   schedule: {
     weeklyResetDay: "Saturday",
     backupResetDay: "Sunday",
     monthlyDeepCleanInterval: 30,
     weeklyResetDueAfterDays: 7,
-    minimalResetFallbackLabel: "Sunday minimum reset"
+    minimalResetFallbackLabel: "Short reset"
   },
   appearance: {
     accentColor: "green",
