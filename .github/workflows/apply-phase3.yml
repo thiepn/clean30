@@ -1,5 +1,6 @@
 name: Apply Clean30 Phase 3
 
+# Retry after aligning the Help guide source text.
 on:
   push:
     branches:
