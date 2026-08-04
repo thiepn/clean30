@@ -4,11 +4,11 @@ import useDialogFocus from "../hooks/useDialogFocus.js";
 const guideSections = [
   {
     title: "Today",
-    body: "Add tasks, check them off, or start a focused clean from the Today screen."
+    body: "Add tasks, check them off, or use Start cleaning for a focused task-by-task view."
   },
   {
     title: "Routines",
-    body: "Routines are reusable cleaning checklists. Start or edit them from Routines."
+    body: "Routines are reusable cleaning checklists. Review or edit them in Routines, and start one from Today → More."
   },
   {
     title: "Progress",
