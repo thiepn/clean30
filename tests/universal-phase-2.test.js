@@ -86,6 +86,12 @@ test("Today focused cleaning mode is a real modal with progress and task control
   assert.match(mode, /Today&apos;s list is complete/);
 });
 
+test("Help directs routine starts through the compact Today action", () => {
+  const help = textFile("../src/components/HelpGuide.jsx");
+  assert.match(help, /Start cleaning for a focused task-by-task view/);
+  assert.match(help, /start one from Today → More/);
+});
+
 test("Phase 2 styles are loaded after the Phase 1 foundation styles", () => {
   const main = textFile("../src/main.jsx");
   const phaseOneIndex = main.indexOf('"./styles/universal-phase1.css"');
