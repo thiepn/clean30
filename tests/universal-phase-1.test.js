@@ -124,6 +124,16 @@ test("onboarding has three clear steps and two distinct setup choices", () => {
   assert.equal(starterPreviewTasks.length, 4);
 });
 
+test("onboarding can import a plan and protects returning users from setup replacement", () => {
+  const onboarding = textFile("../src/components/Onboarding.jsx");
+  assert.match(onboarding, /validateTemplatePayload/);
+  assert.match(onboarding, /Import a cleaning plan/);
+  assert.match(onboarding, /isReturningUser/);
+  assert.match(onboarding, /Your current setup stays unchanged/);
+  assert.match(onboarding, /onboardingCompletedAt/);
+  assert.match(onboarding, /saveAppState/);
+});
+
 test("public labels use Today and Progress without changing route IDs", () => {
   const navigation = textFile("../src/components/Navigation.jsx");
   assert.match(navigation, /id: "dashboard", label: "Today"/);
