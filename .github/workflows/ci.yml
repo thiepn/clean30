@@ -27,6 +27,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify personal template export
+        run: |
+          npm run export:personal-template
+          node --input-type=module -e "import { readFileSync } from 'node:fs'; const payload = JSON.parse(readFileSync('local-templates/clean30-personal-30m2-template.json', 'utf8')); if (payload.app !== 'Clean30' || payload.type !== 'template' || payload.version !== 2 || !payload.template?.routines?.length) process.exit(1);"
+
       - name: Run tests
         run: npm test
 
