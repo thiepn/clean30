@@ -65,12 +65,20 @@ test("starter routines cover short, weekly, and deeper cleaning", () => {
   assert.ok(routines.every((routine) => routine.phases.some((phase) => phase.tasks.length > 0)));
 });
 
-test("unused legacy systems are empty in the universal starter", () => {
+test("legacy systems are neutral but retain strict canonical shape", () => {
   const systems = createDefaultTemplate().systems;
   assert.deepEqual(systems.apartmentLaws, []);
   assert.deepEqual(systems.bottlenecks, []);
   assert.deepEqual(systems.priorityOrder, []);
-  assert.deepEqual(systems.systemSections, []);
+  assert.equal(systems.systemSections.length, 1);
+  assert.deepEqual(systems.systemSections[0], {
+    id: "starter-guidance",
+    title: "Cleaning guidance",
+    problem: "",
+    items: [],
+    secondaryTitle: "",
+    secondaryItems: []
+  });
 });
 
 test("existing custom templates keep their own content when normalized", () => {
