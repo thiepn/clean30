@@ -194,5 +194,14 @@ export const starterSystems = {
   apartmentLaws: [],
   bottlenecks: [],
   priorityOrder: [],
-  systemSections: []
+  systemSections: [
+    {
+      id: "starter-guidance",
+      title: "Cleaning guidance",
+      problem: "",
+      items: [],
+      secondaryTitle: "",
+      secondaryItems: []
+    }
+  ]
 };
