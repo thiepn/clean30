@@ -1,0 +1,91 @@
+.simplified-app-header {
+  align-items: center;
+}
+
+.simplified-app-header > div:first-child {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.simplified-app-header .app-kicker {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.onboarding-simple-points {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.onboarding-simple-points p {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  padding: 0.75rem 0.9rem;
+}
+
+.onboarding-task-preview {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.onboarding-task-preview-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0.7rem 0.85rem;
+}
+
+.onboarding-task-preview-row > span {
+  color: var(--accent-strong);
+  font-size: 1.15rem;
+}
+
+.onboarding-empty-preview {
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+  padding: 1rem;
+}
+
+.onboarding-empty-preview p {
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .simplified-app-header {
+    gap: 1rem;
+  }
+
+  .simplified-app-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .onboarding-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .onboarding-actions > :first-child {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-dot,
+  .onboarding-task-preview-row {
+    transition: none;
+  }
+}
