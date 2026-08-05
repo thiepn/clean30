@@ -19,8 +19,20 @@ export function hasDuplicateRoutineTitle(title, routines = [], ignoreId = "") {
   );
 }
 
+export function createBlankRoutineTask() {
+  return {
+    id: createId("task"),
+    title: "",
+    duration: "",
+    detail: "",
+    note: "",
+    tags: [],
+    priority: "normal"
+  };
+}
+
 export function createSimpleRoutineDraft() {
-  return normalizeRoutine({
+  return {
     id: createId("routine"),
     title: "",
     estimatedMinutes: 30,
@@ -34,18 +46,10 @@ export function createSimpleRoutineDraft() {
       {
         id: createId("phase"),
         title: "Tasks",
-        tasks: [
-          normalizeTask({
-            id: createId("task"),
-            title: "",
-            duration: "",
-            detail: "",
-            priority: "normal"
-          })
-        ]
+        tasks: [createBlankRoutineTask()]
       }
     ]
-  });
+  };
 }
 
 export function createRoutineEditorDraft(routine) {
