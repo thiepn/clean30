@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  createBlankRoutineTask,
   createSimpleRoutineDraft,
   duplicateRoutineForLibrary,
   hasDuplicateRoutineTitle,
@@ -12,6 +13,15 @@ import {
 function textFile(path) {
   return readFileSync(new URL(path, import.meta.url), "utf8");
 }
+
+test("new routine fields stay blank until the user types", () => {
+  const draft = createSimpleRoutineDraft();
+  const task = createBlankRoutineTask();
+  assert.equal(draft.title, "");
+  assert.equal(draft.phases[0].title, "Tasks");
+  assert.equal(draft.phases[0].tasks[0].title, "");
+  assert.equal(task.title, "");
+});
 
 test("simple routine drafts save into one ordinary Tasks section", () => {
   const draft = createSimpleRoutineDraft();
@@ -97,7 +107,16 @@ test("Routines exposes direct Start and a simple editor while retaining Advanced
   assert.match(editor, /Routine name/);
   assert.match(editor, /Estimated time/);
   assert.match(editor, /Create routine/);
+  assert.match(editor, /createBlankRoutineTask/);
   assert.doesNotMatch(editor, /Template|Today defaults/);
+});
+
+test("current-clean labels require both template and routine identity", () => {
+  const app = textFile("../src/App.jsx");
+  const routines = textFile("../src/components/Routines.jsx");
+  assert.match(app, /activeTemplateId=\{activeTemplate.id\}/);
+  assert.match(routines, /activeSession\?\.templateId === activeTemplateId/);
+  assert.match(routines, /activeSession\?\.routineId === routineId/);
 });
 
 test("starting a routine requests focused cleaning on Today", () => {
