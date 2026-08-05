@@ -69,7 +69,9 @@ export default function Dashboard({
   onClearCompletionSummary,
   onEditToday,
   onEditRoutines,
-  onAddRoutine
+  onAddRoutine,
+  autoOpenCleanModeSessionId,
+  onAutoOpenCleanModeHandled
 }) {
   const sessionAnchorRef = useRef(null);
   const routinePickerCloseRef = useRef(null);
@@ -85,6 +87,7 @@ export default function Dashboard({
   const [customTagText, setCustomTagText] = useState("");
   const [timerNow, setTimerNow] = useState(Date.now());
   const [cleanModeOpen, setCleanModeOpen] = useState(false);
+  const [sessionMoreOpen, setSessionMoreOpen] = useState(false);
   const [todayCleaningOpen, setTodayCleaningOpen] = useState(false);
   const todayKey = currentDateKey || getTodayKey();
 
@@ -179,6 +182,18 @@ export default function Dashboard({
       setCleanModeOpen(false);
     }
   }, [cleanModeAvailable, cleanModeOpen]);
+
+  useEffect(() => {
+    if (!autoOpenCleanModeSessionId || !activeSession) return;
+    if (activeSession.id !== autoOpenCleanModeSessionId) return;
+    if (cleanModeAvailable) setCleanModeOpen(true);
+    onAutoOpenCleanModeHandled?.();
+  }, [
+    activeSession,
+    autoOpenCleanModeSessionId,
+    cleanModeAvailable,
+    onAutoOpenCleanModeHandled
+  ]);
 
   useEffect(() => {
     setRoutinePicker((current) =>
@@ -278,8 +293,13 @@ export default function Dashboard({
     });
   }
 
-  function resumeAndScroll() {
+  function continueRoutineCleaning() {
     if (activeSession?.paused) onResumeSession?.();
+    setSessionMoreOpen(false);
+    if (cleanModeAvailable) {
+      setCleanModeOpen(true);
+      return;
+    }
     scrollToSession();
   }
 
@@ -468,35 +488,62 @@ export default function Dashboard({
           <div className="card-actions compact-actions session-resume-actions">
             <button
               className="button primary small"
-              onClick={resumeAndScroll}
+              onClick={continueRoutineCleaning}
               type="button"
             >
-              {activeSession.paused ? "Resume" : "Continue"}
+              {activeSession.paused ? "Resume cleaning" : "Continue cleaning"}
             </button>
-            {cleanModeAvailable ? (
-              <button
-                className="button edit-action small"
-                onClick={openCleanMode}
-                type="button"
-              >
-                Clean Mode
-              </button>
-            ) : null}
             <button
+              aria-expanded={sessionMoreOpen}
               className="button ghost small"
-              onClick={onFinishSession}
+              onClick={() => setSessionMoreOpen((open) => !open)}
               type="button"
             >
-              {activeFinishLabel}
-            </button>
-            <button
-              className="button danger-ghost small"
-              onClick={onCancelSession}
-              type="button"
-            >
-              Discard
+              More
             </button>
           </div>
+          {sessionMoreOpen ? (
+            <div className="session-compact-menu">
+              <button
+                className="button ghost small"
+                onClick={scrollToSession}
+                type="button"
+              >
+                View full checklist
+              </button>
+              {activeSession.paused ? (
+                <button
+                  className="button ghost small"
+                  onClick={onResumeSession}
+                  type="button"
+                >
+                  Resume timer
+                </button>
+              ) : (
+                <button
+                  className="button ghost small"
+                  onClick={onPauseSession}
+                  type="button"
+                >
+                  Pause timer
+                </button>
+              )}
+              <button
+                className="button ghost small"
+                onClick={onFinishSession}
+                type="button"
+              >
+                {activeFinishLabel === "Finish" ? "Finish clean" : "Stop and save"}
+              </button>
+              <button
+                className="button danger-ghost small"
+                onClick={onCancelSession}
+                type="button"
+              >
+                Discard session
+              </button>
+            </div>
+          ) : null}
         </section>
       ) : null}
 

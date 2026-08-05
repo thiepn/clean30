@@ -8,7 +8,7 @@ const guideSections = [
   },
   {
     title: "Routines",
-    body: "Routines are reusable cleaning checklists. Start them from Today → More → Start a routine, or edit them from Routines."
+    body: "Routines are reusable cleaning checklists. Start, create, or edit them directly from Routines."
   },
   {
     title: "Progress",

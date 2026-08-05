@@ -28,6 +28,12 @@ const editorSections = [
   }
 ];
 
+function getRoutineIntentId(entryIntent) {
+  return typeof entryIntent === "string" && entryIntent.startsWith("routine:")
+    ? entryIntent.slice(8)
+    : "";
+}
+
 function normalizeEditorSection(section) {
   if (section === "daily-rules" || section === "today") return "routines";
   if (editorSections.some((item) => item.id === section)) return section;
@@ -72,9 +78,14 @@ export default function Customize({
   const templateImportRef = useRef(null);
   const backupImportRef = useRef(null);
   const [activeSection, setActiveSection] = useState(normalizeEditorSection(initialSection));
-  const [selectedRoutineId, setSelectedRoutineId] = useState(
-    activeTemplate.routines.find((routine) => routine.id !== "daily-rules")?.id || ""
-  );
+  const [selectedRoutineId, setSelectedRoutineId] = useState(() => {
+    const requestedId = getRoutineIntentId(entryIntent);
+    return (
+      activeTemplate.routines.find((routine) => routine.id === requestedId)?.id ||
+      activeTemplate.routines.find((routine) => routine.id !== "daily-rules")?.id ||
+      ""
+    );
+  });
   const [message, setMessage] = useState("");
 
   const selectedRoutine = useMemo(() => {
@@ -95,7 +106,14 @@ export default function Customize({
 
   useEffect(() => {
     setActiveSection(normalizeEditorSection(initialSection));
-  }, [initialSection]);
+    const requestedId = getRoutineIntentId(entryIntent);
+    if (
+      requestedId &&
+      activeTemplate.routines.some((routine) => routine.id === requestedId)
+    ) {
+      setSelectedRoutineId(requestedId);
+    }
+  }, [activeTemplate.routines, entryIntent, initialSection]);
 
   function editTemplate(mutator) {
     onUpdateTemplate((template) => {

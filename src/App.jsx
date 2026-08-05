@@ -34,6 +34,10 @@ import {
   normalizeTemplate,
   validateTemplatePayload
 } from "./utils/templateUtils.js";
+import {
+  duplicateRoutineForLibrary,
+  sanitizeRoutineDraft
+} from "./utils/routineLibrary.js";
 
 function downloadJson(filename, payload) {
   let url = "";
@@ -129,6 +133,7 @@ export default function App() {
   const [selectedRoutineId, setSelectedRoutineId] = useState("weekly-reset");
   const [completionSummary, setCompletionSummary] = useState(null);
   const [pendingCompletionSessionId, setPendingCompletionSessionId] = useState(null);
+  const [autoOpenCleanModeSessionId, setAutoOpenCleanModeSessionId] = useState(null);
   const finishRequestTimesRef = useRef(new Map());
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -470,6 +475,120 @@ export default function App() {
     return { ok: true, message: "Backup validated. Review the preview before importing." };
   }
 
+  function saveRoutineFromLibrary(routineDraft) {
+    const savedRoutine = sanitizeRoutineDraft(routineDraft);
+    const exists = activeTemplate.routines.some(
+      (routine) => routine.id === savedRoutine.id
+    );
+    updateActiveTemplate((template) => ({
+      ...template,
+      routines: exists
+        ? template.routines.map((routine) =>
+            routine.id === savedRoutine.id ? savedRoutine : routine
+          )
+        : [...template.routines, savedRoutine]
+    }));
+    setSelectedRoutineId(savedRoutine.id);
+    return savedRoutine.id;
+  }
+
+  function duplicateRoutineFromLibrary(routineId) {
+    const routine = getRoutineById(activeTemplate.routines, routineId);
+    if (!routine) return "";
+    const duplicate = duplicateRoutineForLibrary(
+      routine,
+      activeTemplate.routines
+        .filter((item) => item.id !== "daily-rules")
+        .map((item) => item.title)
+    );
+    updateActiveTemplate((template) => ({
+      ...template,
+      routines: [...template.routines, duplicate]
+    }));
+    setSelectedRoutineId(duplicate.id);
+    return duplicate.id;
+  }
+
+  function toggleRoutineArchiveFromLibrary(routineId) {
+    const routine = getRoutineById(activeTemplate.routines, routineId);
+    if (!routine) return;
+    if (
+      appState.activeSession?.templateId === activeTemplate.id &&
+      appState.activeSession?.routineId === routineId
+    ) {
+      requestConfirmation({
+        title: "Routine is in use",
+        message: `"${routine.title}" is used by the current clean. Finish or discard it before changing this routine.`,
+        confirmLabel: "Keep routine",
+        onConfirm: () => {}
+      });
+      return;
+    }
+
+    const applyArchive = () =>
+      updateActiveTemplate((template) => ({
+        ...template,
+        routines: template.routines.map((item) =>
+          item.id === routineId
+            ? { ...item, archived: !routine.archived }
+            : item
+        )
+      }));
+
+    if (routine.archived) {
+      applyArchive();
+      return;
+    }
+
+    requestConfirmation({
+      title: "Archive routine?",
+      message: `"${routine.title}" will be hidden from the main routine list. Progress is kept.`,
+      confirmLabel: "Archive routine",
+      onConfirm: applyArchive
+    });
+  }
+
+  function deleteRoutineFromLibrary(routineId) {
+    const routine = getRoutineById(activeTemplate.routines, routineId);
+    if (!routine) return;
+    if (
+      appState.activeSession?.templateId === activeTemplate.id &&
+      appState.activeSession?.routineId === routineId
+    ) {
+      requestConfirmation({
+        title: "Routine is in use",
+        message: `"${routine.title}" is used by the current clean. Finish or discard it before deleting this routine.`,
+        confirmLabel: "Keep routine",
+        onConfirm: () => {}
+      });
+      return;
+    }
+
+    requestConfirmation({
+      title: "Delete routine?",
+      message: `"${routine.title}" will be removed from this cleaning plan. Existing Progress entries are kept.`,
+      confirmLabel: "Delete routine",
+      onConfirm: () => {
+        const fallback = activeTemplate.routines.find(
+          (item) =>
+            item.id !== "daily-rules" &&
+            item.id !== routineId &&
+            !item.archived
+        );
+        updateActiveTemplate((template) => ({
+          ...template,
+          routines: template.routines.filter((item) => item.id !== routineId)
+        }));
+        setSelectedRoutineId(fallback?.id || "");
+      }
+    });
+  }
+
+  function openAdvancedRoutineEditor(routineId) {
+    setSelectedRoutineId(routineId);
+    openInternalEditor("routines", "routines", `routine:${routineId}`);
+  }
+
   function startSession(routineId = selectedRoutineId) {
     const routine = getRoutineById(activeTemplate.routines, routineId);
     if (!routine) return;
@@ -479,6 +598,7 @@ export default function App() {
     if (appState.activeSession) {
       if (isSessionForRoutine(appState.activeSession, activeTemplate.id, routineId)) {
         setCompletionSummary(null);
+        setAutoOpenCleanModeSessionId(appState.activeSession.id);
         setCurrentView("dashboard");
         return;
       }
@@ -487,28 +607,32 @@ export default function App() {
         (appState.activeSession.completedTaskIds || []).length > 0 ||
         Boolean(appState.activeSession.notes?.trim());
       requestConfirmation({
-        title: "Replace active session?",
+        title: "Replace current clean?",
         message: hasProgress
-          ? "An unfinished session already has progress. Replacing it will discard your current progress without saving it to History."
-          : "An unfinished session already exists. Replacing it will discard that session without saving it to History.",
-        confirmLabel: "Replace session",
+          ? "A current clean already has progress. Replacing it will discard that progress without saving it."
+          : "A current clean already exists. Replacing it will discard that clean without saving it.",
+        confirmLabel: "Replace clean",
         onConfirm: () => {
+          const nextSession = createSession(routine, activeTemplate);
           setAppState((current) => ({
             ...current,
-            activeSession: createSession(routine, activeTemplate)
+            activeSession: nextSession
           }));
           setCompletionSummary(null);
+          setAutoOpenCleanModeSessionId(nextSession.id);
           setCurrentView("dashboard");
         }
       });
       return;
     }
 
+    const nextSession = createSession(routine, activeTemplate);
     setAppState((current) => ({
       ...current,
-      activeSession: createSession(routine, activeTemplate)
+      activeSession: nextSession
     }));
     setCompletionSummary(null);
+    setAutoOpenCleanModeSessionId(nextSession.id);
     setCurrentView("dashboard");
   }
 
@@ -1028,8 +1152,13 @@ export default function App() {
       <Routines
         routines={activeTemplate.routines}
         history={appState.history}
-        onEditRoutines={() => openInternalEditor("routines", "routines")}
-        onAddRoutine={() => openInternalEditor("routines", "routines", "add-routine")}
+        activeSession={appState.activeSession}
+        onStartRoutine={startSession}
+        onSaveRoutine={saveRoutineFromLibrary}
+        onDuplicateRoutine={duplicateRoutineFromLibrary}
+        onToggleArchive={toggleRoutineArchiveFromLibrary}
+        onDeleteRoutine={deleteRoutineFromLibrary}
+        onAdvancedEdit={openAdvancedRoutineEditor}
       />
     );
   } else if (effectiveView === "history") {
@@ -1100,6 +1229,8 @@ export default function App() {
         onEditToday={() => openInternalEditor("routines", "dashboard", "today")}
         onEditRoutines={() => openInternalEditor("routines", "dashboard")}
         onAddRoutine={() => openInternalEditor("routines", "dashboard", "add-routine")}
+        autoOpenCleanModeSessionId={autoOpenCleanModeSessionId}
+        onAutoOpenCleanModeHandled={() => setAutoOpenCleanModeSessionId(null)}
       />
     );
   }
