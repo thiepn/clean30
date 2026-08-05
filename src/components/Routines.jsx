@@ -11,6 +11,7 @@ import RoutineEditorDialog from "./RoutineEditorDialog.jsx";
 export default function Routines({
   routines,
   history = [],
+  activeTemplateId,
   activeSession,
   onStartRoutine,
   onSaveRoutine,
@@ -49,6 +50,21 @@ export default function Routines({
       setSelectedRoutineId(referenceRoutines[0].id);
     }
   }, [referenceRoutines, selectedRoutine]);
+
+  useEffect(() => {
+    function closeOpenMenu(event) {
+      if (event.key === "Escape") setOpenMenuId("");
+    }
+    document.addEventListener("keydown", closeOpenMenu);
+    return () => document.removeEventListener("keydown", closeOpenMenu);
+  }, []);
+
+  function isCurrentRoutine(routineId) {
+    return (
+      activeSession?.templateId === activeTemplateId &&
+      activeSession?.routineId === routineId
+    );
+  }
 
   function openCreate() {
     setEditorRoutineId("");
@@ -110,8 +126,9 @@ export default function Routines({
             {referenceRoutines.map((routine) => {
               const taskCount = getRoutineTotalTasks(routine);
               const isCurrent =
-                activeSession?.routineId === routine.id && !routine.archived;
+                isCurrentRoutine(routine.id) && !routine.archived;
               const menuOpen = openMenuId === routine.id;
+              const menuId = `routine-menu-${routine.id}`;
 
               return (
                 <article
@@ -165,7 +182,9 @@ export default function Routines({
                       {isCurrent ? "Continue" : "Start"}
                     </button>
                     <button
+                      aria-controls={menuId}
                       aria-expanded={menuOpen}
+                      aria-haspopup="menu"
                       className="button ghost small"
                       onClick={() => setOpenMenuId(menuOpen ? "" : routine.id)}
                       type="button"
@@ -175,8 +194,12 @@ export default function Routines({
                   </div>
 
                   {menuOpen ? (
-                    <div className="routine-card-menu">
-                      <button onClick={() => openEdit(routine.id)} type="button">
+                    <div className="routine-card-menu" id={menuId} role="menu">
+                      <button
+                        onClick={() => openEdit(routine.id)}
+                        role="menuitem"
+                        type="button"
+                      >
                         Edit
                       </button>
                       <button
@@ -184,6 +207,7 @@ export default function Routines({
                           setOpenMenuId("");
                           onAdvancedEdit(routine.id);
                         }}
+                        role="menuitem"
                         type="button"
                       >
                         Advanced structure
@@ -194,6 +218,7 @@ export default function Routines({
                           const duplicateId = onDuplicateRoutine(routine.id);
                           if (duplicateId) setSelectedRoutineId(duplicateId);
                         }}
+                        role="menuitem"
                         type="button"
                       >
                         Duplicate
@@ -203,6 +228,7 @@ export default function Routines({
                           setOpenMenuId("");
                           onToggleArchive(routine.id);
                         }}
+                        role="menuitem"
                         type="button"
                       >
                         {routine.archived ? "Restore" : "Archive"}
@@ -213,6 +239,7 @@ export default function Routines({
                           setOpenMenuId("");
                           onDeleteRoutine(routine.id);
                         }}
+                        role="menuitem"
                         type="button"
                       >
                         Delete
@@ -253,7 +280,7 @@ export default function Routines({
                 onClick={() => startRoutine(selectedRoutine)}
                 type="button"
               >
-                {activeSession?.routineId === selectedRoutine.id
+                {isCurrentRoutine(selectedRoutine.id)
                   ? "Continue cleaning"
                   : "Start routine"}
               </button>
