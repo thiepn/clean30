@@ -1,6 +1,6 @@
 name: Apply Clean30 Phase 3
 
-# Retry after aligning the Help guide source text.
+# Retry after aligning Phase 2 and Phase 3 regression expectations.
 on:
   push:
     branches:
