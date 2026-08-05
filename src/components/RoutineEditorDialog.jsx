@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import useDialogFocus from "../hooks/useDialogFocus.js";
-import { createId, normalizeTask } from "../utils/templateUtils.js";
 import {
+  createBlankRoutineTask,
   createRoutineEditorDraft,
   hasDuplicateRoutineTitle,
   sanitizeRoutineDraft
@@ -75,16 +75,7 @@ export default function RoutineEditorDialog({
   function addTask(phaseId) {
     updatePhase(phaseId, (phase) => ({
       ...phase,
-      tasks: [
-        ...phase.tasks,
-        normalizeTask({
-          id: createId("task"),
-          title: "",
-          duration: "",
-          detail: "",
-          priority: "normal"
-        })
-      ]
+      tasks: [...phase.tasks, createBlankRoutineTask()]
     }));
   }
 
