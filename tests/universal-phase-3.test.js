@@ -89,7 +89,8 @@ test("routine title comparison is case-insensitive and ignores the current routi
 test("Routines exposes direct Start and a simple editor while retaining Advanced structure", () => {
   const routines = textFile("../src/components/Routines.jsx");
   const editor = textFile("../src/components/RoutineEditorDialog.jsx");
-  assert.match(routines, />Start</);
+  assert.match(routines, /"Continue" : "Start"/);
+  assert.match(routines, /Start routine/);
   assert.match(routines, /New routine/);
   assert.match(routines, /Advanced structure/);
   assert.match(routines, /onStartRoutine\(routine.id\)/);
