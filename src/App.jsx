@@ -1152,6 +1152,7 @@ export default function App() {
       <Routines
         routines={activeTemplate.routines}
         history={appState.history}
+        activeTemplateId={activeTemplate.id}
         activeSession={appState.activeSession}
         onStartRoutine={startSession}
         onSaveRoutine={saveRoutineFromLibrary}
