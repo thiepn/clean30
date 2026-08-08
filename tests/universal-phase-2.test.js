@@ -70,7 +70,7 @@ test("Today screen removes Calendar and bulky Quick Start from its normal idle l
   assert.match(dashboard, /Start cleaning/);
   assert.match(dashboard, /today-more-panel/);
   assert.match(dashboard, /Completed/);
-  assert.match(dashboard, /activeSession \? \(/);
+  assert.match(dashboard, /activeSession && activeRoutine \? \(/);
 });
 
 test("Today focused cleaning mode is a real modal with progress and task controls", () => {
@@ -81,7 +81,7 @@ test("Today focused cleaning mode is a real modal with progress and task control
   assert.match(mode, /Mark done/);
   assert.match(mode, /Previous/);
   assert.match(mode, /Next/);
-  assert.match(mode, /Today&apos;s list is complete/);
+  assert.match(mode, /Today is complete/);
 });
 
 test("Help explains focused Today cleaning and direct routine management", () => {
