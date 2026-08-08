@@ -144,6 +144,28 @@ test("routine drag reorder uses the post-removal target index for downward moves
   assert.doesNotMatch(editor, /sourceIndex\s*<\s*targetIndex\)\s*targetIndex\s*-=\s*1/);
 });
 
+test("Restore starter always uses the current source starter instead of a stale stored default", () => {
+  const app = textFile("../src/App.jsx");
+  const start = app.indexOf("function resetCurrentTemplateToDefault");
+  const end = app.indexOf("function exportTemplate", start);
+  const resetBlock = app.slice(start, end);
+
+  assert.match(resetBlock, /const defaultTemplate = createDefaultTemplate\(\);/);
+  assert.doesNotMatch(resetBlock, /current\.templates\.find[\s\S]*clean30-default/);
+  assert.match(resetBlock, /History is kept/);
+});
+
+test("Home room cards retain native button semantics", () => {
+  const routines = textFile("../src/components/Routines.jsx");
+  const start = routines.indexOf('className="home-room-grid"');
+  const end = routines.indexOf("home-routines-empty", start);
+  const roomBlock = routines.slice(start, end);
+
+  assert.match(roomBlock, /role="group"/);
+  assert.match(roomBlock, /className=\{`home-room-card/);
+  assert.doesNotMatch(roomBlock, /role="listitem"/);
+});
+
 test("Phase 15 data-integrity fixes remain schema-free", () => {
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
