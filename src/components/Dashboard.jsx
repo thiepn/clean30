@@ -88,6 +88,7 @@ export default function Dashboard({
   const [timerNow, setTimerNow] = useState(Date.now());
   const [cleanModeOpen, setCleanModeOpen] = useState(false);
   const [sessionMoreOpen, setSessionMoreOpen] = useState(false);
+  const [showSessionDetails, setShowSessionDetails] = useState(false);
   const [todayCleaningOpen, setTodayCleaningOpen] = useState(false);
   const todayKey = currentDateKey || getTodayKey();
 
@@ -110,6 +111,9 @@ export default function Dashboard({
     () => todayTasks.filter((task) => task.completed),
     [todayTasks]
   );
+  const todayProgressPercent = todayTasks.length
+    ? Math.round((completedTasks.length / todayTasks.length) * 100)
+    : 0;
   const routineOptions = useMemo(
     () =>
       template.routines.filter(
@@ -176,6 +180,11 @@ export default function Dashboard({
     }, 1000);
     return () => window.clearInterval(intervalId);
   }, [activeSession?.id, activeSession?.paused]);
+
+  useEffect(() => {
+    setShowSessionDetails(false);
+    setSessionMoreOpen(false);
+  }, [activeSession?.id]);
 
   useEffect(() => {
     if (cleanModeOpen && !cleanModeAvailable) {
@@ -287,9 +296,13 @@ export default function Dashboard({
   }
 
   function scrollToSession() {
-    sessionAnchorRef.current?.scrollIntoView?.({
-      behavior: "smooth",
-      block: "start"
+    setSessionMoreOpen(false);
+    setShowSessionDetails(true);
+    window.requestAnimationFrame(() => {
+      sessionAnchorRef.current?.scrollIntoView?.({
+        behavior: "smooth",
+        block: "start"
+      });
     });
   }
 
@@ -375,24 +388,18 @@ export default function Dashboard({
             </>
           ) : null}
           <button
+            aria-controls={`today-task-details-${task.id}`}
+            aria-expanded={expanded}
             aria-label={`${expanded ? "Hide" : "Show"} details for ${task.text}`}
             className="button text-button small"
             onClick={() => setExpandedTaskId(expanded ? "" : task.id)}
             type="button"
           >
-            More
-          </button>
-          <button
-            aria-label={`Remove ${task.text}`}
-            className="icon-button small danger-icon"
-            onClick={() => onDeleteTodayTask(task.id)}
-            type="button"
-          >
-            ×
+            Details
           </button>
         </div>
         {expanded ? (
-          <div className="today-task-details">
+          <div className="today-task-details" id={`today-task-details-${task.id}`}>
             {task.source === "routine" && task.routineName ? (
               <p className="muted compact-source">From {task.routineName}</p>
             ) : null}
@@ -452,6 +459,7 @@ export default function Dashboard({
                 }}
               >
                 <input
+                  aria-label={`New tag for ${task.text}`}
                   onChange={(event) => setCustomTagText(event.target.value)}
                   placeholder="Custom tag"
                   type="text"
@@ -461,6 +469,18 @@ export default function Dashboard({
                   Add tag
                 </button>
               </form>
+            </div>
+            <div className="today-task-detail-actions">
+              <button
+                className="button danger-ghost small"
+                onClick={() => {
+                  setExpandedTaskId("");
+                  onDeleteTodayTask(task.id);
+                }}
+                type="button"
+              >
+                Remove task
+              </button>
             </div>
           </div>
         ) : null}
@@ -474,16 +494,26 @@ export default function Dashboard({
         <section className="panel session-resume-panel">
           <div className="section-heading compact-heading">
             <div>
-              <p className="eyebrow">Unfinished routine</p>
+              <p className="eyebrow">Current clean</p>
               <h2>{activeRoutine.title}</h2>
               <p>
-                {activeProgress.completed}/{activeProgress.total} tasks complete. Elapsed{" "}
-                {formatElapsedTime(activeElapsed)}.
+                {activeProgress.completed}/{activeProgress.total} tasks complete ·{" "}
+                {formatElapsedTime(activeElapsed)} elapsed
               </p>
             </div>
             <span className="status-pill compact">
-              {activeSession.paused ? "Paused" : "Active"}
+              {activeSession.paused ? "Paused" : "Cleaning"}
             </span>
+          </div>
+          <div
+            aria-label={`${activeProgress.percent}% of current clean complete`}
+            aria-valuemax="100"
+            aria-valuemin="0"
+            aria-valuenow={activeProgress.percent}
+            className="session-resume-progress"
+            role="progressbar"
+          >
+            <span style={{ width: `${activeProgress.percent}%` }} />
           </div>
           <div className="card-actions compact-actions session-resume-actions">
             <button
@@ -494,6 +524,7 @@ export default function Dashboard({
               {activeSession.paused ? "Resume cleaning" : "Continue cleaning"}
             </button>
             <button
+              aria-controls="current-clean-more-actions"
               aria-expanded={sessionMoreOpen}
               className="button ghost small"
               onClick={() => setSessionMoreOpen((open) => !open)}
@@ -503,7 +534,7 @@ export default function Dashboard({
             </button>
           </div>
           {sessionMoreOpen ? (
-            <div className="session-compact-menu">
+            <div className="session-compact-menu" id="current-clean-more-actions">
               <button
                 className="button ghost small"
                 onClick={scrollToSession}
@@ -558,6 +589,19 @@ export default function Dashboard({
           </span>
         </div>
 
+        {todayTasks.length ? (
+          <div
+            aria-label={`${todayProgressPercent}% of Today complete`}
+            aria-valuemax="100"
+            aria-valuemin="0"
+            aria-valuenow={todayProgressPercent}
+            className="today-overall-progress"
+            role="progressbar"
+          >
+            <span style={{ width: `${todayProgressPercent}%` }} />
+          </div>
+        ) : null}
+
         <div className="today-focus-card">
           <div>
             <strong>
@@ -574,7 +618,7 @@ export default function Dashboard({
                 ? "Work through today’s list one task at a time."
                 : todayTasks.length
                   ? "You can review completed tasks or add something new."
-                  : "Add a task below, then begin focused cleaning."}
+                  : "Add a task below, then begin cleaning."}
             </p>
           </div>
           <button
@@ -601,6 +645,7 @@ export default function Dashboard({
             </button>
           </form>
           <button
+            aria-controls="today-more-actions"
             aria-expanded={moreOpen}
             className={moreOpen ? "button edit-action" : "button ghost"}
             onClick={() => setMoreOpen((open) => !open)}
@@ -611,7 +656,7 @@ export default function Dashboard({
         </div>
 
         {moreOpen ? (
-          <div className="today-more-panel" aria-label="More Today actions">
+          <div className="today-more-panel" aria-label="More Today actions" id="today-more-actions">
             <button className="button ghost" onClick={openRoutinePicker} type="button">
               Add from routine
             </button>
@@ -640,7 +685,7 @@ export default function Dashboard({
               }}
               type="button"
             >
-              Edit Today defaults
+              Edit regular tasks
             </button>
             {todayTasks.length ? (
               <button
@@ -715,7 +760,7 @@ export default function Dashboard({
 
         {deletedTodayTask ? (
           <div className="undo-toast" role="status">
-            <span>Task deleted</span>
+            <span>Task removed</span>
             <button
               className="button ghost small"
               onClick={onUndoDeleteTodayTask}
@@ -773,8 +818,21 @@ export default function Dashboard({
         </section>
       ) : null}
 
-      {activeSession ? (
-        <div ref={sessionAnchorRef}>
+      {activeSession && showSessionDetails ? (
+        <div className="session-details-wrapper" ref={sessionAnchorRef}>
+          <div className="session-details-toolbar">
+            <div>
+              <p className="eyebrow">Current clean</p>
+              <h3>Full checklist and notes</h3>
+            </div>
+            <button
+              className="button ghost small"
+              onClick={() => setShowSessionDetails(false)}
+              type="button"
+            >
+              Hide details
+            </button>
+          </div>
           <StartSession
             activeSession={activeSession}
             completionSummary={completionSummary}
@@ -951,6 +1009,7 @@ export default function Dashboard({
                 <div className="today-routine-choice-list" role="list">
                   {routineOptions.map((routine) => (
                     <button
+                      aria-pressed={selectedRoutineForStart?.id === routine.id}
                       className={
                         selectedRoutineForStart?.id === routine.id
                           ? "today-routine-choice active"
