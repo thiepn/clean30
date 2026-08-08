@@ -20,21 +20,21 @@ export function getRoomFreshnessPresentation(care) {
   const percent = clamp(Math.round(100 - ratio * 70), 10, 100);
   const segments = clamp(Math.ceil(percent / 20), 1, 5);
 
+  if (care.status === "attention") {
+    return { percent, segments, label: "Needs attention", tone: "attention" };
+  }
+  if (care.status === "soon") {
+    return { percent, segments, label: "Could use attention", tone: "soon" };
+  }
   if (percent >= 80) {
     return { percent, segments, label: "Fresh", tone: "fresh" };
   }
-  if (percent >= 60) {
-    return { percent, segments, label: "Looking good", tone: "good" };
-  }
-  if (percent >= 40) {
-    return { percent, segments, label: "Could use attention", tone: "soon" };
-  }
-  return { percent, segments, label: "Needs attention", tone: "attention" };
+  return { percent, segments, label: "Looking good", tone: "good" };
 }
 
 export function getRoutineCoveredRooms(routine, rooms = []) {
   return (Array.isArray(rooms) ? rooms : []).filter((room) =>
-    routineCoversRoom(routine, room)
+    routineCoversRoom(routine, room, { includeArchived: true })
   );
 }
 
