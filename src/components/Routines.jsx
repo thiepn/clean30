@@ -4,9 +4,15 @@ import {
   getLastRoutineDoneLabel,
   getRoutineTotalTasks
 } from "../utils/calculations.js";
+import {
+  getHomeRoomNames,
+  getSuggestedTaskCountForRoom
+} from "../utils/homeLibrary.js";
 import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
+import HomeRoomsDialog from "./HomeRoomsDialog.jsx";
 import RoutineEditorDialog from "./RoutineEditorDialog.jsx";
+import TaskLibraryDialog from "./TaskLibraryDialog.jsx";
 
 const LEGACY_STARTER_IDS = new Set([
   "initial-reset",
@@ -18,11 +24,14 @@ const LEGACY_STARTER_IDS = new Set([
 
 export default function Routines({
   routines,
+  zones = [],
   history = [],
   activeTemplateId,
   activeSession,
   onStartRoutine,
   onSaveRoutine,
+  onSaveHomeRooms,
+  onAddLibraryTasksToToday,
   onDuplicateRoutine,
   onToggleArchive,
   onDeleteRoutine,
@@ -32,9 +41,15 @@ export default function Routines({
   const [selectedRoutineId, setSelectedRoutineId] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorRoutineId, setEditorRoutineId] = useState("");
+  const [editorSeed, setEditorSeed] = useState(null);
   const [openMenuId, setOpenMenuId] = useState("");
   const [legacyNoticeDismissed, setLegacyNoticeDismissed] = useState(false);
+  const [homeRoomsOpen, setHomeRoomsOpen] = useState(false);
+  const [taskLibraryOpen, setTaskLibraryOpen] = useState(false);
+  const [taskLibraryRoom, setTaskLibraryRoom] = useState("All");
+  const [taskLibraryPreselect, setTaskLibraryPreselect] = useState(false);
 
+  const homeRooms = useMemo(() => getHomeRoomNames(zones), [zones]);
   const referenceRoutines = useMemo(
     () =>
       routines.filter(
@@ -98,21 +113,30 @@ export default function Routines({
     );
   }
 
-  function openCreate() {
+  function openCreate(seed = null) {
     setEditorRoutineId("");
+    setEditorSeed(seed);
     setEditorOpen(true);
     setOpenMenuId("");
   }
 
   function openEdit(routineId) {
+    setEditorSeed(null);
     setEditorRoutineId(routineId);
     setEditorOpen(true);
     setOpenMenuId("");
   }
 
+  function openTaskLibrary(room = "All", preselectRecommended = false) {
+    setTaskLibraryRoom(room);
+    setTaskLibraryPreselect(preselectRecommended);
+    setTaskLibraryOpen(true);
+  }
+
   function saveRoutine(routine) {
     const savedId = onSaveRoutine(routine);
     setSelectedRoutineId(savedId || routine.id);
+    setEditorSeed(null);
   }
 
   function startRoutine(routine) {
@@ -145,24 +169,87 @@ export default function Routines({
 
   return (
     <div className="screen-stack routines-screen">
+      <section className="panel home-routines-panel">
+        <div className="home-routines-heading">
+          <div>
+            <p className="eyebrow">Your home</p>
+            <h2>Start with the room, not the setup</h2>
+            <p>Tap a room to get relevant cleaning tasks. You can send them straight to Today or turn them into a reusable routine.</p>
+          </div>
+          <div className="home-routines-heading-actions">
+            <button className="button ghost" onClick={() => setHomeRoomsOpen(true)} type="button">
+              Edit rooms
+            </button>
+            <button className="button primary" onClick={() => openTaskLibrary("All", false)} type="button">
+              Task library
+            </button>
+          </div>
+        </div>
+
+        {homeRooms.length ? (
+          <div className="home-room-grid" role="list" aria-label="Rooms in your home">
+            {homeRooms.map((room) => {
+              const suggestionCount = getSuggestedTaskCountForRoom(room);
+              return (
+                <button
+                  className="home-room-card"
+                  key={room}
+                  onClick={() => openTaskLibrary(room, true)}
+                  role="listitem"
+                  type="button"
+                >
+                  <span className="home-room-card-icon" aria-hidden="true" />
+                  <span>
+                    <strong>{room}</strong>
+                    <small>
+                      {suggestionCount
+                        ? `${suggestionCount} suggested tasks`
+                        : "Use your own routine tasks"}
+                    </small>
+                  </span>
+                  <span className="home-room-card-action">Choose tasks</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="home-routines-empty">
+            <div>
+              <strong>No rooms set up yet</strong>
+              <p>Add the rooms that actually exist in your home. This only takes a few taps.</p>
+            </div>
+            <button className="button primary" onClick={() => setHomeRoomsOpen(true)} type="button">
+              Set up my home
+            </button>
+          </div>
+        )}
+
+        <div className="home-whole-home-action">
+          <button className="button ghost small" onClick={() => openTaskLibrary("Whole home", true)} type="button">
+            Choose a quick whole-home reset
+          </button>
+          <span>Whole-home tasks stay available even if you have not configured every room.</span>
+        </div>
+      </section>
+
       <section className="panel routines-library-panel">
         <div className="routines-page-heading">
           <div>
             <p className="eyebrow">Reusable checklists</p>
             <h2>Routines</h2>
-            <p>Build a checklist once, then start it whenever you need it.</p>
+            <p>Save the cleans you repeat. Start them directly whenever you need them.</p>
           </div>
-          <button className="button primary" onClick={openCreate} type="button">
+          <button className="button primary" onClick={() => openCreate()} type="button">
             Build routine
           </button>
         </div>
 
-        <div className="routine-builder-callout">
+        <div className="routine-builder-callout routine-builder-callout-compact">
           <div>
-            <strong>Large checklist?</strong>
-            <span>Paste 10, 20, or 50 tasks at once. Clean30 can split headings, skip duplicates, estimate the time, and optimize the order.</span>
+            <strong>Already have a checklist?</strong>
+            <span>Paste 10, 20, or 50 tasks at once instead of creating rows one by one.</span>
           </div>
-          <button className="button ghost small" onClick={openCreate} type="button">
+          <button className="button ghost small" onClick={() => openCreate()} type="button">
             Paste a list
           </button>
         </div>
@@ -330,7 +417,7 @@ export default function Routines({
         ) : (
           <EmptyState
             title={showArchived ? "No routines" : "No active routines"}
-            message="Build one from suggestions or paste a checklist in one go."
+            message="Build one from the Task Library or paste a checklist in one go."
           />
         )}
       </section>
@@ -392,12 +479,33 @@ export default function Routines({
       ) : null}
 
       <RoutineEditorDialog
+        homeRooms={homeRooms}
         onAdvancedEdit={onAdvancedEdit}
-        onClose={() => setEditorOpen(false)}
+        onClose={() => {
+          setEditorOpen(false);
+          setEditorSeed(null);
+        }}
         onSave={saveRoutine}
         open={editorOpen}
         routine={editorRoutine}
         routines={routines.filter((routine) => routine.id !== "daily-rules")}
+        seedDraft={editorSeed}
+      />
+      <HomeRoomsDialog
+        onClose={() => setHomeRoomsOpen(false)}
+        onSave={(roomNames) => onSaveHomeRooms?.(roomNames)}
+        open={homeRoomsOpen}
+        rooms={homeRooms}
+      />
+      <TaskLibraryDialog
+        homeRooms={homeRooms}
+        initialRoom={taskLibraryRoom}
+        onAddToToday={(items) => onAddLibraryTasksToToday?.(items)}
+        onBuildRoutine={(draft) => openCreate(draft)}
+        onClose={() => setTaskLibraryOpen(false)}
+        open={taskLibraryOpen}
+        preselectRecommended={taskLibraryPreselect}
+        routines={routines}
       />
     </div>
   );
