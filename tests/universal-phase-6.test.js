@@ -78,7 +78,8 @@ test("simple routine editor reports and focuses validation errors accessibly", (
   assert.match(editor, /role="alert"/);
   assert.match(editor, /nameInputRef\.current\?\.focus/);
   assert.match(editor, /durationInputRef\.current\?\.focus/);
-  assert.match(editor, /firstTaskInputRef\.current\?\.focus/);
+  assert.match(editor, /firstTaskInputRef\.current/);
+  assert.match(editor, /addTaskButtonRef\.current\?\.focus/);
 });
 
 test("Phase 6 CSS covers narrow phones, large text, touch targets, safe areas, and reduced motion", () => {
