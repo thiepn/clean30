@@ -1,0 +1,657 @@
+/* Phase 8: visual polish. No product-model or persistence changes. */
+
+.app-shell {
+  --radius-card: 18px;
+  --radius-control: 12px;
+  --shadow: 0 18px 45px rgba(38, 41, 34, 0.08), 0 2px 8px rgba(38, 41, 34, 0.04);
+  --shadow-soft: 0 8px 24px rgba(38, 41, 34, 0.065), 0 1px 4px rgba(38, 41, 34, 0.03);
+  width: min(1120px, calc(100% - 36px));
+  padding-top: 20px;
+}
+
+.app-shell::before {
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--accent) 11%, transparent) 0, transparent 34%),
+    radial-gradient(circle at 88% 7%, color-mix(in srgb, var(--accent-soft) 78%, transparent) 0, transparent 30%),
+    linear-gradient(180deg, var(--bg-top, rgba(248, 250, 247, 0.97)) 0%, var(--bg) 44%, color-mix(in srgb, var(--bg) 94%, #ffffff) 100%);
+}
+
+.simplified-app-header {
+  align-items: center;
+  min-height: 72px;
+  margin-bottom: 12px;
+  padding: 10px 12px 10px 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.brand-mark {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--accent) 72%, #ffffff);
+  border-radius: 15px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 88%, #ffffff) 0%, var(--accent-strong) 100%);
+  color: #ffffff;
+  box-shadow:
+    0 10px 22px color-mix(in srgb, var(--accent) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.brand-copy {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.brand-copy h1 {
+  font-size: clamp(1.28rem, 1.15rem + 0.5vw, 1.55rem);
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+
+.brand-copy .app-kicker {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 610;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.help-button {
+  width: 42px;
+  height: 42px;
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface-soft) 76%, var(--surface));
+  box-shadow: none;
+  color: var(--text-soft);
+}
+
+.help-button:hover {
+  border-color: var(--selected-border);
+  background: var(--selected-bg);
+  color: var(--accent-text);
+}
+
+.navigation.desktop-navigation {
+  top: 10px;
+  gap: 0.2rem;
+  margin-bottom: 28px;
+  padding: 0.32rem;
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow: 0 10px 28px rgba(34, 39, 32, 0.06);
+  backdrop-filter: blur(20px) saturate(1.08);
+  -webkit-backdrop-filter: blur(20px) saturate(1.08);
+}
+
+.nav-item {
+  gap: 0.45rem;
+  min-height: 46px;
+  border-radius: 12px;
+  color: color-mix(in srgb, var(--muted) 92%, var(--text));
+  font-size: 0.91rem;
+  font-weight: 690;
+}
+
+.nav-icon {
+  flex: 0 0 auto;
+  opacity: 0.78;
+}
+
+.nav-item.active {
+  border-color: color-mix(in srgb, var(--active-nav-border) 72%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--active-nav-bg) 82%, #ffffff) 0%, var(--active-nav-bg) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    0 5px 12px color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.nav-item.active .nav-icon {
+  opacity: 1;
+}
+
+.app-main {
+  padding-bottom: 12px;
+}
+
+.screen-stack {
+  gap: 22px;
+}
+
+.panel,
+.routine-card,
+.phase,
+.empty-state,
+.history-card {
+  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+
+.panel,
+.routine-card,
+.phase,
+.empty-state {
+  padding: clamp(1.15rem, 0.9rem + 1vw, 1.65rem);
+}
+
+.eyebrow {
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-weight: 780;
+  letter-spacing: 0.055em;
+}
+
+.section-heading,
+.card-heading {
+  margin-bottom: 1.15rem;
+}
+
+.section-heading h2,
+.card-heading h2,
+.routines-page-heading h2,
+.progress-page-heading h2,
+.settings-overview-heading h2,
+.settings-page-header h2,
+.today-title-row h2 {
+  letter-spacing: -0.025em;
+}
+
+.button {
+  min-height: 44px;
+  border-radius: 12px;
+  padding: 0.72rem 1rem;
+  font-weight: 720;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.button.primary {
+  border-color: color-mix(in srgb, var(--accent) 84%, var(--accent-strong));
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 92%, #ffffff) 0%, var(--accent-strong) 100%);
+  box-shadow:
+    0 7px 16px color-mix(in srgb, var(--accent) 17%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.button.primary:hover {
+  box-shadow:
+    0 10px 20px color-mix(in srgb, var(--accent) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.button.ghost {
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, var(--surface-soft));
+}
+
+.button.ghost:hover {
+  border-color: var(--selected-border);
+  background: var(--selected-bg);
+}
+
+.button.text-button {
+  border-radius: 10px;
+}
+
+input,
+select,
+textarea {
+  border-color: color-mix(in srgb, var(--border) 86%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 96%, #ffffff);
+  box-shadow: inset 0 1px 2px rgba(32, 37, 30, 0.025);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--border-strong);
+}
+
+.today-primary-panel {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--accent-border) 58%, var(--border));
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 97%, var(--accent-soft)) 0%, var(--surface) 54%, color-mix(in srgb, var(--accent-soft) 32%, var(--surface)) 100%);
+  box-shadow: var(--shadow);
+}
+
+.today-primary-panel::after {
+  position: absolute;
+  top: -80px;
+  right: -70px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 11%, transparent), transparent 67%);
+  pointer-events: none;
+  content: "";
+}
+
+.today-title-row,
+.today-primary-actions,
+.today-add-toolbar,
+.today-task-section,
+.today-more-panel {
+  position: relative;
+  z-index: 1;
+}
+
+.today-overall-progress,
+.session-resume-progress {
+  height: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  background: color-mix(in srgb, var(--surface-soft) 72%, var(--surface));
+  box-shadow: inset 0 1px 2px rgba(34, 39, 32, 0.04);
+}
+
+.today-overall-progress > span,
+.session-resume-progress > span,
+.clean-mode-progress > span {
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 62%, #ffffff));
+}
+
+.today-task-list {
+  gap: 0.62rem;
+}
+
+.today-task-row {
+  min-height: 64px;
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 89%, var(--surface-strong));
+  padding: 0.62rem 0.72rem;
+}
+
+.today-task-row:hover {
+  border-color: color-mix(in srgb, var(--selected-border) 74%, var(--border));
+  background: var(--surface);
+  box-shadow: 0 5px 14px rgba(32, 37, 30, 0.045);
+}
+
+.today-task-row.checked {
+  border-color: color-mix(in srgb, var(--success) 25%, var(--border));
+  background: color-mix(in srgb, var(--success-soft) 60%, var(--surface));
+}
+
+.today-check-control input {
+  accent-color: var(--accent);
+}
+
+.today-task-details {
+  border-top-color: color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+.session-resume-panel {
+  border-color: color-mix(in srgb, var(--accent-border) 68%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-panel) 72%, var(--surface)) 0%, var(--surface) 100%);
+}
+
+.session-details-toolbar,
+.settings-info-box,
+.backup-summary,
+.about-app-block,
+.progress-week-summary-card,
+.progress-day-summary {
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-soft) 72%, var(--surface));
+}
+
+.routine-card-grid {
+  gap: 0.95rem;
+}
+
+.routine-action-card {
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 16px;
+  padding: 0.95rem;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: 0 5px 16px rgba(32, 37, 30, 0.035);
+}
+
+.routine-action-card:hover,
+.routine-action-card.selected {
+  border-color: var(--selected-border-strong);
+  box-shadow:
+    0 0 0 3px var(--selected-ring),
+    0 10px 24px rgba(32, 37, 30, 0.06);
+}
+
+.routine-action-card.current {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-panel) 82%, var(--surface)) 0%, var(--surface) 100%);
+}
+
+.routine-color-dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.routine-card-menu {
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 14px;
+  padding: 0.45rem;
+  box-shadow: 0 16px 38px rgba(27, 32, 26, 0.14);
+}
+
+.routine-card-menu button {
+  border-radius: 10px;
+}
+
+.routine-detail-panel {
+  border-color: color-mix(in srgb, var(--accent-border) 42%, var(--border));
+}
+
+.routine-editor-dialog,
+.dialog,
+.onboarding-dialog,
+.guide-dialog {
+  border-color: color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(25, 30, 24, 0.16);
+}
+
+.dialog-backdrop,
+.clean-mode-overlay,
+.today-cleaning-backdrop {
+  background: rgba(24, 29, 23, 0.34);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.progress-week-summary-card {
+  padding: 1.1rem;
+}
+
+.progress-week-primary strong {
+  letter-spacing: -0.035em;
+}
+
+.progress-week-facts span,
+.progress-day-facts span,
+.progress-activity-meta > span,
+.date-chip,
+.task-count,
+.pill,
+.duration,
+.status-pill {
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-soft) 72%, var(--surface));
+}
+
+.progress-activity-item {
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(32, 37, 30, 0.025);
+}
+
+.progress-activity-button {
+  border-radius: inherit;
+}
+
+.progress-entry-detail {
+  background: color-mix(in srgb, var(--surface-soft) 68%, var(--surface));
+}
+
+.progress-calendar-grid {
+  gap: 0.42rem;
+}
+
+.progress-calendar-day {
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+}
+
+.progress-calendar-day:hover,
+.progress-calendar-day:focus-visible,
+.progress-calendar-day.selected {
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.progress-calendar-day.today {
+  box-shadow: inset 0 0 0 2px var(--selected-border);
+}
+
+.progress-insights-panel,
+.settings-subdetail {
+  border-color: color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 14px;
+}
+
+.progress-insight-fact {
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-soft) 72%, var(--surface));
+}
+
+.settings-destination-list,
+.settings-action-list {
+  gap: 0.55rem;
+  border-top: 0;
+}
+
+.settings-destination,
+.settings-action-row {
+  min-height: 72px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 14px;
+  padding: 0.85rem 0.95rem;
+  background: color-mix(in srgb, var(--surface) 90%, var(--surface-soft));
+}
+
+.settings-destination:hover,
+.settings-destination:focus-visible,
+.settings-action-row:hover,
+.settings-action-row:focus-visible {
+  border-color: var(--selected-border);
+  background: var(--selected-bg);
+  box-shadow: 0 5px 14px rgba(32, 37, 30, 0.04);
+}
+
+.settings-destination-tail > span,
+.settings-action-row > span:last-child {
+  opacity: 0.72;
+}
+
+.appearance-preset {
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+}
+
+.appearance-preset-preview {
+  height: 58px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+}
+
+.clean-mode-shell,
+.today-cleaning-mode {
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 9%, transparent) 0%, transparent 31%),
+    color-mix(in srgb, var(--surface) 98%, transparent);
+  box-shadow: 0 28px 72px rgba(22, 28, 21, 0.18);
+}
+
+.clean-mode-focus,
+.today-cleaning-task-card {
+  border-color: color-mix(in srgb, var(--accent-border) 45%, var(--border));
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 96%, var(--accent-soft)) 0%, var(--surface) 100%);
+  box-shadow: 0 12px 30px rgba(29, 34, 28, 0.055);
+}
+
+.clean-mode-task-title,
+.today-cleaning-task-card h3 {
+  letter-spacing: -0.025em;
+}
+
+.empty-state {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  box-shadow: none;
+}
+
+@media (max-width: 680px) {
+  .app-shell {
+    width: min(100% - 14px, 540px);
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-bottom: calc(var(--mobile-nav-height) + 28px + env(safe-area-inset-bottom));
+  }
+
+  .simplified-app-header {
+    min-height: 62px;
+    margin-bottom: 10px;
+    border-radius: 17px;
+    padding: 8px 9px;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .brand-copy h1 {
+    font-size: 1.2rem;
+  }
+
+  .brand-copy .app-kicker {
+    max-width: 18rem;
+    font-size: 0.72rem;
+  }
+
+  .mobile-navigation {
+    left: 10px;
+    right: 10px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    overflow: hidden;
+    margin: 0;
+    padding: 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    box-shadow: 0 16px 40px rgba(25, 30, 24, 0.16);
+    backdrop-filter: blur(22px) saturate(1.08);
+    -webkit-backdrop-filter: blur(22px) saturate(1.08);
+  }
+
+  .mobile-navigation > .nav-item {
+    display: grid;
+    grid-template-rows: 22px auto;
+    gap: 0.1rem;
+    min-height: 56px;
+    padding: 0.35rem 0.1rem;
+    border-radius: 14px;
+    font-size: 0.69rem;
+    font-weight: 700;
+  }
+
+  .mobile-navigation .nav-icon {
+    justify-self: center;
+    width: 20px;
+    height: 20px;
+  }
+
+  .today-primary-panel,
+  .session-resume-panel,
+  .completion-summary-panel,
+  .routines-library-panel,
+  .routine-detail-panel,
+  .progress-overview-panel,
+  .progress-recent-panel,
+  .progress-calendar-panel,
+  .settings-overview-panel,
+  .settings-focus-panel {
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(32, 37, 30, 0.045);
+  }
+
+  .today-task-row {
+    border-radius: 13px;
+  }
+
+  .routine-action-card,
+  .progress-activity-item,
+  .settings-destination,
+  .settings-action-row {
+    border-radius: 13px;
+  }
+
+  .routine-editor-dialog,
+  .routine-import-dialog,
+  .today-routine-start-dialog {
+    border-radius: 22px 22px 0 0;
+  }
+
+  .progress-calendar-grid {
+    gap: 0.24rem;
+  }
+
+  .progress-calendar-day {
+    border-radius: 9px;
+  }
+
+  .clean-mode-shell,
+  .today-cleaning-mode {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-copy .app-kicker {
+    max-width: 13rem;
+  }
+
+  .mobile-navigation {
+    left: 7px;
+    right: 7px;
+  }
+
+  .mobile-navigation > .nav-item {
+    font-size: 0.64rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .today-task-row,
+  .routine-action-card,
+  .progress-activity-item,
+  .settings-destination,
+  .settings-action-row,
+  .appearance-preset {
+    transition: none;
+  }
+}
