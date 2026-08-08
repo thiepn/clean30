@@ -121,7 +121,7 @@ test("Phase 14 explicitly keeps room status as maintenance context rather than a
   const help = textFile("../src/components/HelpGuide.jsx");
   assert.match(history, /not deadlines or a score/i);
   assert.match(help, /not a score or deadline/i);
-  assert.doesNotMatch(history, /XP|leaderboard|achievement|level up/i);
+  assert.doesNotMatch(history, /\bXP\b|\bleaderboard\b|\bachievement\b|\blevel up\b/i);
 });
 
 test("Phase 14 styling loads last and supports responsive and reduced-motion layouts", () => {
