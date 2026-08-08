@@ -12,7 +12,7 @@ const guideSections = [
   },
   {
     title: "Progress",
-    body: "Progress starts with recent activity and this week, then gives you a Calendar and optional deeper Insights. Completed routines also help Clean30 judge which rooms may deserve attention next."
+    body: "Progress shows what you cleaned and how your home is doing. Home snapshot turns full room-routine completions into simple Fresh, Looking good, Could use attention, or Needs attention guidance. It is maintenance context, not a score or deadline."
   },
   {
     title: "Data",
