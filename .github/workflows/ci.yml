@@ -38,5 +38,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify release artifacts
+        run: npm run verify:release
+
       - name: Check service worker syntax
         run: node --check public/sw.js
