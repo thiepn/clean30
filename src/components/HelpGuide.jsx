@@ -12,7 +12,7 @@ const guideSections = [
   },
   {
     title: "Progress",
-    body: "Progress shows completed Today tasks, finished routines, and Calendar activity."
+    body: "Progress starts with recent activity and this week, then gives you a Calendar and optional deeper Insights."
   },
   {
     title: "Data",
