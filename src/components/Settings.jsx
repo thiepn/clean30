@@ -407,7 +407,7 @@ export default function Settings({
         <section className="panel settings-focus-panel">
           <SettingsPageHeader
             title="Help"
-            description="Most Clean30 features should work without instructions. These are here when you need them."
+            description="Clean30 is designed to work without a guide. These options are here when you need them."
             onBack={() => setActivePage(null)}
           />
 
@@ -431,8 +431,8 @@ export default function Settings({
           <div className="settings-info-box">
             <strong>Install Clean30</strong>
             <p>
-              Open your browser menu and choose Install app or Add to Home Screen. The installed
-              app keeps using the same local-first Clean30 experience.
+              Open your browser menu and choose Install app or Add to Home Screen. Your data stays
+              on this device.
             </p>
           </div>
         </section>
@@ -515,9 +515,9 @@ export default function Settings({
         </div>
 
         <div className="settings-info-box">
-          <strong>Starter content and plan sharing</strong>
+          <strong>Cleaning plans</strong>
           <p>
-            The advanced plan editor contains starter-plan restore, cleaning-plan import/export,
+            The advanced editor contains starter-plan restore, cleaning-plan import and export,
             schedule controls, and detailed task configuration.
           </p>
         </div>
@@ -526,7 +526,7 @@ export default function Settings({
           <summary>
             <span>
               <strong>Reset data</strong>
-              <small>Destructive actions are kept out of the normal Settings flow.</small>
+              <small>Destructive actions stay out of the normal Settings flow.</small>
             </span>
             <span aria-hidden="true">›</span>
           </summary>
