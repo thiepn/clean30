@@ -49,6 +49,7 @@ test("full routine checklist stays hidden until the user requests details", () =
   assert.match(dashboard, /View full checklist/);
   assert.match(dashboard, /activeSession && showSessionDetails \? \(/);
   assert.match(dashboard, /Hide details/);
+  assert.match(dashboard, /<StartSession/);
 });
 
 test("routine Cleaning mode uses clear stop-save terminology and accessible progress", () => {
@@ -91,12 +92,10 @@ test("Phase 6 CSS covers narrow phones, large text, touch targets, safe areas, a
   assert.match(css, /:focus-visible/);
 });
 
-test("current-clean details no longer repeat the bulky session summary", () => {
-  const css = textFile("../src/styles/universal-phase6.css");
+test("current-clean detail terminology no longer exposes partial-finish wording", () => {
   const startSession = textFile("../src/components/StartSession.jsx");
-  assert.match(css, /\.session-details-wrapper \.active-session-panel/);
-  assert.match(css, /display: none/);
   assert.match(startSession, /Current clean/);
   assert.match(startSession, /Saved to Progress/);
+  assert.match(startSession, /Stop and save/);
   assert.doesNotMatch(startSession, /Finish partial/);
 });
