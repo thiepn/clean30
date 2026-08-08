@@ -84,6 +84,7 @@ test("release verification is wired into the package and CI after the production
   const packageInfo = JSON.parse(textFile("../package.json"));
   const ci = textFile("../.github/workflows/ci.yml");
   const verifier = textFile("../scripts/verify-release.mjs");
+  const gitignore = textFile("../.gitignore");
 
   assert.equal(packageInfo.scripts["verify:release"], "node scripts/verify-release.mjs");
   const buildIndex = ci.indexOf("npm run build");
@@ -93,5 +94,7 @@ test("release verification is wired into the package and CI after the production
   assert.match(verifier, /dist\/index\.html/);
   assert.match(verifier, /Manifest icon is missing from the build/);
   assert.match(verifier, /saveAppState must remain void-style/);
-  assert.match(verifier, /git", \["ls-files", "node_modules"\]/);
+  assert.match(verifier, /const gitignore = read\("\.gitignore"\)/);
+  assert.doesNotMatch(verifier, /ls-files.*node_modules/);
+  assert.match(gitignore, /(^|\n)node_modules\/?\s*($|\n)/);
 });
