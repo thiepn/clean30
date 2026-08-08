@@ -29,7 +29,7 @@ export default function CleanMode({
   onFinishSession,
   onExit
 }) {
-  const exitButtonRef = useRef(null);
+  const primaryActionRef = useRef(null);
   const onExitRef = useRef(onExit);
   const [currentIndex, setCurrentIndex] = useState(0);
   const tasks = useMemo(() => flattenRoutineTasks(routine), [routine]);
@@ -40,14 +40,13 @@ export default function CleanMode({
   const progress = getSessionProgress(activeSession, routine);
   const allComplete = progress.total > 0 && progress.completed === progress.total;
   const currentTask = tasks[currentIndex] || null;
-  const finishLabel = allComplete ? "Finish" : "Finish partial";
   const taskSignature = tasks.map((task) => task.id).join("|");
 
   onExitRef.current = onExit;
   const dialogRef = useDialogFocus({
     open: Boolean(open && activeSession),
     onClose: onExit,
-    initialFocusRef: exitButtonRef
+    initialFocusRef: primaryActionRef
   });
 
   useEffect(() => {
@@ -96,20 +95,20 @@ export default function CleanMode({
       >
         <header className="clean-mode-header">
           <div>
-            <p className="eyebrow">Clean Mode</p>
-            <h1 id="clean-mode-title">{routine?.title || "Active routine"}</h1>
+            <p className="eyebrow">Cleaning mode</p>
+            <h1 id="clean-mode-title">{routine?.title || "Current clean"}</h1>
           </div>
           <button
+            aria-label="Exit cleaning mode"
             className="button ghost clean-mode-exit"
             type="button"
             onClick={onExit}
-            ref={exitButtonRef}
           >
             Exit
           </button>
         </header>
 
-        <div className="clean-mode-status" aria-label="Session status">
+        <div className="clean-mode-status" aria-label="Current clean status">
           <div>
             <span>Elapsed</span>
             <strong>{formatElapsedTime(elapsedMs)}</strong>
@@ -126,16 +125,23 @@ export default function CleanMode({
           </div>
         </div>
 
-        <div className="clean-mode-progress" aria-hidden="true">
+        <div
+          aria-label={`${progress.percent}% of routine complete`}
+          aria-valuemax="100"
+          aria-valuemin="0"
+          aria-valuenow={progress.percent}
+          className="clean-mode-progress"
+          role="progressbar"
+        >
           <span style={{ width: `${progress.percent}%` }} />
         </div>
 
-        <main className="clean-mode-focus" aria-live="polite">
+        <main className="clean-mode-focus" aria-live="polite" aria-atomic="true">
           {tasks.length === 0 ? (
             <div className="clean-mode-empty">
               <p className="eyebrow">Routine</p>
               <h2>No tasks in this routine</h2>
-              <p>Exit Clean Mode to edit the routine or finish this empty session.</p>
+              <p>Exit cleaning mode to edit the routine, or save this clean as it is.</p>
             </div>
           ) : (
             <>
@@ -152,10 +158,11 @@ export default function CleanMode({
                     ? "button clean-mode-complete-button done"
                     : "button primary clean-mode-complete-button"
                 }
+                ref={primaryActionRef}
                 type="button"
                 onClick={toggleCurrentTask}
               >
-                {completedIds.has(currentTask.id) ? "Undo done" : "Mark done"}
+                {completedIds.has(currentTask.id) ? "Mark not done" : "Mark done"}
               </button>
             </>
           )}
@@ -170,7 +177,9 @@ export default function CleanMode({
           >
             Previous
           </button>
-          <span>{tasks.length ? `${currentIndex + 1} of ${tasks.length}` : "0 tasks"}</span>
+          <span aria-live="polite">
+            {tasks.length ? `${currentIndex + 1} of ${tasks.length}` : "0 tasks"}
+          </span>
           <button
             className="button ghost"
             type="button"
@@ -185,16 +194,20 @@ export default function CleanMode({
 
         <footer className="clean-mode-footer">
           {activeSession.paused ? (
-            <button className="button primary" type="button" onClick={onResumeSession}>
-              Resume
+            <button className="button ghost" type="button" onClick={onResumeSession}>
+              Resume timer
             </button>
           ) : (
             <button className="button ghost" type="button" onClick={onPauseSession}>
-              Pause
+              Pause timer
             </button>
           )}
-          <button className="button primary" type="button" onClick={onFinishSession}>
-            {finishLabel}
+          <button
+            className={allComplete ? "button primary" : "button ghost"}
+            type="button"
+            onClick={onFinishSession}
+          >
+            {allComplete ? "Finish clean" : "Stop and save"}
           </button>
         </footer>
       </section>
