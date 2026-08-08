@@ -1,6 +1,20 @@
 const CACHE_PREFIX = "clean30-";
-const CACHE_NAME = `${CACHE_PREFIX}app-shell-v6`;
+const CACHE_NAME = `${CACHE_PREFIX}app-shell-v7`;
 const BASE_PATH = "/clean30/";
+const OFFLINE_FALLBACK_HTML = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clean30 offline</title>
+  </head>
+  <body>
+    <main>
+      <h1>Clean30 is unavailable offline</h1>
+      <p>Open Clean30 once while connected so the app can finish caching its local files.</p>
+    </main>
+  </body>
+</html>`;
 
 const STATIC_SHELL = [
   BASE_PATH,
@@ -50,6 +64,19 @@ async function cacheAppShell() {
   }
 }
 
+async function getNavigationFallback() {
+  const cached = await caches.match(`${BASE_PATH}index.html`);
+  if (cached) return cached;
+  return new Response(OFFLINE_FALLBACK_HTML, {
+    status: 503,
+    statusText: "Offline",
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store"
+    }
+  });
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(cacheAppShell());
 });
@@ -93,7 +120,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(`${BASE_PATH}index.html`))
+        .catch(() => getNavigationFallback())
     );
     return;
   }
