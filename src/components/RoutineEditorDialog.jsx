@@ -34,6 +34,8 @@ function countTasks(phases = []) {
 export default function RoutineEditorDialog({
   open,
   routine,
+  seedDraft = null,
+  homeRooms = [],
   routines = [],
   onSave,
   onClose,
@@ -49,7 +51,7 @@ export default function RoutineEditorDialog({
     onClose,
     initialFocusRef: nameInputRef
   });
-  const [draft, setDraft] = useState(() => createRoutineEditorDraft(routine));
+  const [draft, setDraft] = useState(() => createRoutineEditorDraft(routine || seedDraft));
   const [attemptedSave, setAttemptedSave] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [bulkMessage, setBulkMessage] = useState("");
@@ -60,15 +62,15 @@ export default function RoutineEditorDialog({
 
   useEffect(() => {
     if (!open) return;
-    setDraft(createRoutineEditorDraft(routine));
+    setDraft(createRoutineEditorDraft(routine || seedDraft));
     setAttemptedSave(false);
     setBulkText("");
-    setBulkMessage("");
+    setBulkMessage(seedDraft && !routine ? "Task Library selection loaded. Change anything before saving." : "");
     setSuggestionQuery("");
     setSuggestionRoom("All");
     setAutoDuration(!routine);
     setDraggedTask(null);
-  }, [open, routine?.id]);
+  }, [open, routine?.id, seedDraft?.id]);
 
   useEffect(() => {
     if (!open || !autoDuration) return;
@@ -82,6 +84,16 @@ export default function RoutineEditorDialog({
       };
     });
   }, [autoDuration, draft.phases, open]);
+
+  const availableSuggestionRooms = useMemo(() => {
+    if (!homeRooms.length) return suggestionRooms;
+    const wanted = new Set(["All", "Whole home", "Other", ...homeRooms]);
+    return suggestionRooms.filter((room) => wanted.has(room));
+  }, [homeRooms]);
+
+  useEffect(() => {
+    if (!availableSuggestionRooms.includes(suggestionRoom)) setSuggestionRoom("All");
+  }, [availableSuggestionRooms, suggestionRoom]);
 
   const titleError = useMemo(() => {
     if (!String(draft.title || "").trim()) return "Routine name is required.";
@@ -286,7 +298,7 @@ export default function RoutineEditorDialog({
               {routine ? "Edit routine" : "Build a routine"}
             </h2>
             <p>
-              Paste a whole checklist, use suggestions, or type quickly. You do not need to add tasks one by one.
+              Paste a whole checklist, use suggestions from your home, or type quickly. You do not need to add tasks one by one.
             </p>
           </div>
           <button
@@ -300,7 +312,7 @@ export default function RoutineEditorDialog({
         </div>
 
         <form className="routine-editor-form routine-editor-workspace-body" onSubmit={submit} noValidate>
-          {!routine ? (
+          {!routine && !seedDraft ? (
             <section className="routine-fast-start" aria-labelledby="routine-fast-start-title">
               <div className="section-heading compact-heading">
                 <div>
@@ -434,7 +446,7 @@ export default function RoutineEditorDialog({
             <summary>
               <span>
                 <strong>Pick common cleaning tasks</strong>
-                <small>Search the built-in suggestions instead of typing.</small>
+                <small>{homeRooms.length ? "Suggestions are filtered to rooms in your home." : "Search the built-in suggestions instead of typing."}</small>
               </span>
               <span aria-hidden="true">+</span>
             </summary>
@@ -452,7 +464,7 @@ export default function RoutineEditorDialog({
                   onChange={(event) => setSuggestionRoom(event.target.value)}
                   value={suggestionRoom}
                 >
-                  {suggestionRooms.map((room) => (
+                  {availableSuggestionRooms.map((room) => (
                     <option key={room} value={room}>{room}</option>
                   ))}
                 </select>
