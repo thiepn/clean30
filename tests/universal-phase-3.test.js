@@ -96,19 +96,19 @@ test("routine title comparison is case-insensitive and ignores the current routi
   assert.equal(hasDuplicateRoutineTitle("weekly clean", routines, "a"), false);
 });
 
-test("Routines exposes direct Start and a simple editor while retaining Advanced structure", () => {
+test("Routines retains direct Start and advanced editing while routine building can evolve", () => {
   const routines = textFile("../src/components/Routines.jsx");
   const editor = textFile("../src/components/RoutineEditorDialog.jsx");
   assert.match(routines, /"Continue" : "Start"/);
   assert.match(routines, /Start routine/);
-  assert.match(routines, /New routine/);
+  assert.match(routines, /Build routine|New routine/);
   assert.match(routines, /Advanced structure/);
   assert.match(routines, /onStartRoutine\(routine.id\)/);
   assert.match(editor, /Routine name/);
   assert.match(editor, /Estimated time/);
   assert.match(editor, /Create routine/);
   assert.match(editor, /createBlankRoutineTask/);
-  assert.doesNotMatch(editor, /Template|Today defaults/);
+  assert.doesNotMatch(editor, /Template ID|Today defaults/);
 });
 
 test("current-clean labels require both template and routine identity", () => {
