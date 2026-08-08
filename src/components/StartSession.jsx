@@ -71,24 +71,25 @@ export default function StartSession({
         phases: []
       };
     const progress = getSessionProgress(activeSession, routine);
-    const finishLabel =
-      progress.total > 0 && progress.completed === progress.total ? "Finish" : "Finish partial";
+    const allComplete = progress.total > 0 && progress.completed === progress.total;
 
     return (
       <div className="screen-stack">
         <section className="panel active-session-panel">
           <div className="session-topline">
             <div>
-              <p className="eyebrow">Active session</p>
+              <p className="eyebrow">Current clean</p>
               <h2>{routine.title}</h2>
               <p className="muted">
                 {activeSession.paused
-                  ? `Paused locally. Resume when you are ready, or ${finishLabel.toLowerCase()} to save progress.`
-                  : `Saved locally. Continue, pause, ${finishLabel.toLowerCase()}, or discard before starting another routine.`}
+                  ? "Paused locally. Resume when you are ready, or stop and save your progress."
+                  : "Saved locally. Continue cleaning, pause, or stop and save before starting another routine."}
               </p>
             </div>
             <div className="session-meta">
-              <span className="status-pill compact">{activeSession.paused ? "Paused" : "Active"}</span>
+              <span className="status-pill compact">
+                {activeSession.paused ? "Paused" : "Cleaning"}
+              </span>
               <span>{formatRoutineDuration(routine)}</span>
               <span>Started {formatDateTime(activeSession.startedAt)}</span>
               {onOpenCleanMode && activeSession.routineId !== "daily-rules" ? (
@@ -97,7 +98,7 @@ export default function StartSession({
                   type="button"
                   onClick={onOpenCleanMode}
                 >
-                  Clean Mode
+                  Cleaning mode
                 </button>
               ) : null}
             </div>
@@ -125,21 +126,25 @@ export default function StartSession({
           <div className="session-actions">
             {activeSession.paused ? (
               <button className="button primary" type="button" onClick={onResumeSession}>
-                Resume
+                Resume timer
               </button>
             ) : (
               <button className="button ghost" type="button" onClick={onPauseSession}>
-                Pause
+                Pause timer
               </button>
             )}
             <button className="button ghost" type="button" onClick={onResetSession}>
-              Reset
+              Reset progress
             </button>
             <button className="button danger-ghost" type="button" onClick={onCancelSession}>
-              Discard
+              Discard session
             </button>
-            <button className="button primary" type="button" onClick={onFinishSession}>
-              {finishLabel}
+            <button
+              className={allComplete ? "button primary" : "button ghost"}
+              type="button"
+              onClick={onFinishSession}
+            >
+              {allComplete ? "Finish clean" : "Stop and save"}
             </button>
           </div>
         </section>
@@ -153,14 +158,14 @@ export default function StartSession({
           focusFirstIncomplete
         />
 
-        <section className="panel">
+        <section className="panel session-notes-panel">
           <label className="field-label" htmlFor="session-notes">
-            Session notes
+            Notes
           </label>
           <textarea
             id="session-notes"
             value={activeSession.notes || ""}
-            placeholder="What helped, what blocked the routine, or what should be handled next time."
+            placeholder="Anything to remember for next time?"
             onChange={(event) => onUpdateNotes(event.target.value)}
           />
         </section>
@@ -173,7 +178,7 @@ export default function StartSession({
       {completionSummary ? (
         <section className="panel completion-panel completion-summary-panel">
           <div>
-            <p className="eyebrow">Saved to History</p>
+            <p className="eyebrow">Saved to Progress</p>
             <h2>{completionSummary.routineTitle}</h2>
             <p>
               {completionSummary.completedTasks}/{completionSummary.totalTasks} tasks complete,{" "}
@@ -195,7 +200,7 @@ export default function StartSession({
           </div>
           <div className="card-actions compact-actions">
             <button className="button primary small" type="button" onClick={onViewHistory}>
-              View History
+              View Progress
             </button>
             <button className="button ghost small" type="button" onClick={onClearCompletionSummary}>
               Close
@@ -206,7 +211,7 @@ export default function StartSession({
 
       <section className="panel">
         <div className="section-heading compact-heading">
-          <h2>Quick Start</h2>
+          <h2>Start a routine</h2>
           <div className="card-actions compact-actions">
             <button className="button edit-action small" type="button" onClick={onEditRoutines}>
               Edit
@@ -231,7 +236,7 @@ export default function StartSession({
             </button>
           )) : (
             <p className="muted compact-empty">
-              No active routines yet. Add or unarchive a routine to start cleaning.
+              No active routines yet. Add or restore a routine to start cleaning.
             </p>
           )}
         </div>
