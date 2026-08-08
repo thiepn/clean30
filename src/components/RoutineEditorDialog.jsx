@@ -23,11 +23,13 @@ export default function RoutineEditorDialog({
   onClose,
   onAdvancedEdit
 }) {
-  const closeButtonRef = useRef(null);
+  const nameInputRef = useRef(null);
+  const durationInputRef = useRef(null);
+  const firstTaskInputRef = useRef(null);
   const dialogRef = useDialogFocus({
     open,
     onClose,
-    initialFocusRef: closeButtonRef
+    initialFocusRef: nameInputRef
   });
   const [draft, setDraft] = useState(() => createRoutineEditorDraft(routine));
   const [attemptedSave, setAttemptedSave] = useState(false);
@@ -105,7 +107,14 @@ export default function RoutineEditorDialog({
   function submit(event) {
     event.preventDefault();
     setAttemptedSave(true);
-    if (!canSave) return;
+    if (!canSave) {
+      window.requestAnimationFrame(() => {
+        if (titleError) nameInputRef.current?.focus();
+        else if (durationError) durationInputRef.current?.focus();
+        else if (taskError) firstTaskInputRef.current?.focus();
+      });
+      return;
+    }
     onSave(sanitizeRoutineDraft(draft));
     onClose();
   }
@@ -137,35 +146,43 @@ export default function RoutineEditorDialog({
             aria-label="Close routine editor"
             className="icon-button"
             onClick={onClose}
-            ref={closeButtonRef}
             type="button"
           >
             ×
           </button>
         </div>
 
-        <form className="routine-editor-form" onSubmit={submit}>
+        <form className="routine-editor-form" onSubmit={submit} noValidate>
           <label className="field-label" htmlFor="routine-editor-name">
             Routine name
             <input
+              aria-describedby={attemptedSave && titleError ? "routine-name-error" : undefined}
+              aria-invalid={attemptedSave && Boolean(titleError)}
               autoComplete="off"
               id="routine-editor-name"
               onChange={(event) =>
                 setDraft((current) => ({ ...current, title: event.target.value }))
               }
               placeholder="Sunday clean"
+              ref={nameInputRef}
               type="text"
               value={draft.title}
             />
           </label>
           {attemptedSave && titleError ? (
-            <p className="field-error">{titleError}</p>
+            <p className="field-error" id="routine-name-error" role="alert">
+              {titleError}
+            </p>
           ) : null}
 
           <label className="field-label" htmlFor="routine-editor-duration">
             Estimated time
             <span className="duration-input-row">
               <input
+                aria-describedby={
+                  attemptedSave && durationError ? "routine-duration-error" : undefined
+                }
+                aria-invalid={attemptedSave && Boolean(durationError)}
                 id="routine-editor-duration"
                 inputMode="numeric"
                 max="600"
@@ -176,6 +193,7 @@ export default function RoutineEditorDialog({
                     estimatedMinutes: event.target.value
                   }))
                 }
+                ref={durationInputRef}
                 type="number"
                 value={draft.estimatedMinutes}
               />
@@ -183,7 +201,9 @@ export default function RoutineEditorDialog({
             </span>
           </label>
           {attemptedSave && durationError ? (
-            <p className="field-error">{durationError}</p>
+            <p className="field-error" id="routine-duration-error" role="alert">
+              {durationError}
+            </p>
           ) : null}
 
           <div className="routine-editor-task-area">
@@ -195,53 +215,63 @@ export default function RoutineEditorDialog({
               <span className="task-count">{taskCount} tasks</span>
             </div>
 
-            {draft.phases.map((phase) => (
+            {draft.phases.map((phase, phaseIndex) => (
               <section className="routine-editor-section" key={phase.id}>
                 {draft.phases.length > 1 ? <h4>{phase.title}</h4> : null}
                 <div className="routine-editor-task-list">
-                  {phase.tasks.map((task, taskIndex) => (
-                    <div className="routine-editor-task-row" key={task.id}>
-                      <input
-                        aria-label={`Task ${taskIndex + 1}${
-                          draft.phases.length > 1 ? ` in ${phase.title}` : ""
-                        }`}
-                        onChange={(event) =>
-                          updateTask(phase.id, task.id, event.target.value)
-                        }
-                        placeholder="Add a cleaning task"
-                        type="text"
-                        value={task.title}
-                      />
-                      <div className="routine-editor-task-actions">
-                        <button
-                          aria-label={`Move ${task.title || `task ${taskIndex + 1}`} up`}
-                          className="icon-button small"
-                          disabled={taskIndex === 0}
-                          onClick={() => moveTask(phase.id, taskIndex, -1)}
-                          type="button"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          aria-label={`Move ${task.title || `task ${taskIndex + 1}`} down`}
-                          className="icon-button small"
-                          disabled={taskIndex === phase.tasks.length - 1}
-                          onClick={() => moveTask(phase.id, taskIndex, 1)}
-                          type="button"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          aria-label={`Remove ${task.title || `task ${taskIndex + 1}`}`}
-                          className="icon-button small danger-icon"
-                          onClick={() => removeTask(phase.id, task.id)}
-                          type="button"
-                        >
-                          ×
-                        </button>
+                  {phase.tasks.map((task, taskIndex) => {
+                    const isFirstTask = phaseIndex === 0 && taskIndex === 0;
+                    return (
+                      <div className="routine-editor-task-row" key={task.id}>
+                        <input
+                          aria-describedby={
+                            attemptedSave && taskError && isFirstTask
+                              ? "routine-task-error"
+                              : undefined
+                          }
+                          aria-invalid={attemptedSave && Boolean(taskError) && isFirstTask}
+                          aria-label={`Task ${taskIndex + 1}${
+                            draft.phases.length > 1 ? ` in ${phase.title}` : ""
+                          }`}
+                          onChange={(event) =>
+                            updateTask(phase.id, task.id, event.target.value)
+                          }
+                          placeholder="Add a cleaning task"
+                          ref={isFirstTask ? firstTaskInputRef : undefined}
+                          type="text"
+                          value={task.title}
+                        />
+                        <div className="routine-editor-task-actions">
+                          <button
+                            aria-label={`Move ${task.title || `task ${taskIndex + 1}`} up`}
+                            className="icon-button small"
+                            disabled={taskIndex === 0}
+                            onClick={() => moveTask(phase.id, taskIndex, -1)}
+                            type="button"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            aria-label={`Move ${task.title || `task ${taskIndex + 1}`} down`}
+                            className="icon-button small"
+                            disabled={taskIndex === phase.tasks.length - 1}
+                            onClick={() => moveTask(phase.id, taskIndex, 1)}
+                            type="button"
+                          >
+                            ↓
+                          </button>
+                          <button
+                            aria-label={`Remove ${task.title || `task ${taskIndex + 1}`}`}
+                            className="icon-button small danger-icon"
+                            onClick={() => removeTask(phase.id, task.id)}
+                            type="button"
+                          >
+                            ×
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <button
                   className="button ghost small"
@@ -253,7 +283,9 @@ export default function RoutineEditorDialog({
               </section>
             ))}
             {attemptedSave && taskError ? (
-              <p className="field-error">{taskError}</p>
+              <p className="field-error" id="routine-task-error" role="alert">
+                {taskError}
+              </p>
             ) : null}
           </div>
 
