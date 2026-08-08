@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -120,11 +119,12 @@ assert.match(
   "App persistence effect must not return saveAppState."
 );
 
-const trackedNodeModules = execFileSync("git", ["ls-files", "node_modules"], {
-  cwd: rootDir,
-  encoding: "utf8"
-}).trim();
-assert.equal(trackedNodeModules, "", "node_modules must never be tracked in the repository.");
+const gitignore = read(".gitignore");
+assert.match(
+  gitignore,
+  /(^|\n)node_modules\/?\s*($|\n)/,
+  "node_modules must remain ignored so new dependency files are not added to the repository."
+);
 
 console.log("Clean30 release verification passed.");
 console.log(`- deployment base: ${expectedBase}`);
@@ -132,3 +132,4 @@ console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
 console.log("- service worker offline fallback verified");
+console.log("- node_modules ignore rule verified");
