@@ -76,8 +76,11 @@ export function mergeHomeRoomsWithZones(currentZones = [], roomNames = []) {
       })
       .filter(([key]) => key)
   );
+  const utilityNames = current
+    .map(roomNameFromZone)
+    .filter((name) => UTILITY_ZONE_NAMES.has(normalized(name)));
 
-  return uniqueNames(roomNames).map((name) => {
+  return uniqueNames([...roomNames, ...utilityNames]).map((name) => {
     const existing = existingByName.get(normalized(name));
     return {
       id: existing?.id || createId("zone"),
@@ -152,7 +155,7 @@ export function getTaskLibraryItems({
   const builtIns = builtInTaskItems().filter(
     (item) => !homeRooms.length || allowedRooms.has(item.room)
   );
-  const combined = [...builtIns, ...routineTaskItems(routines, homeRooms), ...extraItems];
+  const combined = [...extraItems, ...builtIns, ...routineTaskItems(routines, homeRooms)];
   const deduped = [];
   const seen = new Set();
 
