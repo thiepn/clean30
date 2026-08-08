@@ -40,9 +40,18 @@ export function getSuggestedRoomCareDays(room) {
   return ROOM_CADENCE_DAYS.get(normalized(room)) || 14;
 }
 
-export function routineCoversRoom(routine, room) {
+export function routineCoversRoom(
+  routine,
+  room,
+  { includeArchived = false } = {}
+) {
   const roomKey = normalized(room);
-  if (!roomKey || !routine || routine.id === "daily-rules" || routine.archived) {
+  if (
+    !roomKey ||
+    !routine ||
+    routine.id === "daily-rules" ||
+    (routine.archived && !includeArchived)
+  ) {
     return false;
   }
 
