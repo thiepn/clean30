@@ -8,7 +8,7 @@ const guideSections = [
   },
   {
     title: "Routines",
-    body: "Routines are reusable cleaning checklists. Start, create, or edit them directly from Routines."
+    body: "Start with a room or the Task Library when you do not want to plan. Save repeated cleans as reusable routines."
   },
   {
     title: "Progress",
