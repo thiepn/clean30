@@ -38,6 +38,7 @@ import {
   duplicateRoutineForLibrary,
   sanitizeRoutineDraft
 } from "./utils/routineLibrary.js";
+import { mergeHomeRoomsWithZones } from "./utils/homeLibrary.js";
 
 function downloadJson(filename, payload) {
   let url = "";
@@ -829,6 +830,45 @@ export default function App() {
     );
   }
 
+  function saveHomeRooms(roomNames) {
+    updateActiveTemplate((template) => ({
+      ...template,
+      zones: mergeHomeRoomsWithZones(template.zones, roomNames)
+    }));
+  }
+
+  function addLibraryTasksToToday(items = []) {
+    const dateKey = getTodayKey();
+    setAppState((current) => {
+      const currentTasks = getTodayTasksFromState(current, dateKey);
+      const existingTitles = new Set(
+        currentTasks.map((task) => String(task.text || "").trim().toLowerCase()).filter(Boolean)
+      );
+      const additions = [];
+
+      for (const item of Array.isArray(items) ? items : []) {
+        const title = String(item?.title || "").trim();
+        const key = title.toLowerCase();
+        if (!title || existingTitles.has(key)) continue;
+        existingTitles.add(key);
+        const task = createTodayTask(title, dateKey);
+        additions.push({
+          ...task,
+          note:
+            item.room && item.room !== "Whole home" && item.room !== "Other"
+              ? `Room: ${item.room}`
+              : ""
+        });
+      }
+
+      if (!additions.length) return current;
+      return markMeaningfulUse(
+        applyTodayTasksToState(current, dateKey, [...currentTasks, ...additions])
+      );
+    });
+    setCurrentView("dashboard");
+  }
+
   function deleteTodayTask(taskId) {
     const dateKey = getTodayKey();
     const currentTasks = getTodayTasksFromState(appState, dateKey);
@@ -1151,11 +1191,14 @@ export default function App() {
     content = (
       <Routines
         routines={activeTemplate.routines}
+        zones={activeTemplate.zones}
         history={appState.history}
         activeTemplateId={activeTemplate.id}
         activeSession={appState.activeSession}
         onStartRoutine={startSession}
         onSaveRoutine={saveRoutineFromLibrary}
+        onSaveHomeRooms={saveHomeRooms}
+        onAddLibraryTasksToToday={addLibraryTasksToToday}
         onDuplicateRoutine={duplicateRoutineFromLibrary}
         onToggleArchive={toggleRoutineArchiveFromLibrary}
         onDeleteRoutine={deleteRoutineFromLibrary}
