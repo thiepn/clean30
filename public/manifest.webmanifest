@@ -1,7 +1,8 @@
 {
+  "id": "/clean30/",
   "name": "Clean30",
   "short_name": "Clean30",
-  "description": "A local-only apartment cleaning routine system.",
+  "description": "A simple, local-first cleaning assistant for daily tasks, reusable routines, and progress.",
   "start_url": "/clean30/",
   "scope": "/clean30/",
   "display": "standalone",
