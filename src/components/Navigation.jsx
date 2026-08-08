@@ -1,8 +1,10 @@
+import AppIcon from "./AppIcon.jsx";
+
 const navItems = [
-  { id: "dashboard", label: "Today" },
-  { id: "routines", label: "Routines" },
-  { id: "history", label: "Progress" },
-  { id: "settings", label: "Settings" }
+  { id: "dashboard", label: "Today", icon: "today" },
+  { id: "routines", label: "Routines", icon: "routines" },
+  { id: "history", label: "Progress", icon: "progress" },
+  { id: "settings", label: "Settings", icon: "settings" }
 ];
 
 function NavigationButtons({ currentView, onNavigate }) {
@@ -14,7 +16,8 @@ function NavigationButtons({ currentView, onNavigate }) {
       aria-current={currentView === item.id ? "page" : undefined}
       onClick={() => onNavigate(item.id)}
     >
-      {item.label}
+      <AppIcon className="nav-icon" name={item.icon} size={19} />
+      <span>{item.label}</span>
     </button>
   ));
 }
