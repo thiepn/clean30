@@ -1,0 +1,771 @@
+/* Phase 6: cross-screen visual, responsive, interaction, and accessibility polish. */
+
+:where(button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+:where(button, input, select, textarea) {
+  min-width: 0;
+}
+
+:where(.button, .nav-item, .settings-destination, .settings-action-row, .today-routine-choice) {
+  overflow-wrap: anywhere;
+}
+
+.today-screen {
+  width: min(900px, 100%);
+  margin-inline: auto;
+}
+
+.today-primary-panel,
+.session-resume-panel,
+.completion-summary-panel,
+.routines-library-panel,
+.routine-detail-panel,
+.progress-overview-panel,
+.progress-recent-panel,
+.progress-calendar-panel,
+.settings-overview-panel,
+.settings-focus-panel {
+  box-shadow: var(--shadow-soft);
+}
+
+.today-overall-progress,
+.session-resume-progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.today-overall-progress > span,
+.session-resume-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--progress-fill);
+  transition: width 180ms ease;
+}
+
+.session-resume-panel {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.session-resume-actions .button.primary {
+  min-height: 46px;
+}
+
+.today-task-list {
+  gap: 0.55rem;
+}
+
+.today-task-row {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 60px;
+  padding: 0.55rem 0.65rem;
+  box-shadow: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    opacity 160ms ease;
+}
+
+.today-task-row:hover {
+  border-color: var(--selected-border);
+  background: var(--surface);
+}
+
+.today-task-row.checked {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--border));
+  background: color-mix(in srgb, var(--success-soft) 70%, var(--surface));
+}
+
+.today-task-row.checked .task-copy strong {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.today-check-control {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  margin: -4px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.today-check-control:hover {
+  background: var(--surface-soft);
+}
+
+.today-check-control input {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.today-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.today-row-actions .button,
+.today-row-actions .icon-button {
+  min-height: 44px;
+}
+
+.today-task-details {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0.15rem 0 0.15rem;
+  border-top: 1px solid var(--border);
+  padding: 0.8rem 0.15rem 0.25rem;
+}
+
+.today-task-details textarea,
+.today-task-details input {
+  width: 100%;
+}
+
+.today-task-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  padding-top: 0.65rem;
+}
+
+.today-more-panel,
+.session-compact-menu {
+  animation: phase6-reveal 140ms ease-out;
+}
+
+.session-details-wrapper {
+  display: grid;
+  gap: 0.75rem;
+  scroll-margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.2rem;
+}
+
+.session-details-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+  padding: 0.8rem 0.9rem;
+}
+
+.session-details-toolbar > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+/* The compact Current clean card already owns session status. Detailed view starts at checklist. */
+.session-details-wrapper .active-session-panel {
+  display: none;
+}
+
+.session-details-wrapper .session-notes-panel {
+  box-shadow: none;
+}
+
+.routine-action-card,
+.progress-activity-item,
+.settings-destination,
+.settings-action-row,
+.appearance-preset {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.routine-action-card:hover {
+  transform: none;
+}
+
+.routine-card-main {
+  min-height: 48px;
+}
+
+.routine-card-actions .button,
+.routine-card-menu button {
+  min-height: 44px;
+}
+
+.routine-card-menu {
+  overflow: hidden;
+}
+
+.routine-detail-panel .checklist {
+  margin-top: 0;
+}
+
+.routine-editor-dialog {
+  overscroll-behavior: contain;
+}
+
+.routine-editor-task-row > input {
+  min-height: 44px;
+}
+
+.routine-editor-task-actions .icon-button {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+}
+
+.field-error {
+  margin-top: -0.3rem;
+  border-left: 3px solid var(--danger);
+  padding-left: 0.55rem;
+}
+
+.progress-screen,
+.routines-screen {
+  scroll-margin-top: 1rem;
+}
+
+.progress-activity-button,
+.settings-destination,
+.settings-action-row {
+  min-height: 64px;
+}
+
+.progress-calendar-day {
+  min-height: 48px;
+}
+
+.progress-calendar-day:focus-visible,
+.progress-activity-button:focus-visible,
+.routine-card-main:focus-visible,
+.settings-destination:focus-visible,
+.settings-action-row:focus-visible {
+  position: relative;
+  z-index: 1;
+}
+
+.progress-insights-panel > summary,
+.settings-subdetail > summary {
+  min-height: 56px;
+}
+
+.settings-destination-tail > span,
+.settings-action-row > span:last-child {
+  flex: 0 0 auto;
+}
+
+.appearance-preset {
+  min-height: 128px;
+}
+
+.onboarding-dialog,
+.guide-dialog,
+.routine-editor-dialog,
+.routine-import-dialog,
+.today-routine-start-dialog {
+  overscroll-behavior: contain;
+}
+
+.onboarding-step h2,
+.dialog-header h2,
+.settings-page-header h2,
+.routines-page-heading h2,
+.progress-page-heading h2,
+.today-title-row h2 {
+  text-wrap: balance;
+}
+
+.setup-option {
+  min-height: 64px;
+  cursor: pointer;
+}
+
+.setup-option input {
+  width: 22px;
+  height: 22px;
+}
+
+.onboarding-actions .button,
+.dialog-actions .button {
+  min-height: 44px;
+}
+
+.clean-mode-overlay,
+.today-cleaning-backdrop {
+  overscroll-behavior: contain;
+}
+
+.clean-mode-shell,
+.today-cleaning-mode {
+  overscroll-behavior: contain;
+}
+
+.clean-mode-progress {
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.clean-mode-complete-button,
+.today-cleaning-main-action {
+  min-height: 56px;
+}
+
+.clean-mode-footer .button,
+.clean-mode-navigation .button,
+.today-cleaning-navigation .button {
+  min-height: 46px;
+}
+
+.clean-mode-task-title,
+.today-cleaning-task-card h3 {
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.clean-mode-task-detail,
+.today-cleaning-task-card p {
+  max-width: 58ch;
+  margin-inline: auto;
+}
+
+.clean-mode-navigation > span {
+  min-width: 5rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.clean-mode-footer {
+  align-items: center;
+}
+
+.mobile-navigation {
+  isolation: isolate;
+}
+
+.update-toast,
+.undo-toast {
+  max-width: min(420px, calc(100vw - 1rem));
+}
+
+@keyframes phase6-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 760px) {
+  .today-task-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  .today-task-details {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .today-row-actions .button.text-button {
+    padding-inline: 0.55rem;
+  }
+
+  .session-details-toolbar,
+  .routine-detail-heading,
+  .progress-page-heading,
+  .progress-section-heading,
+  .progress-calendar-header {
+    align-items: stretch;
+  }
+
+  .session-details-toolbar {
+    flex-direction: column;
+  }
+
+  .session-details-toolbar .button {
+    width: 100%;
+  }
+
+  .progress-calendar-day {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-shell {
+    width: min(100% - 16px, 540px);
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+
+  .simplified-app-header {
+    min-height: 54px;
+  }
+
+  .simplified-app-header .help-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .mobile-navigation {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: translateZ(0);
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+    border-radius: 14px 14px 0 0;
+  }
+
+  .mobile-navigation > .nav-item {
+    min-width: 0;
+    min-height: 48px;
+    padding: 0.45rem 0.15rem;
+    line-height: 1.15;
+  }
+
+  .today-primary-panel,
+  .session-resume-panel,
+  .completion-summary-panel,
+  .routines-library-panel,
+  .routine-detail-panel,
+  .progress-overview-panel,
+  .progress-recent-panel,
+  .progress-calendar-panel,
+  .settings-overview-panel,
+  .settings-focus-panel {
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .today-task-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+    align-items: start;
+    padding: 0.6rem;
+  }
+
+  .today-row-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+    margin-top: -0.1rem;
+  }
+
+  .today-task-details {
+    grid-column: 1 / -1;
+  }
+
+  .today-task-detail-actions .button {
+    width: 100%;
+  }
+
+  .today-add-toolbar .dashboard-todo-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .today-add-toolbar .dashboard-todo-form .button {
+    width: auto;
+    min-width: 68px;
+  }
+
+  .today-more-panel,
+  .session-compact-menu {
+    gap: 0.4rem;
+  }
+
+  .today-more-panel .button,
+  .session-compact-menu .button {
+    min-height: 46px;
+  }
+
+  .routine-card-menu {
+    inset: auto 8px calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 8px);
+    border-radius: 12px;
+  }
+
+  .routine-editor-backdrop,
+  .compact-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .routine-editor-dialog,
+  .routine-import-dialog,
+  .today-routine-start-dialog {
+    width: 100%;
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-top)));
+    border-radius: 16px 16px 0 0;
+    padding: 1rem max(1rem, env(safe-area-inset-right))
+      calc(1rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  }
+
+  .dialog-header {
+    position: sticky;
+    top: -1rem;
+    z-index: 2;
+    margin: -1rem -1rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 1rem;
+  }
+
+  .guide-dialog .dialog-header,
+  .onboarding-dialog .dialog-header {
+    position: static;
+    margin: 0;
+    border-bottom: 0;
+    padding: 0;
+  }
+
+  .today-cleaning-mode,
+  .clean-mode-shell {
+    min-height: 100dvh;
+    max-height: 100dvh;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .today-cleaning-task-card,
+  .clean-mode-focus {
+    min-height: clamp(220px, 38dvh, 360px);
+  }
+
+  .today-cleaning-header .button,
+  .clean-mode-header .button {
+    min-height: 44px;
+  }
+
+  .clean-mode-status {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .clean-mode-status > div {
+    min-width: 0;
+  }
+
+  .clean-mode-status strong {
+    overflow-wrap: anywhere;
+  }
+
+  .clean-mode-navigation,
+  .today-cleaning-navigation {
+    gap: 0.5rem;
+  }
+
+  .clean-mode-navigation .button,
+  .today-cleaning-navigation .button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .clean-mode-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .clean-mode-footer .button {
+    width: 100%;
+  }
+
+  .progress-calendar-grid {
+    gap: 0.2rem;
+  }
+
+  .progress-calendar-day {
+    min-width: 0;
+    padding-inline: 0;
+  }
+
+  .progress-calendar-markers {
+    right: 3px;
+    bottom: 3px;
+  }
+
+  .settings-destination,
+  .settings-action-row {
+    padding-inline: 0.15rem;
+  }
+
+  .settings-destination > span:first-child,
+  .settings-action-row > span:first-child {
+    min-width: 0;
+  }
+
+  .onboarding-dialog,
+  .guide-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 16px;
+    padding: 1rem;
+  }
+
+  .onboarding-actions {
+    gap: 0.5rem;
+  }
+
+  .storage-warning-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .storage-warning-actions {
+    width: 100%;
+  }
+
+  .storage-warning-actions .button {
+    flex: 1 1 0;
+  }
+
+  .update-toast {
+    right: 8px;
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 8px);
+    left: 8px;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 390px) {
+  .today-count-summary {
+    font-size: 0.78rem;
+  }
+
+  .today-focus-card {
+    padding: 0.85rem;
+  }
+
+  .routine-action-card,
+  .progress-week-summary-card,
+  .progress-day-summary,
+  .settings-info-box,
+  .backup-summary,
+  .about-app-block {
+    padding: 0.8rem;
+  }
+
+  .clean-mode-status {
+    grid-template-columns: 1fr;
+  }
+
+  .clean-mode-status > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .clean-mode-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-calendar-weekday {
+    font-size: 0.62rem;
+  }
+
+  .progress-calendar-day {
+    min-height: 42px;
+    font-size: 0.82rem;
+  }
+
+  .appearance-preset-grid,
+  .privacy-fact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 340px) {
+  .app-shell {
+    width: calc(100% - 10px);
+  }
+
+  .panel {
+    padding: 0.8rem;
+  }
+
+  .mobile-navigation {
+    padding-inline: 0.25rem;
+  }
+
+  .mobile-navigation > .nav-item {
+    font-size: 0.68rem;
+    letter-spacing: -0.01em;
+  }
+
+  .today-task-row {
+    padding-inline: 0.45rem;
+  }
+
+  .today-add-toolbar .dashboard-todo-form {
+    grid-template-columns: 1fr;
+  }
+
+  .today-add-toolbar .dashboard-todo-form .button {
+    width: 100%;
+  }
+
+  .progress-calendar-grid {
+    gap: 2px;
+  }
+
+  .progress-calendar-day {
+    min-height: 40px;
+    border-radius: 6px;
+  }
+
+  .progress-marker {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+html[data-font-size="large"] .nav-item {
+  line-height: 1.1;
+}
+
+html[data-font-size="large"] .today-task-row,
+html[data-font-size="large"] .settings-destination,
+html[data-font-size="large"] .settings-action-row,
+html[data-font-size="large"] .routine-action-card,
+html[data-font-size="large"] .progress-activity-button {
+  min-height: 68px;
+}
+
+html[data-font-size="large"] .button {
+  white-space: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .today-more-panel,
+  .session-compact-menu {
+    animation: none;
+  }
+}

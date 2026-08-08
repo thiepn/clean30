@@ -1,0 +1,492 @@
+.progress-screen {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.progress-page-heading,
+.progress-section-heading,
+.progress-calendar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.progress-page-heading > div,
+.progress-section-heading > div,
+.progress-calendar-header > div:first-child {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.progress-week-summary-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1.45fr);
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+  padding: 1rem;
+}
+
+.progress-week-primary {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.progress-week-primary > span,
+.progress-activity-type,
+.progress-day-summary-heading > span,
+.progress-detail-grid span,
+.progress-entry-note > span,
+.progress-insight-fact > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 730;
+}
+
+.progress-week-primary strong {
+  color: var(--text);
+  font-size: clamp(1.5rem, 1.25rem + 1vw, 2.05rem);
+  line-height: 1.1;
+}
+
+.progress-week-primary small,
+.progress-activity-main small,
+.progress-insight-fact small {
+  color: var(--muted);
+}
+
+.progress-week-facts,
+.progress-day-facts,
+.progress-calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.progress-week-facts span,
+.progress-day-facts span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  padding: 0.35rem 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 670;
+}
+
+.progress-filter {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 220px);
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 680;
+}
+
+.progress-filter select {
+  min-height: 42px;
+  padding: 0.55rem 0.7rem;
+}
+
+.progress-inline-empty {
+  margin-top: 0.75rem;
+}
+
+.progress-activity-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.progress-activity-item {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.progress-activity-item.selected {
+  border-color: var(--selected-border-strong);
+  box-shadow: 0 0 0 3px var(--selected-ring);
+}
+
+.progress-activity-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  min-height: 70px;
+  border: 0;
+  padding: 0.9rem 1rem;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.progress-activity-button:hover,
+.progress-activity-button:focus-visible {
+  background: var(--surface-soft);
+}
+
+.progress-activity-main {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.progress-activity-main strong {
+  color: var(--text);
+}
+
+.progress-activity-type {
+  color: var(--accent-text);
+}
+
+.progress-activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.progress-activity-meta > span {
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  padding: 0.22rem 0.48rem;
+  font-size: 0.76rem;
+  font-weight: 680;
+}
+
+.progress-entry-detail {
+  display: grid;
+  gap: 0.85rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface-soft);
+  padding: 0.9rem 1rem 1rem;
+}
+
+.progress-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.progress-detail-grid > div,
+.progress-insight-fact {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.progress-detail-grid strong,
+.progress-insight-fact strong {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.progress-entry-note {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.progress-entry-footnote {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.progress-show-more {
+  margin-top: 0.85rem;
+}
+
+.progress-calendar-feature {
+  display: grid;
+  gap: 1rem;
+}
+
+.progress-calendar-controls {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.progress-calendar-controls .button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.progress-calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.65fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.progress-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.38rem;
+}
+
+.progress-calendar-weekday {
+  padding: 0.2rem 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 760;
+  text-align: center;
+}
+
+.progress-calendar-empty,
+.progress-calendar-day {
+  min-height: 52px;
+}
+
+.progress-calendar-day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-weight: 720;
+}
+
+.progress-calendar-day:hover,
+.progress-calendar-day:focus-visible,
+.progress-calendar-day.selected {
+  border-color: var(--selected-border-strong);
+  background: var(--selected-bg);
+  color: var(--accent-text);
+}
+
+.progress-calendar-day.today {
+  box-shadow: inset 0 0 0 2px var(--selected-border);
+}
+
+.progress-calendar-number {
+  line-height: 1;
+}
+
+.progress-calendar-markers {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  display: flex;
+  gap: 3px;
+}
+
+.progress-marker {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.today-marker {
+  background: var(--blue);
+}
+
+.routine-marker {
+  background: var(--accent);
+}
+
+.progress-day-summary {
+  display: grid;
+  gap: 0.85rem;
+  min-height: 100%;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-soft);
+  padding: 0.9rem;
+}
+
+.progress-day-summary-heading {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.progress-day-summary-heading strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.progress-day-session-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.progress-day-session-list > div {
+  display: grid;
+  gap: 0.08rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.progress-day-session-list span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.progress-calendar-legend {
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.progress-calendar-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.progress-insights-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.progress-insights-panel > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 64px;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.progress-insights-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.progress-insights-panel > summary > span:first-child {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.progress-insights-panel > summary strong {
+  color: var(--text);
+}
+
+.progress-insights-panel > summary small {
+  color: var(--muted);
+}
+
+.progress-insights-panel[open] > summary {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.progress-insights-panel[open] > summary > span:last-child {
+  transform: rotate(45deg);
+}
+
+.progress-insights-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.progress-insight-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.progress-insight-fact {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  padding: 0.75rem;
+}
+
+.progress-routine-recap {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.density-compact .progress-activity-list,
+.density-compact .progress-calendar-feature,
+.density-compact .progress-insights-body {
+  gap: 0.55rem;
+}
+
+@media (max-width: 760px) {
+  .progress-page-heading,
+  .progress-section-heading,
+  .progress-calendar-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .progress-week-summary-card,
+  .progress-calendar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-filter {
+    grid-template-columns: auto minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .progress-activity-button {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .progress-activity-meta {
+    justify-content: flex-start;
+  }
+
+  .progress-detail-grid,
+  .progress-insight-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-calendar-controls {
+    width: 100%;
+  }
+
+  .progress-calendar-controls .button:nth-child(2) {
+    flex: 1;
+  }
+
+  .progress-calendar-grid {
+    gap: 0.28rem;
+  }
+
+  .progress-calendar-weekday {
+    font-size: 0.66rem;
+  }
+
+  .progress-calendar-empty,
+  .progress-calendar-day {
+    min-height: 44px;
+  }
+
+  .progress-calendar-day {
+    border-radius: 7px;
+    font-size: 0.86rem;
+  }
+
+  .progress-calendar-markers {
+    right: 4px;
+    bottom: 4px;
+  }
+
+  .progress-insights-panel > summary {
+    min-height: 60px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-insights-panel > summary > span:last-child {
+    transition: none;
+  }
+}
