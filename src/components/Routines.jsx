@@ -8,6 +8,14 @@ import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
 import RoutineEditorDialog from "./RoutineEditorDialog.jsx";
 
+const LEGACY_STARTER_IDS = new Set([
+  "initial-reset",
+  "weekly-reset",
+  "minimal-reset",
+  "guest-reset",
+  "monthly-deep-clean"
+]);
+
 export default function Routines({
   routines,
   history = [],
@@ -25,6 +33,7 @@ export default function Routines({
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorRoutineId, setEditorRoutineId] = useState("");
   const [openMenuId, setOpenMenuId] = useState("");
+  const [legacyNoticeDismissed, setLegacyNoticeDismissed] = useState(false);
 
   const referenceRoutines = useMemo(
     () =>
@@ -44,6 +53,16 @@ export default function Routines({
     null;
   const editorRoutine =
     routines.find((routine) => routine.id === editorRoutineId) || null;
+  const legacyStarterRoutines = useMemo(
+    () =>
+      routines.filter(
+        (routine) => routine.id !== "daily-rules" && LEGACY_STARTER_IDS.has(routine.id)
+      ),
+    [routines]
+  );
+  const hasLegacyStarterSet =
+    routines.some((routine) => routine.id === "initial-reset") &&
+    legacyStarterRoutines.length >= 4;
 
   useEffect(() => {
     if (!selectedRoutine && referenceRoutines[0]) {
@@ -104,6 +123,26 @@ export default function Routines({
     onStartRoutine(routine.id);
   }
 
+  function archiveLegacyStarterExamples() {
+    let firstRemainingId = "";
+    for (const routine of legacyStarterRoutines) {
+      if (isCurrentRoutine(routine.id)) {
+        firstRemainingId = routine.id;
+        continue;
+      }
+      onSaveRoutine({ ...routine, archived: true });
+    }
+    const fallback = routines.find(
+      (routine) =>
+        routine.id !== "daily-rules" &&
+        !routine.archived &&
+        !LEGACY_STARTER_IDS.has(routine.id)
+    );
+    setSelectedRoutineId(firstRemainingId || fallback?.id || "");
+    setLegacyNoticeDismissed(true);
+    setShowArchived(false);
+  }
+
   return (
     <div className="screen-stack routines-screen">
       <section className="panel routines-library-panel">
@@ -111,12 +150,41 @@ export default function Routines({
           <div>
             <p className="eyebrow">Reusable checklists</p>
             <h2>Routines</h2>
-            <p>Start a familiar clean or create a checklist you can reuse.</p>
+            <p>Build a checklist once, then start it whenever you need it.</p>
           </div>
           <button className="button primary" onClick={openCreate} type="button">
-            New routine
+            Build routine
           </button>
         </div>
+
+        <div className="routine-builder-callout">
+          <div>
+            <strong>Large checklist?</strong>
+            <span>Paste 10, 20, or 50 tasks at once. Clean30 can split headings, skip duplicates, estimate the time, and optimize the order.</span>
+          </div>
+          <button className="button ghost small" onClick={openCreate} type="button">
+            Paste a list
+          </button>
+        </div>
+
+        {hasLegacyStarterSet && !legacyNoticeDismissed ? (
+          <div className="legacy-routine-notice">
+            <div>
+              <strong>Older Clean30 starter examples found</strong>
+              <p>
+                These are the original example routines from older Clean30 versions. You can archive the old examples and keep your own routines. Archived routines and Progress are not deleted.
+              </p>
+            </div>
+            <div className="legacy-routine-actions">
+              <button className="button ghost small" onClick={archiveLegacyStarterExamples} type="button">
+                Archive old examples
+              </button>
+              <button className="button text-button small" onClick={() => setLegacyNoticeDismissed(true)} type="button">
+                Keep them
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="routines-toolbar">
           <span>
@@ -262,7 +330,7 @@ export default function Routines({
         ) : (
           <EmptyState
             title={showArchived ? "No routines" : "No active routines"}
-            message="Create a reusable checklist for cleaning you repeat."
+            message="Build one from suggestions or paste a checklist in one go."
           />
         )}
       </section>
