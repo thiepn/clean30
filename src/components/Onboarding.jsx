@@ -26,7 +26,12 @@ export default function Onboarding({ onComplete }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [setupMode, setSetupMode] = useState("starter");
   const [importMessage, setImportMessage] = useState("");
-  const [isReturningUser] = useState(() => Boolean(loadAppState().onboardingCompletedAt));
+  const [initialState] = useState(() => loadAppState());
+  const isReturningUser = Boolean(
+    initialState.onboardingCompleted ||
+      initialState.onboardingCompletedAt ||
+      initialState.firstMeaningfulUseAt
+  );
   const step = onboardingSteps[stepIndex];
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === onboardingSteps.length - 1;
@@ -68,6 +73,14 @@ export default function Onboarding({ onComplete }) {
 
   function handleImportFile(event) {
     const input = event.currentTarget;
+    if (isReturningUser) {
+      input.value = "";
+      setImportMessage(
+        "Existing cleaning plans can be imported from Settings so your current setup is not changed during this introduction."
+      );
+      return;
+    }
+
     const file = input.files?.[0];
     if (!file) return;
 
@@ -164,13 +177,15 @@ export default function Onboarding({ onComplete }) {
                 <p>Start a reusable routine.</p>
                 <p>Review what you finished.</p>
               </div>
-              <button
-                className="button ghost onboarding-import-button"
-                type="button"
-                onClick={() => importInputRef.current?.click()}
-              >
-                Import a cleaning plan
-              </button>
+              {!isReturningUser ? (
+                <button
+                  className="button ghost onboarding-import-button"
+                  type="button"
+                  onClick={() => importInputRef.current?.click()}
+                >
+                  Import a cleaning plan
+                </button>
+              ) : null}
             </>
           ) : null}
 
@@ -278,13 +293,15 @@ export default function Onboarding({ onComplete }) {
           )}
         </div>
 
-        <input
-          ref={importInputRef}
-          className="hidden-input"
-          type="file"
-          accept="application/json,.json"
-          onChange={handleImportFile}
-        />
+        {!isReturningUser ? (
+          <input
+            ref={importInputRef}
+            className="hidden-input"
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportFile}
+          />
+        ) : null}
       </section>
     </div>
   );
