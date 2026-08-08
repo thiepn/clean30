@@ -1,7 +1,65 @@
+import {
+  cleaningTaskCatalog,
+  routineStarterTemplates
+} from "../data/taskSuggestions.js";
 import { cloneDeep, createId, normalizeRoutine, normalizeTask } from "./templateUtils.js";
 
 function normalizedTitle(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function parseMinutes(value) {
+  const matches = String(value || "").match(/\d+(?:\.\d+)?/g);
+  if (!matches?.length) return null;
+  const numbers = matches.map(Number).filter((item) => Number.isFinite(item) && item > 0);
+  if (!numbers.length) return null;
+  if (numbers.length > 1) return Math.round((numbers[0] + numbers[1]) / 2);
+  return Math.round(numbers[0]);
+}
+
+function stageForTitle(title) {
+  const catalog = getSuggestedTaskInfo(title);
+  if (catalog) return catalog.stage;
+  const value = normalizedTitle(title);
+  if (/trash|rubbish|garbage|\bbin\b/.test(value)) return 10;
+  if (/dish|laundry|clothes/.test(value)) return 20;
+  if (/put away|declutter|clutter|tidy|clear|make the bed/.test(value)) return 30;
+  if (/dust/.test(value)) return 40;
+  if (/wipe|clean|scrub|wash|stove|sink|toilet|shower|bath/.test(value)) return 50;
+  if (/mirror|window|glass/.test(value)) return 60;
+  if (/vacuum|sweep/.test(value)) return 70;
+  if (/mop/.test(value)) return 80;
+  return 55;
+}
+
+function cleanListLine(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^[-*•]\s*\[[ xX]\]\s*/, "")
+    .replace(/^[-*•]\s+/, "")
+    .replace(/^\d+[.)]\s+/, "")
+    .trim();
+}
+
+function headingFromLine(value) {
+  const trimmed = String(value || "").trim();
+  const markdown = trimmed.match(/^#{1,6}\s+(.+)$/);
+  if (markdown) return markdown[1].trim().replace(/:$/, "");
+  if (/^[^:]{1,50}:$/.test(trimmed)) return trimmed.slice(0, -1).trim();
+  return "";
+}
+
+function createTaskFromTitle(title) {
+  const suggestion = getSuggestedTaskInfo(title);
+  return {
+    id: createId("task"),
+    title: String(title || "").trim(),
+    duration: suggestion ? `${suggestion.minutes} min` : "",
+    detail: "",
+    note: "",
+    tags: [],
+    priority: "normal"
+  };
 }
 
 export function getRoutineMinutes(routine) {
@@ -35,8 +93,8 @@ export function createSimpleRoutineDraft() {
   return {
     id: createId("routine"),
     title: "",
-    estimatedMinutes: 30,
-    estimatedTime: "30 min",
+    estimatedMinutes: 5,
+    estimatedTime: "5 min",
     archived: false,
     colorLabel: "none",
     purpose: "",
@@ -56,10 +114,191 @@ export function createRoutineEditorDraft(routine) {
   return cloneDeep(routine || createSimpleRoutineDraft());
 }
 
+export function getSuggestedTaskInfo(title) {
+  const key = normalizedTitle(title);
+  if (!key) return null;
+  return cleaningTaskCatalog.find((task) => normalizedTitle(task.title) === key) || null;
+}
+
+export function getTaskSuggestions(query = "", room = "All", limit = 18) {
+  const needle = normalizedTitle(query);
+  return cleaningTaskCatalog
+    .filter((task) => room === "All" || task.room === room)
+    .filter((task) => {
+      if (!needle) return true;
+      return [task.title, task.room, ...(task.keywords || [])]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
+    })
+    .slice(0, limit);
+}
+
+export function parseRoutineTaskText(text) {
+  const sections = [];
+  let current = { title: "Tasks", tasks: [] };
+  let sawHeading = false;
+  const seen = new Set();
+
+  function pushCurrent() {
+    if (!current.tasks.length) return;
+    sections.push(current);
+  }
+
+  for (const rawLine of String(text || "").split(/\r?\n/)) {
+    const trimmed = rawLine.trim();
+    if (!trimmed) continue;
+    const heading = headingFromLine(trimmed);
+    if (heading) {
+      pushCurrent();
+      current = { title: heading || "Tasks", tasks: [] };
+      sawHeading = true;
+      continue;
+    }
+
+    const title = cleanListLine(trimmed);
+    if (!title) continue;
+    const key = normalizedTitle(title);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    current.tasks.push(title);
+  }
+
+  pushCurrent();
+  return {
+    sections,
+    taskCount: sections.reduce((total, section) => total + section.tasks.length, 0),
+    hasHeadings: sawHeading
+  };
+}
+
+export function appendParsedTaskText(draft, text) {
+  const parsed = parseRoutineTaskText(text);
+  if (!parsed.taskCount) return cloneDeep(draft);
+
+  const next = cloneDeep(draft);
+  const existingKeys = new Set(
+    next.phases.flatMap((phase) => phase.tasks.map((task) => normalizedTitle(task.title))).filter(Boolean)
+  );
+
+  if (!parsed.hasHeadings && parsed.sections.length === 1) {
+    const target = next.phases[0] || {
+      id: createId("phase"),
+      title: "Tasks",
+      tasks: []
+    };
+    if (!next.phases.length) next.phases.push(target);
+    const blankOnly = target.tasks.length === 1 && !String(target.tasks[0]?.title || "").trim();
+    if (blankOnly) target.tasks = [];
+    for (const title of parsed.sections[0].tasks) {
+      const key = normalizedTitle(title);
+      if (existingKeys.has(key)) continue;
+      existingKeys.add(key);
+      target.tasks.push(createTaskFromTitle(title));
+    }
+    return next;
+  }
+
+  if (
+    next.phases.length === 1 &&
+    next.phases[0].title === "Tasks" &&
+    next.phases[0].tasks.every((task) => !String(task.title || "").trim())
+  ) {
+    next.phases = [];
+  }
+
+  for (const section of parsed.sections) {
+    let target = next.phases.find(
+      (phase) => normalizedTitle(phase.title) === normalizedTitle(section.title)
+    );
+    if (!target) {
+      target = { id: createId("phase"), title: section.title || "Tasks", tasks: [] };
+      next.phases.push(target);
+    }
+    for (const title of section.tasks) {
+      const key = normalizedTitle(title);
+      if (existingKeys.has(key)) continue;
+      existingKeys.add(key);
+      target.tasks.push(createTaskFromTitle(title));
+    }
+  }
+  return next;
+}
+
+export function addSuggestedTaskToDraft(draft, suggestion, phaseId = "") {
+  const next = cloneDeep(draft);
+  const title = suggestion?.title || suggestion;
+  if (!String(title || "").trim()) return next;
+  const key = normalizedTitle(title);
+  if (
+    next.phases.some((phase) =>
+      phase.tasks.some((task) => normalizedTitle(task.title) === key)
+    )
+  ) {
+    return next;
+  }
+  let target = next.phases.find((phase) => phase.id === phaseId) || next.phases[0];
+  if (!target) {
+    target = { id: createId("phase"), title: "Tasks", tasks: [] };
+    next.phases.push(target);
+  }
+  if (target.tasks.length === 1 && !String(target.tasks[0]?.title || "").trim()) {
+    target.tasks = [];
+  }
+  target.tasks.push(createTaskFromTitle(title));
+  return next;
+}
+
+export function createRoutineDraftFromTemplate(templateId) {
+  const template = routineStarterTemplates.find((item) => item.id === templateId);
+  if (!template) return createSimpleRoutineDraft();
+  const phases = Object.entries(template.sections).map(([title, tasks]) => ({
+    id: createId("phase"),
+    title,
+    tasks: tasks.map(createTaskFromTitle)
+  }));
+  const draft = {
+    ...createSimpleRoutineDraft(),
+    title: template.title,
+    phases
+  };
+  const minutes = estimateRoutineMinutes(draft);
+  return { ...draft, estimatedMinutes: minutes, estimatedTime: `${minutes} min` };
+}
+
+export function estimateRoutineMinutes(routine) {
+  const total = (routine?.phases || []).reduce(
+    (sum, phase) =>
+      sum +
+      (phase.tasks || []).reduce((taskSum, task) => {
+        if (!String(task?.title || "").trim()) return taskSum;
+        const direct = parseMinutes(task.duration);
+        const suggested = getSuggestedTaskInfo(task.title)?.minutes;
+        return taskSum + (direct || suggested || 3);
+      }, 0),
+    0
+  );
+  return Math.max(1, Math.min(600, Math.round(total || 1)));
+}
+
+export function optimizeRoutineTaskOrder(draft) {
+  const next = cloneDeep(draft);
+  next.phases = next.phases.map((phase) => ({
+    ...phase,
+    tasks: [...phase.tasks].sort((first, second) => {
+      const firstBlank = !String(first?.title || "").trim();
+      const secondBlank = !String(second?.title || "").trim();
+      if (firstBlank !== secondBlank) return firstBlank ? 1 : -1;
+      return stageForTitle(first?.title) - stageForTitle(second?.title);
+    })
+  }));
+  return next;
+}
+
 export function sanitizeRoutineDraft(draft) {
   const minutes = Math.max(
     1,
-    Math.min(600, Math.round(Number(draft?.estimatedMinutes) || 30))
+    Math.min(600, Math.round(Number(draft?.estimatedMinutes) || estimateRoutineMinutes(draft)))
   );
   const phases = (Array.isArray(draft?.phases) ? draft.phases : [])
     .map((phase, phaseIndex) => ({
