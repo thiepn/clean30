@@ -1,0 +1,580 @@
+/* Phase 10 — Home and Task Library */
+
+.home-routines-panel {
+  display: grid;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.home-routines-heading,
+.home-routines-empty,
+.home-whole-home-action,
+.task-library-results-heading,
+.task-library-footer,
+.home-rooms-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-routines-heading > div:first-child {
+  display: grid;
+  gap: 5px;
+  max-width: 720px;
+}
+
+.home-routines-heading-actions,
+.task-library-quick-actions,
+.task-library-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.home-room-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.home-room-card {
+  min-height: 112px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  gap: 8px 11px;
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.home-room-card:hover,
+.home-room-card:focus-visible {
+  border-color: var(--accent-border-strong);
+  background: color-mix(in srgb, var(--accent-soft) 26%, var(--surface));
+}
+
+.home-room-card:hover {
+  transform: translateY(-1px);
+}
+
+.home-room-card-icon {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--accent-border);
+  border-radius: 11px;
+  background:
+    linear-gradient(90deg, transparent 47%, var(--accent) 47% 53%, transparent 53%),
+    linear-gradient(transparent 47%, var(--accent) 47% 53%, transparent 53%),
+    var(--accent-soft);
+  opacity: 0.8;
+}
+
+.home-room-card > span:nth-child(2) {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+}
+
+.home-room-card strong {
+  font-size: 0.98rem;
+}
+
+.home-room-card small,
+.home-whole-home-action span,
+.task-library-results-heading span,
+.task-library-source,
+.home-room-safety-note,
+.home-rooms-actions > span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.home-room-card-action {
+  grid-column: 1 / -1;
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 720;
+}
+
+.home-routines-empty {
+  padding: 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.home-routines-empty > div {
+  display: grid;
+  gap: 4px;
+}
+
+.home-whole-home-action {
+  padding-top: 2px;
+}
+
+.routine-builder-callout-compact {
+  margin-block: 14px;
+  padding-block: 12px;
+}
+
+.home-rooms-backdrop,
+.task-library-backdrop {
+  align-items: center;
+}
+
+.home-rooms-dialog {
+  width: min(820px, calc(100vw - 32px));
+  max-width: 820px;
+  max-height: min(90dvh, 900px);
+  overflow: auto;
+}
+
+.home-room-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.home-room-option {
+  min-height: 92px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.home-room-option:hover,
+.home-room-option:focus-within,
+.home-room-option.selected {
+  border-color: var(--accent-border-strong);
+}
+
+.home-room-option.selected {
+  background: color-mix(in srgb, var(--accent-soft) 44%, var(--surface));
+}
+
+.home-room-option input,
+.task-library-card input {
+  width: 19px;
+  height: 19px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.home-room-option > span {
+  display: grid;
+  gap: 3px;
+}
+
+.home-room-option small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.home-custom-room-section {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-soft);
+  display: grid;
+  gap: 12px;
+}
+
+.home-custom-room-entry,
+.task-library-custom-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.home-custom-room-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.home-room-chip {
+  min-height: 34px;
+  padding: 4px 5px 4px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.84rem;
+}
+
+.home-room-chip button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.home-room-chip button:hover,
+.home-room-chip button:focus-visible {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.home-room-safety-note {
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.home-rooms-actions {
+  margin-top: 16px;
+}
+
+.home-rooms-actions > span {
+  margin-right: auto;
+}
+
+.task-library-dialog {
+  width: min(1180px, calc(100vw - 28px));
+  height: min(92dvh, 940px);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  border-radius: 22px;
+}
+
+.task-library-header {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-library-header > div:first-child {
+  max-width: 760px;
+}
+
+.task-library-toolbar {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+  display: grid;
+  gap: 10px;
+}
+
+.task-library-toolbar > input[type="search"] {
+  width: 100%;
+  min-height: 46px;
+}
+
+.task-library-room-strip {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 1px 1px 4px;
+  scrollbar-width: thin;
+}
+
+.task-library-room {
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.task-library-room:hover,
+.task-library-room:focus-visible,
+.task-library-room.active {
+  border-color: var(--accent-border-strong);
+}
+
+.task-library-room.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 720;
+}
+
+.task-library-content {
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 22px 24px;
+}
+
+.task-library-results-heading {
+  margin-bottom: 11px;
+}
+
+.task-library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.task-library-card {
+  min-height: 104px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.task-library-card:hover,
+.task-library-card:focus-within,
+.task-library-card.selected {
+  border-color: var(--accent-border-strong);
+}
+
+.task-library-card:hover {
+  transform: translateY(-1px);
+}
+
+.task-library-card.selected {
+  background: color-mix(in srgb, var(--accent-soft) 42%, var(--surface));
+}
+
+.task-library-card-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.task-library-card-copy strong {
+  line-height: 1.35;
+}
+
+.task-library-card-copy small {
+  color: var(--text-soft);
+}
+
+.task-library-source {
+  margin-top: 3px;
+}
+
+.task-library-empty {
+  padding: 26px 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  text-align: center;
+  display: grid;
+  gap: 4px;
+}
+
+.task-library-custom {
+  margin-top: 18px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface-soft);
+  display: grid;
+  gap: 11px;
+}
+
+.task-library-custom-entry {
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 210px) auto;
+}
+
+.task-library-message {
+  margin-top: 10px;
+}
+
+.task-library-footer {
+  padding: 13px 22px max(13px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.task-library-footer > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.task-library-footer > div:first-child strong {
+  color: var(--text);
+}
+
+@media (max-width: 900px) {
+  .home-room-grid,
+  .home-room-preset-grid,
+  .task-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .home-routines-heading,
+  .home-routines-empty,
+  .home-whole-home-action,
+  .task-library-footer,
+  .home-rooms-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .home-routines-heading-actions,
+  .task-library-footer-actions {
+    width: 100%;
+  }
+
+  .home-routines-heading-actions .button,
+  .task-library-footer-actions .button,
+  .home-routines-empty .button {
+    flex: 1 1 0;
+  }
+
+  .home-whole-home-action span {
+    padding-inline: 2px;
+  }
+
+  .home-rooms-backdrop,
+  .task-library-backdrop {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .home-rooms-dialog,
+  .task-library-dialog {
+    width: 100%;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .home-rooms-dialog {
+    padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+  }
+
+  .task-library-dialog {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+
+  .task-library-header {
+    padding: max(14px, env(safe-area-inset-top)) 14px 12px;
+  }
+
+  .task-library-toolbar,
+  .task-library-content {
+    padding-inline: 14px;
+  }
+
+  .task-library-footer {
+    padding-inline: 14px;
+  }
+
+  .task-library-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-library-card {
+    min-height: 82px;
+  }
+
+  .task-library-custom-entry,
+  .home-custom-room-entry {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-room-grid,
+  .home-room-preset-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-room-card {
+    min-height: 88px;
+  }
+
+  .task-library-quick-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .task-library-quick-actions .button,
+  .task-library-footer-actions .button {
+    width: 100%;
+  }
+
+  .task-library-footer-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .task-library-footer-actions .button.primary {
+    grid-column: 1 / -1;
+  }
+}
+
+.home-room-card,
+.home-room-option,
+.task-library-card,
+.task-library-room,
+.home-room-chip button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-room-card:focus-visible,
+.home-room-option:focus-within,
+.task-library-card:focus-within,
+.task-library-room:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .task-library-room,
+  .home-room-chip button {
+    min-height: 44px;
+  }
+
+  .task-library-room {
+    padding-inline: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-room-card,
+  .task-library-card,
+  .home-room-option {
+    transition: none;
+  }
+
+  .home-room-card:hover,
+  .task-library-card:hover {
+    transform: none;
+  }
+}
