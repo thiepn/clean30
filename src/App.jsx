@@ -384,9 +384,7 @@ export default function App() {
       confirmLabel: "Reset template",
       onConfirm: () => {
         setAppState((current) => {
-          const defaultTemplate =
-            current.templates.find((template) => template.id === "clean30-default") ||
-            createDefaultTemplate();
+          const defaultTemplate = createDefaultTemplate();
           const active = current.templates.find(
             (template) => template.id === current.activeTemplateId
           );
