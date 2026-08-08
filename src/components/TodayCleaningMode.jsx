@@ -9,11 +9,11 @@ import {
 } from "../utils/todayCleaning.js";
 
 export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onExit }) {
-  const closeButtonRef = useRef(null);
+  const primaryActionRef = useRef(null);
   const dialogRef = useDialogFocus({
     open,
     onClose: onExit,
-    initialFocusRef: closeButtonRef
+    initialFocusRef: primaryActionRef
   });
   const orderedTasks = useMemo(() => orderTodayCleaningTasks(tasks), [tasks]);
   const progress = useMemo(() => getTodayCleaningProgress(tasks), [tasks]);
@@ -72,21 +72,20 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
       >
         <header className="today-cleaning-header">
           <div>
-            <p className="eyebrow">Focus mode</p>
-            <h2 id="today-cleaning-title">Today&apos;s cleaning</h2>
+            <p className="eyebrow">Cleaning mode</p>
+            <h2 id="today-cleaning-title">Today</h2>
           </div>
           <button
             aria-label="Exit Today cleaning mode"
             className="button ghost small"
             onClick={onExit}
-            ref={closeButtonRef}
             type="button"
           >
             Exit
           </button>
         </header>
 
-        <div className="today-cleaning-progress" aria-live="polite">
+        <div className="today-cleaning-progress">
           <div>
             <strong>
               {progress.completed}/{progress.total}
@@ -94,7 +93,7 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
             <span>tasks complete</span>
           </div>
           <div
-            aria-label={`${progress.percent}% complete`}
+            aria-label={`${progress.percent}% of Today complete`}
             aria-valuemax="100"
             aria-valuemin="0"
             aria-valuenow={progress.percent}
@@ -108,29 +107,41 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
         {!currentTask ? (
           <div className="today-cleaning-empty">
             <h3>No tasks for today</h3>
-            <p>Add a task to Today before starting focused cleaning.</p>
-            <button className="button primary" onClick={onExit} type="button">
+            <p>Add a task to Today before starting cleaning mode.</p>
+            <button
+              className="button primary"
+              onClick={onExit}
+              ref={primaryActionRef}
+              type="button"
+            >
               Back to Today
             </button>
           </div>
         ) : allComplete ? (
-          <div className="today-cleaning-complete">
+          <div className="today-cleaning-complete" aria-live="polite">
             <span aria-hidden="true" className="today-cleaning-complete-mark">
               ✓
             </span>
-            <h3>Today&apos;s list is complete</h3>
-            <p>Every task currently on the list is marked done.</p>
-            <button className="button primary" onClick={onExit} type="button">
-              Finish
+            <h3>Today is complete</h3>
+            <p>{progress.completed} tasks finished.</p>
+            <button
+              className="button primary"
+              onClick={onExit}
+              ref={primaryActionRef}
+              type="button"
+            >
+              Done
             </button>
           </div>
         ) : (
           <>
-            <div className="today-cleaning-position">
+            <div className="today-cleaning-position" aria-live="polite">
               Task {currentIndex + 1} of {orderedTasks.length}
             </div>
 
             <article
+              aria-atomic="true"
+              aria-live="polite"
               className={
                 currentTask.completed
                   ? "today-cleaning-task-card completed"
@@ -159,12 +170,13 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
             <button
               className="button primary today-cleaning-main-action"
               onClick={toggleCurrentTask}
+              ref={primaryActionRef}
               type="button"
             >
               {currentTask.completed ? "Mark not done" : "Mark done"}
             </button>
 
-            <div className="today-cleaning-navigation">
+            <div className="today-cleaning-navigation" aria-label="Task navigation">
               <button
                 className="button ghost"
                 disabled={orderedTasks.length < 2}
