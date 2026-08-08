@@ -26,6 +26,7 @@ export default function RoutineEditorDialog({
   const nameInputRef = useRef(null);
   const durationInputRef = useRef(null);
   const firstTaskInputRef = useRef(null);
+  const addTaskButtonRef = useRef(null);
   const dialogRef = useDialogFocus({
     open,
     onClose,
@@ -57,11 +58,14 @@ export default function RoutineEditorDialog({
 
   const taskCount = draft.phases.reduce(
     (total, phase) =>
-      total + phase.tasks.filter((task) => task.title.trim()).length,
+      total + phase.tasks.filter((task) => String(task?.title || "").trim()).length,
     0
   );
   const taskError = taskCount ? "" : "Add at least one task.";
   const canSave = !titleError && !durationError && !taskError;
+  const firstRenderedTask = draft.phases
+    .flatMap((phase) => phase.tasks.map((task) => ({ phaseId: phase.id, taskId: task.id })))
+    .find(Boolean) || null;
 
   if (!open) return null;
 
@@ -111,7 +115,10 @@ export default function RoutineEditorDialog({
       window.requestAnimationFrame(() => {
         if (titleError) nameInputRef.current?.focus();
         else if (durationError) durationInputRef.current?.focus();
-        else if (taskError) firstTaskInputRef.current?.focus();
+        else if (taskError) {
+          if (firstTaskInputRef.current) firstTaskInputRef.current.focus();
+          else addTaskButtonRef.current?.focus();
+        }
       });
       return;
     }
@@ -220,7 +227,9 @@ export default function RoutineEditorDialog({
                 {draft.phases.length > 1 ? <h4>{phase.title}</h4> : null}
                 <div className="routine-editor-task-list">
                   {phase.tasks.map((task, taskIndex) => {
-                    const isFirstTask = phaseIndex === 0 && taskIndex === 0;
+                    const isFirstTask =
+                      firstRenderedTask?.phaseId === phase.id &&
+                      firstRenderedTask?.taskId === task.id;
                     return (
                       <div className="routine-editor-task-row" key={task.id}>
                         <input
@@ -276,6 +285,7 @@ export default function RoutineEditorDialog({
                 <button
                   className="button ghost small"
                   onClick={() => addTask(phase.id)}
+                  ref={phaseIndex === 0 ? addTaskButtonRef : undefined}
                   type="button"
                 >
                   + Add task{draft.phases.length > 1 ? ` to ${phase.title}` : ""}
