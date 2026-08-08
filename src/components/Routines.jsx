@@ -52,11 +52,24 @@ export default function Routines({
   }, [referenceRoutines, selectedRoutine]);
 
   useEffect(() => {
-    function closeOpenMenu(event) {
+    function handleKeyDown(event) {
       if (event.key === "Escape") setOpenMenuId("");
     }
-    document.addEventListener("keydown", closeOpenMenu);
-    return () => document.removeEventListener("keydown", closeOpenMenu);
+
+    function handlePointerDown(event) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest(".routine-card-menu")) return;
+      if (target.closest("[data-routine-menu-trigger]")) return;
+      setOpenMenuId("");
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
   }, []);
 
   function isCurrentRoutine(routineId) {
@@ -184,8 +197,8 @@ export default function Routines({
                     <button
                       aria-controls={menuId}
                       aria-expanded={menuOpen}
-                      aria-haspopup="menu"
                       className="button ghost small"
+                      data-routine-menu-trigger="true"
                       onClick={() => setOpenMenuId(menuOpen ? "" : routine.id)}
                       type="button"
                     >
@@ -194,12 +207,12 @@ export default function Routines({
                   </div>
 
                   {menuOpen ? (
-                    <div className="routine-card-menu" id={menuId} role="menu">
-                      <button
-                        onClick={() => openEdit(routine.id)}
-                        role="menuitem"
-                        type="button"
-                      >
+                    <div
+                      aria-label={`${routine.title} actions`}
+                      className="routine-card-menu"
+                      id={menuId}
+                    >
+                      <button onClick={() => openEdit(routine.id)} type="button">
                         Edit
                       </button>
                       <button
@@ -207,7 +220,6 @@ export default function Routines({
                           setOpenMenuId("");
                           onAdvancedEdit(routine.id);
                         }}
-                        role="menuitem"
                         type="button"
                       >
                         Advanced structure
@@ -218,7 +230,6 @@ export default function Routines({
                           const duplicateId = onDuplicateRoutine(routine.id);
                           if (duplicateId) setSelectedRoutineId(duplicateId);
                         }}
-                        role="menuitem"
                         type="button"
                       >
                         Duplicate
@@ -228,7 +239,6 @@ export default function Routines({
                           setOpenMenuId("");
                           onToggleArchive(routine.id);
                         }}
-                        role="menuitem"
                         type="button"
                       >
                         {routine.archived ? "Restore" : "Archive"}
@@ -239,7 +249,6 @@ export default function Routines({
                           setOpenMenuId("");
                           onDeleteRoutine(routine.id);
                         }}
-                        role="menuitem"
                         type="button"
                       >
                         Delete
