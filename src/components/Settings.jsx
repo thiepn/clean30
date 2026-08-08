@@ -121,8 +121,7 @@ export default function Settings({
   onUpdateStartTodayEmpty,
   onRestartOnboarding,
   onOpenHelp,
-  onOpenAdvancedEditor,
-  onRestoreStarterPlan,
+  onManageCustomize,
   onResetAll,
   onResetHistory
 }) {
@@ -172,10 +171,6 @@ export default function Settings({
   function applyPreset(preset) {
     onUpdateAppAppearance("accentColor", preset.accentColor);
     onUpdateAppAppearance("backgroundColor", preset.backgroundColor);
-  }
-
-  function openAdvanced(section, intent = null) {
-    onOpenAdvancedEditor?.(section, intent);
   }
 
   if (!activePage) {
@@ -494,58 +489,12 @@ export default function Settings({
         />
 
         <div className="settings-action-list">
-          <button
-            className="settings-action-row"
-            onClick={() => openAdvanced("routines", "today")}
-            type="button"
-          >
+          <button className="settings-action-row" onClick={onManageCustomize} type="button">
             <span>
-              <strong>Manage regular tasks</strong>
-              <small>Edit the tasks Clean30 can use when a new Today list begins.</small>
-            </span>
-            <span aria-hidden="true">›</span>
-          </button>
-          <button
-            className="settings-action-row"
-            onClick={() => openAdvanced("routines")}
-            type="button"
-          >
-            <span>
-              <strong>Manage cleaning plan</strong>
-              <small>Open the full routines and regular-task editor.</small>
-            </span>
-            <span aria-hidden="true">›</span>
-          </button>
-          <button
-            className="settings-action-row"
-            onClick={() => openAdvanced("profile")}
-            type="button"
-          >
-            <span>
-              <strong>Home details</strong>
-              <small>Change app labels, home name, and cleaning goal.</small>
-            </span>
-            <span aria-hidden="true">›</span>
-          </button>
-          <button
-            className="settings-action-row"
-            onClick={() => openAdvanced("schedule")}
-            type="button"
-          >
-            <span>
-              <strong>Schedule</strong>
-              <small>Adjust advanced reset timing and due thresholds.</small>
-            </span>
-            <span aria-hidden="true">›</span>
-          </button>
-          <button
-            className="settings-action-row"
-            onClick={() => openAdvanced("import-export")}
-            type="button"
-          >
-            <span>
-              <strong>Import or export a cleaning plan</strong>
-              <small>Share reusable plan content without personal Progress data.</small>
+              <strong>Open advanced plan editor</strong>
+              <small>
+                Manage regular tasks, routines, home details, schedules, and cleaning-plan files.
+              </small>
             </span>
             <span aria-hidden="true">›</span>
           </button>
@@ -565,14 +514,12 @@ export default function Settings({
           </label>
         </div>
 
-        <div className="settings-focus-section">
-          <h3>Starter content</h3>
-          <p className="muted">
-            Restore Clean30's universal starter tasks and routines while keeping Progress.
+        <div className="settings-info-box">
+          <strong>Starter content and plan sharing</strong>
+          <p>
+            The advanced plan editor contains starter-plan restore, cleaning-plan import/export,
+            schedule controls, and detailed task configuration.
           </p>
-          <button className="button ghost" onClick={onRestoreStarterPlan} type="button">
-            Restore starter plan
-          </button>
         </div>
 
         <details className="settings-subdetail danger-subdetail">
