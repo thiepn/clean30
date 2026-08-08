@@ -188,7 +188,6 @@ export default function RoutineEditorDialog({
       const [task] = sourcePhase.tasks.splice(sourceIndex, 1);
       let targetIndex = targetPhase.tasks.findIndex((item) => item.id === targetTaskId);
       if (targetIndex < 0) targetIndex = targetPhase.tasks.length;
-      if (sourcePhase.id === targetPhase.id && sourceIndex < targetIndex) targetIndex -= 1;
       targetPhase.tasks.splice(targetIndex, 0, task);
       return next;
     });
