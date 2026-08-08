@@ -274,7 +274,7 @@ export default function Routines({
         </div>
 
         {homeRooms.length ? (
-          <div className="home-room-grid" role="list" aria-label="Rooms in your home">
+          <div className="home-room-grid" role="group" aria-label="Rooms in your home">
             {homeRooms.map((room) => {
               const suggestionCount = getSuggestedTaskCountForRoom(room);
               const care = roomCareByName.get(room);
@@ -283,7 +283,6 @@ export default function Routines({
                   className={`home-room-card care-${care?.status || "untracked"}`}
                   key={room}
                   onClick={() => openTaskLibrary(room, true)}
-                  role="listitem"
                   type="button"
                 >
                   <span className="home-room-card-icon" aria-hidden="true" />
