@@ -1,0 +1,595 @@
+/* Phase 8.1: refined visual hierarchy and component finish. */
+
+.app-shell {
+  --shadow-raised: 0 18px 44px rgba(30, 36, 29, 0.075), 0 2px 7px rgba(30, 36, 29, 0.035);
+  --shadow-hover: 0 14px 30px rgba(30, 36, 29, 0.085), 0 2px 6px rgba(30, 36, 29, 0.035);
+  --hairline: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--text);
+}
+
+.app-main {
+  isolation: isolate;
+}
+
+.screen-stack > .panel {
+  position: relative;
+}
+
+.routines-page-heading h2,
+.progress-page-heading h2,
+.settings-overview-heading h2,
+.settings-page-header h2,
+.today-title-row h2 {
+  font-size: clamp(1.6rem, 1.4rem + 0.65vw, 2rem);
+  line-height: 1.08;
+}
+
+.routines-page-heading p,
+.progress-page-heading p,
+.settings-overview-heading p,
+.settings-page-header p,
+.today-title-row p {
+  max-width: 62ch;
+}
+
+/* Keep primary actions confident but less glossy. */
+.button.primary {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 94%, #ffffff) 0%,
+    var(--accent) 100%
+  );
+  box-shadow:
+    0 6px 14px color-mix(in srgb, var(--accent) 17%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.button.primary:hover {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-strong) 92%, #ffffff) 0%,
+    var(--accent-strong) 100%
+  );
+  box-shadow:
+    0 8px 18px color-mix(in srgb, var(--accent) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--selected-border-strong);
+  box-shadow:
+    0 0 0 3px var(--selected-ring),
+    inset 0 1px 2px rgba(32, 37, 30, 0.025);
+  outline: none;
+}
+
+/* Today is the visual anchor of the product. */
+.today-primary-panel {
+  padding: clamp(1.25rem, 1rem + 1vw, 1.8rem);
+  box-shadow: var(--shadow-raised);
+}
+
+.today-title-row {
+  align-items: center;
+}
+
+.today-title-row .eyebrow {
+  margin-bottom: 0.18rem;
+}
+
+.today-primary-actions {
+  gap: 0.65rem;
+}
+
+.today-primary-actions .button.primary {
+  min-height: 52px;
+  padding-inline: 1.25rem;
+}
+
+.today-overall-progress,
+.session-resume-progress {
+  height: 9px;
+  border: 0;
+  background: color-mix(in srgb, var(--surface-soft) 82%, var(--surface));
+}
+
+.today-overall-progress > span,
+.session-resume-progress > span {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.today-task-section {
+  gap: 0.7rem;
+}
+
+.today-task-row {
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--surface) 95%, var(--surface-strong));
+  box-shadow: 0 1px 2px rgba(30, 36, 29, 0.018);
+}
+
+.today-task-row:hover {
+  border-color: color-mix(in srgb, var(--selected-border) 68%, var(--border));
+  box-shadow: 0 7px 18px rgba(30, 36, 29, 0.05);
+}
+
+.today-task-row .task-copy {
+  gap: 0.13rem;
+}
+
+.today-task-row .task-copy strong {
+  color: var(--text);
+  font-size: 0.98rem;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.today-task-row .task-copy small {
+  line-height: 1.4;
+}
+
+/* Custom checkbox keeps native semantics while making completion feel intentional. */
+.today-check-control input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 2px solid color-mix(in srgb, var(--border-strong) 84%, var(--muted));
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 1px rgba(30, 36, 29, 0.035);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.today-check-control input[type="checkbox"]::after {
+  width: 6px;
+  height: 11px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  content: "";
+  transform: translateY(-1px) rotate(45deg) scale(0);
+  transform-origin: center;
+  transition: transform 120ms ease;
+}
+
+.today-check-control input[type="checkbox"]:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.today-check-control input[type="checkbox"]:checked::after {
+  transform: translateY(-1px) rotate(45deg) scale(1);
+}
+
+.today-check-control input[type="checkbox"]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.today-task-row.checked {
+  opacity: 0.88;
+}
+
+.today-task-row.checked .task-copy strong {
+  text-decoration-color: color-mix(in srgb, var(--muted) 65%, transparent);
+}
+
+.today-add-toolbar {
+  border-top: 1px solid var(--hairline);
+  padding-top: 1rem;
+}
+
+.today-more-panel,
+.session-compact-menu {
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-soft) 56%, var(--surface));
+  padding: 0.55rem;
+}
+
+/* Current clean should read as an active state, not another generic card. */
+.session-resume-panel {
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.session-resume-panel::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+  background: var(--accent);
+  content: "";
+}
+
+.session-resume-panel .button.primary {
+  min-height: 48px;
+}
+
+/* Routines: stronger grouping with quieter chrome. */
+.routines-library-panel,
+.routine-detail-panel {
+  box-shadow: var(--shadow-soft);
+}
+
+.routine-action-card {
+  min-height: 112px;
+  border-color: var(--hairline);
+  box-shadow: 0 2px 8px rgba(30, 36, 29, 0.025);
+}
+
+.routine-action-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.routine-action-card.selected {
+  border-color: var(--selected-border-strong);
+  box-shadow:
+    0 0 0 3px var(--selected-ring),
+    0 10px 24px rgba(30, 36, 29, 0.055);
+}
+
+.routine-action-card.current::after {
+  position: absolute;
+  top: 0;
+  right: 1rem;
+  left: 1rem;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: var(--accent);
+  content: "";
+}
+
+.routine-card-copy strong {
+  font-size: 1.03rem;
+  font-weight: 750;
+  letter-spacing: -0.012em;
+}
+
+.routine-card-copy small {
+  font-size: 0.8rem;
+}
+
+.routine-card-actions .button.primary {
+  min-width: 82px;
+}
+
+.routine-detail-panel {
+  background: color-mix(in srgb, var(--surface) 97%, var(--accent-soft));
+}
+
+.routine-detail-heading h2 {
+  letter-spacing: -0.025em;
+}
+
+.routine-card-menu {
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+}
+
+/* Progress: make summary and calendar feel less like raw analytics. */
+.progress-week-summary-card {
+  border: 1px solid color-mix(in srgb, var(--accent-border) 38%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 42%, var(--surface)) 0%, var(--surface) 58%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.progress-week-primary strong {
+  color: var(--accent-text);
+  font-size: clamp(1.7rem, 1.45rem + 1vw, 2.25rem);
+  letter-spacing: -0.035em;
+}
+
+.progress-week-facts span,
+.progress-day-facts span,
+.progress-activity-meta > span {
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--surface) 90%, var(--surface-soft));
+}
+
+.progress-activity-item {
+  border-color: var(--hairline);
+  border-radius: 14px;
+  box-shadow: 0 2px 9px rgba(30, 36, 29, 0.025);
+}
+
+.progress-activity-item:hover {
+  border-color: color-mix(in srgb, var(--selected-border) 60%, var(--border));
+  box-shadow: 0 8px 20px rgba(30, 36, 29, 0.045);
+}
+
+.progress-activity-button {
+  padding: 1rem 1.05rem;
+}
+
+.progress-calendar-day {
+  border-color: var(--hairline);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  transition:
+    background-color 130ms ease,
+    border-color 130ms ease,
+    box-shadow 130ms ease,
+    transform 130ms ease;
+}
+
+.progress-calendar-day:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(30, 36, 29, 0.045);
+}
+
+.progress-calendar-day.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 13%, transparent);
+}
+
+.progress-calendar-day.today:not(.selected) {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.progress-day-summary {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.progress-insights-panel,
+.settings-subdetail {
+  border-color: var(--hairline);
+}
+
+/* Settings becomes a set of clear destinations instead of a table-like list. */
+.settings-destination-list {
+  gap: 0.55rem;
+  border-top: 0;
+}
+
+.settings-destination {
+  min-height: 76px;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  background: color-mix(in srgb, var(--surface) 94%, var(--surface-soft));
+  box-shadow: 0 2px 8px rgba(30, 36, 29, 0.02);
+}
+
+.settings-destination:hover,
+.settings-destination:focus-visible {
+  border-color: color-mix(in srgb, var(--selected-border) 70%, var(--border));
+  background: color-mix(in srgb, var(--selected-bg) 42%, var(--surface));
+  box-shadow: 0 7px 18px rgba(30, 36, 29, 0.04);
+}
+
+.settings-destination:last-child {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.settings-destination strong {
+  font-weight: 740;
+  letter-spacing: -0.01em;
+}
+
+.settings-destination-tail > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 64%, var(--surface));
+  font-size: 1.15rem;
+}
+
+.appearance-preset {
+  border-color: var(--hairline);
+  box-shadow: 0 2px 8px rgba(30, 36, 29, 0.02);
+}
+
+.appearance-preset:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(30, 36, 29, 0.045);
+}
+
+.appearance-preset.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 28%, var(--surface));
+}
+
+/* Dialogs and onboarding get a cleaner sheet-like finish. */
+.dialog,
+.onboarding-dialog,
+.guide-dialog,
+.routine-editor-dialog,
+.routine-import-dialog,
+.today-routine-start-dialog {
+  border-color: color-mix(in srgb, var(--border) 65%, transparent);
+  box-shadow:
+    0 28px 70px rgba(21, 27, 22, 0.18),
+    0 4px 14px rgba(21, 27, 22, 0.08);
+}
+
+.dialog-header {
+  gap: 1rem;
+}
+
+.dialog-header .icon-button {
+  border-color: var(--hairline);
+  background: color-mix(in srgb, var(--surface-soft) 72%, var(--surface));
+  box-shadow: none;
+}
+
+.setup-option {
+  border-color: var(--hairline);
+  border-radius: 14px;
+}
+
+.setup-option.active,
+.setup-option:has(input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 42%, var(--surface));
+  box-shadow: 0 0 0 3px var(--selected-ring);
+}
+
+/* Focused cleaning should feel calm and intentional. */
+.clean-mode-shell,
+.today-cleaning-mode {
+  box-shadow:
+    0 30px 80px rgba(18, 24, 19, 0.22),
+    0 4px 18px rgba(18, 24, 19, 0.1);
+}
+
+.clean-mode-focus,
+.today-cleaning-task-card {
+  border-color: color-mix(in srgb, var(--accent-border) 35%, var(--border));
+  background:
+    linear-gradient(155deg, var(--surface) 0%, color-mix(in srgb, var(--accent-soft) 22%, var(--surface)) 100%);
+}
+
+.clean-mode-task-title,
+.today-cleaning-task-card h3 {
+  letter-spacing: -0.03em;
+}
+
+.clean-mode-complete-button,
+.today-cleaning-main-action {
+  min-height: 58px;
+  border-radius: 15px;
+  font-size: 1rem;
+}
+
+/* Empty states should read as calm, not unfinished. */
+.empty-state {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  background: color-mix(in srgb, var(--surface-soft) 45%, var(--surface));
+  box-shadow: none;
+}
+
+.empty-state h3 {
+  letter-spacing: -0.015em;
+}
+
+/* Narrow phones: keep the visual character without wasting vertical space. */
+@media (max-width: 680px) {
+  .app-shell {
+    width: min(100% - 14px, 540px);
+    padding-top: max(9px, env(safe-area-inset-top));
+  }
+
+  .simplified-app-header {
+    min-height: 60px;
+    margin-bottom: 10px;
+    padding: 7px 8px;
+    border-radius: 17px;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .brand-copy h1 {
+    font-size: 1.2rem;
+  }
+
+  .brand-copy .app-kicker {
+    font-size: 0.72rem;
+  }
+
+  .today-primary-panel {
+    padding: 1rem;
+  }
+
+  .today-title-row h2,
+  .routines-page-heading h2,
+  .progress-page-heading h2,
+  .settings-overview-heading h2,
+  .settings-page-header h2 {
+    font-size: 1.55rem;
+  }
+
+  .today-task-row {
+    min-height: 62px;
+  }
+
+  .routine-action-card {
+    min-height: 0;
+  }
+
+  .settings-destination {
+    min-height: 72px;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .progress-calendar-day:hover,
+  .appearance-preset:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-lockup {
+    gap: 0.58rem;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .brand-mark svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .brand-copy h1 {
+    font-size: 1.08rem;
+  }
+
+  .brand-copy .app-kicker {
+    max-width: 165px;
+    font-size: 0.66rem;
+  }
+
+  .settings-destination-tail small {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .today-check-control input[type="checkbox"],
+  .today-check-control input[type="checkbox"]::after,
+  .progress-calendar-day,
+  .appearance-preset {
+    transition: none;
+  }
+
+  .button:active:not(:disabled),
+  .progress-calendar-day:hover,
+  .appearance-preset:hover {
+    transform: none;
+  }
+}

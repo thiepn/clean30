@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import AppIcon from "./AppIcon.jsx";
 import Navigation from "./Navigation.jsx";
 
 function formatCurrentDate() {
@@ -36,9 +37,14 @@ export default function Layout({
       data-background={appAppearance?.backgroundColor || "cream"}
     >
       <header className="app-header simplified-app-header">
-        <div>
-          <h1>{appName}</h1>
-          <p className="app-kicker">{formatCurrentDate()}</p>
+        <div className="brand-lockup">
+          <span className="brand-mark" aria-hidden="true">
+            <AppIcon name="sparkle" size={24} />
+          </span>
+          <div className="brand-copy">
+            <h1>{appName}</h1>
+            <p className="app-kicker">{formatCurrentDate()}</p>
+          </div>
         </div>
         <div className="header-actions">
           <button
@@ -47,7 +53,7 @@ export default function Layout({
             type="button"
             onClick={onOpenHelp}
           >
-            ?
+            <AppIcon name="help" size={20} />
           </button>
         </div>
       </header>
