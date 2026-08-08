@@ -1,0 +1,109 @@
+/* Phase 13 — global Quick Clean access and one-tap smart plans */
+
+.quick-clean-header-button {
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.quick-clean-header-button:hover,
+.quick-clean-header-button:focus-visible {
+  border-color: var(--accent-border-strong);
+  background: color-mix(in srgb, var(--accent-soft) 78%, var(--surface));
+}
+
+.quick-clean-launch-instant {
+  align-items: stretch;
+}
+
+.quick-clean-launch-actions {
+  flex: 0 0 auto;
+  min-width: min(330px, 44%);
+  display: grid;
+  align-content: center;
+  justify-items: end;
+  gap: 7px;
+}
+
+.quick-clean-instant-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(76px, 1fr));
+  gap: 7px;
+  width: 100%;
+}
+
+.quick-clean-instant-button {
+  min-height: 44px;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+.quick-clean-customize {
+  min-height: 40px;
+  padding-inline: 7px;
+}
+
+@media (max-width: 760px) {
+  .quick-clean-launch-instant {
+    display: grid;
+  }
+
+  .quick-clean-launch-actions {
+    min-width: 0;
+    width: 100%;
+    justify-items: stretch;
+  }
+
+  .quick-clean-customize {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 520px) {
+  .quick-clean-header-button {
+    width: 44px;
+    padding: 0;
+  }
+
+  .quick-clean-header-button > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@media (max-width: 390px) {
+  .quick-clean-instant-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .quick-clean-instant-button {
+    padding-inline: 6px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-clean-header-button,
+  .quick-clean-instant-button {
+    transition: none !important;
+    animation: none !important;
+  }
+}

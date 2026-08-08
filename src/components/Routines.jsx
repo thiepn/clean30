@@ -8,6 +8,7 @@ import {
   getHomeRoomNames,
   getSuggestedTaskCountForRoom
 } from "../utils/homeLibrary.js";
+import { buildQuickCleanPlan } from "../utils/quickClean.js";
 import {
   getRoomsNeedingAttention,
   getRoomCareStatus
@@ -26,6 +27,8 @@ const LEGACY_STARTER_IDS = new Set([
   "guest-reset",
   "monthly-deep-clean"
 ]);
+
+const instantQuickCleanBudgets = [5, 15, 30];
 
 export default function Routines({
   routines,
@@ -126,6 +129,21 @@ export default function Routines({
     };
   }, []);
 
+  useEffect(() => {
+    function consumeQuickCleanRequest() {
+      if (typeof window === "undefined") return;
+      if (!window.clean30OpenQuickCleanRequested) return;
+      window.clean30OpenQuickCleanRequested = false;
+      setQuickCleanOpen(true);
+    }
+
+    consumeQuickCleanRequest();
+    window.addEventListener("clean30:openQuickClean", consumeQuickCleanRequest);
+    return () => {
+      window.removeEventListener("clean30:openQuickClean", consumeQuickCleanRequest);
+    };
+  }, []);
+
   function isCurrentRoutine(routineId) {
     return (
       activeSession?.templateId === activeTemplateId &&
@@ -167,6 +185,20 @@ export default function Routines({
     onStartRoutine(routine.id);
   }
 
+  function addInstantQuickClean(minutes) {
+    const plan = buildQuickCleanPlan({
+      minutes,
+      rooms: homeRooms,
+      routines,
+      history
+    });
+    if (!plan.items.length) {
+      setQuickCleanOpen(true);
+      return;
+    }
+    onAddLibraryTasksToToday?.(plan.items);
+  }
+
   function archiveLegacyStarterExamples() {
     let firstRemainingId = "";
     for (const routine of legacyStarterRoutines) {
@@ -191,8 +223,8 @@ export default function Routines({
     ? `${roomsNeedingAttention
         .slice(0, 2)
         .map((item) => item.room)
-        .join(" and ")}${roomsNeedingAttention.length > 2 ? " and more" : ""} may need attention based on completed routines. Quick Clean can put them first.`
-    : "Pick 5–60 minutes and the rooms that matter. Quick Clean can use your completed routines to avoid treating every room as equally recent.";
+        .join(" and ")}${roomsNeedingAttention.length > 2 ? " and more" : ""} may need attention based on completed routines. Pick a time and send a ready-made plan straight to Today.`
+    : "Pick 5, 15, or 30 minutes and send a ready-made plan straight to Today. Clean30 uses your rooms and completed routines to choose what deserves attention first.";
 
   return (
     <div className="screen-stack routines-screen">
@@ -213,17 +245,32 @@ export default function Routines({
           </div>
         </div>
 
-        <div className="quick-clean-launch">
+        <div className="quick-clean-launch quick-clean-launch-instant">
           <div className="quick-clean-launch-copy">
             <span aria-hidden="true" className="quick-clean-launch-mark">15</span>
             <div>
-              <strong>Have a few minutes? Let Clean30 choose.</strong>
+              <strong>Have a few minutes? Skip the planning.</strong>
               <span>{quickCleanCopy}</span>
             </div>
           </div>
-          <button className="button primary" onClick={() => setQuickCleanOpen(true)} type="button">
-            Plan a quick clean
-          </button>
+          <div className="quick-clean-launch-actions">
+            <div className="quick-clean-instant-options" aria-label="Add a quick clean plan to Today" role="group">
+              {instantQuickCleanBudgets.map((minutes) => (
+                <button
+                  aria-label={`Add a ${minutes}-minute smart clean to Today`}
+                  className={minutes === 15 ? "button primary quick-clean-instant-button" : "button ghost quick-clean-instant-button"}
+                  key={minutes}
+                  onClick={() => addInstantQuickClean(minutes)}
+                  type="button"
+                >
+                  {minutes} min
+                </button>
+              ))}
+            </div>
+            <button className="button text-button quick-clean-customize" onClick={() => setQuickCleanOpen(true)} type="button">
+              Plan a quick clean
+            </button>
+          </div>
         </div>
 
         {homeRooms.length ? (
@@ -273,7 +320,7 @@ export default function Routines({
           <button className="button ghost small" onClick={() => openTaskLibrary("Whole home", true)} type="button">
             Choose a quick whole-home reset
           </button>
-          <span>Room care is guidance from full routine completions, not a required schedule. Nothing is added to Today automatically.</span>
+          <span>Room care is guidance from full routine completions, not a required schedule. Nothing is added to Today automatically unless you choose a quick plan.</span>
         </div>
       </section>
 
