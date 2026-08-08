@@ -11,6 +11,7 @@ import {
 import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
 import HomeRoomsDialog from "./HomeRoomsDialog.jsx";
+import QuickCleanDialog from "./QuickCleanDialog.jsx";
 import RoutineEditorDialog from "./RoutineEditorDialog.jsx";
 import TaskLibraryDialog from "./TaskLibraryDialog.jsx";
 
@@ -48,6 +49,7 @@ export default function Routines({
   const [taskLibraryOpen, setTaskLibraryOpen] = useState(false);
   const [taskLibraryRoom, setTaskLibraryRoom] = useState("All");
   const [taskLibraryPreselect, setTaskLibraryPreselect] = useState(false);
+  const [quickCleanOpen, setQuickCleanOpen] = useState(false);
 
   const homeRooms = useMemo(() => getHomeRoomNames(zones), [zones]);
   const referenceRoutines = useMemo(
@@ -180,10 +182,23 @@ export default function Routines({
             <button className="button ghost" onClick={() => setHomeRoomsOpen(true)} type="button">
               Edit rooms
             </button>
-            <button className="button primary" onClick={() => openTaskLibrary("All", false)} type="button">
+            <button className="button ghost" onClick={() => openTaskLibrary("All", false)} type="button">
               Task library
             </button>
           </div>
+        </div>
+
+        <div className="quick-clean-launch">
+          <div className="quick-clean-launch-copy">
+            <span aria-hidden="true" className="quick-clean-launch-mark">15</span>
+            <div>
+              <strong>Have a few minutes? Let Clean30 choose.</strong>
+              <span>Pick 5–60 minutes and the rooms that matter. Get a sensible checklist without planning the clean yourself.</span>
+            </div>
+          </div>
+          <button className="button primary" onClick={() => setQuickCleanOpen(true)} type="button">
+            Plan a quick clean
+          </button>
         </div>
 
         {homeRooms.length ? (
@@ -505,6 +520,14 @@ export default function Routines({
         onClose={() => setTaskLibraryOpen(false)}
         open={taskLibraryOpen}
         preselectRecommended={taskLibraryPreselect}
+        routines={routines}
+      />
+      <QuickCleanDialog
+        homeRooms={homeRooms}
+        onAddToToday={(items) => onAddLibraryTasksToToday?.(items)}
+        onBuildRoutine={(draft) => openCreate(draft)}
+        onClose={() => setQuickCleanOpen(false)}
+        open={quickCleanOpen}
         routines={routines}
       />
     </div>

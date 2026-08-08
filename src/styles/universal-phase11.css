@@ -1,0 +1,439 @@
+/* Phase 11 — time-budget Quick Clean planner */
+
+.quick-clean-launch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 17px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 72%, var(--surface)) 0%, var(--surface) 72%);
+}
+
+.quick-clean-launch-copy {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.quick-clean-launch-copy > div {
+  display: grid;
+  gap: 3px;
+}
+
+.quick-clean-launch-copy span:last-child {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.quick-clean-launch-mark {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--accent);
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+}
+
+.quick-clean-backdrop {
+  padding: 18px;
+  align-items: center;
+}
+
+.quick-clean-dialog {
+  width: min(980px, 100%);
+  max-width: none;
+  max-height: min(94dvh, 980px);
+  padding: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border-radius: 22px;
+}
+
+.quick-clean-header {
+  padding: 20px 22px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.quick-clean-header > div:first-child {
+  display: grid;
+  gap: 4px;
+  max-width: 720px;
+}
+
+.quick-clean-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 22px 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.quick-clean-step,
+.quick-clean-preview {
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface);
+}
+
+.quick-clean-step-heading,
+.quick-clean-preview-heading,
+.quick-clean-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.quick-clean-step-heading > div:first-child,
+.quick-clean-preview-heading > div:first-child {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+}
+
+.quick-clean-step-heading > div:first-child > div,
+.quick-clean-preview-heading > div:first-child > div {
+  display: grid;
+  gap: 2px;
+}
+
+.quick-clean-step-heading p,
+.quick-clean-preview-heading p {
+  font-size: 0.9rem;
+}
+
+.quick-clean-step-number {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent-border);
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.quick-clean-budget-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.quick-clean-budget {
+  min-height: 62px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface-soft);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0;
+}
+
+.quick-clean-budget strong {
+  font-size: 1.08rem;
+  line-height: 1.1;
+}
+
+.quick-clean-budget span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.quick-clean-budget:hover,
+.quick-clean-budget:focus-visible,
+.quick-clean-budget.active {
+  border-color: var(--accent-border-strong);
+  background: var(--accent-soft);
+}
+
+.quick-clean-budget.active {
+  box-shadow: 0 0 0 2px var(--selected-ring);
+  color: var(--accent-strong);
+}
+
+.quick-clean-room-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.quick-clean-room {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.quick-clean-room:hover,
+.quick-clean-room:focus-visible,
+.quick-clean-room.selected {
+  border-color: var(--accent-border-strong);
+  background: var(--accent-soft);
+}
+
+.quick-clean-room-check {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.quick-clean-room.selected .quick-clean-room-check {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+}
+
+.quick-clean-room-empty {
+  margin-top: 14px;
+  padding: 13px 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 13px;
+  background: var(--surface-soft);
+  display: grid;
+  gap: 3px;
+}
+
+.quick-clean-preview {
+  background: color-mix(in srgb, var(--accent-soft) 15%, var(--surface));
+}
+
+.quick-clean-summary {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+}
+
+.quick-clean-summary strong {
+  color: var(--accent-strong);
+  font-size: 1.02rem;
+}
+
+.quick-clean-summary span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.quick-clean-plan-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.quick-clean-plan-group {
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 13px;
+  background: var(--surface);
+}
+
+.quick-clean-plan-group h4 {
+  margin: 0 0 8px;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.quick-clean-task-list {
+  display: grid;
+  gap: 7px;
+}
+
+.quick-clean-task {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.quick-clean-task-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.quick-clean-task > span:last-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quick-clean-task strong {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.quick-clean-task small {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.quick-clean-budget-note {
+  margin-top: 13px;
+  font-size: 0.82rem;
+}
+
+.quick-clean-footer {
+  padding: 14px 22px max(14px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.quick-clean-footer > div:first-child {
+  display: grid;
+  gap: 1px;
+}
+
+.quick-clean-footer > div:first-child span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.quick-clean-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .quick-clean-budget-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .quick-clean-plan-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-clean-launch,
+  .quick-clean-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-clean-launch > .button,
+  .quick-clean-footer-actions .button {
+    flex: 1 1 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .quick-clean-backdrop {
+    padding: 0;
+  }
+
+  .quick-clean-dialog {
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .quick-clean-header {
+    padding: max(14px, env(safe-area-inset-top)) 15px 14px;
+  }
+
+  .quick-clean-body {
+    padding: 13px 13px 18px;
+  }
+
+  .quick-clean-step,
+  .quick-clean-preview {
+    padding: 14px;
+  }
+
+  .quick-clean-step-heading,
+  .quick-clean-preview-heading {
+    align-items: flex-start;
+  }
+
+  .quick-clean-footer {
+    padding: 12px 13px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .quick-clean-footer-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quick-clean-footer-actions .button.primary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 390px) {
+  .quick-clean-launch-copy {
+    align-items: flex-start;
+  }
+
+  .quick-clean-launch-mark {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .quick-clean-budget-grid {
+    gap: 6px;
+  }
+
+  .quick-clean-budget {
+    min-height: 56px;
+  }
+
+  .quick-clean-room {
+    flex: 1 1 calc(50% - 4px);
+  }
+
+  .quick-clean-task > span:last-child {
+    display: grid;
+    gap: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-clean-budget,
+  .quick-clean-room,
+  .quick-clean-launch {
+    scroll-behavior: auto;
+    transition: none !important;
+    animation: none !important;
+  }
+}
