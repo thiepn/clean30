@@ -8,6 +8,10 @@ import {
   getHomeRoomNames,
   getSuggestedTaskCountForRoom
 } from "../utils/homeLibrary.js";
+import {
+  getRoomsNeedingAttention,
+  getRoomCareStatus
+} from "../utils/roomCare.js";
 import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
 import HomeRoomsDialog from "./HomeRoomsDialog.jsx";
@@ -52,6 +56,20 @@ export default function Routines({
   const [quickCleanOpen, setQuickCleanOpen] = useState(false);
 
   const homeRooms = useMemo(() => getHomeRoomNames(zones), [zones]);
+  const roomCareByName = useMemo(
+    () =>
+      new Map(
+        homeRooms.map((room) => [
+          room,
+          getRoomCareStatus({ room, routines, history })
+        ])
+      ),
+    [history, homeRooms, routines]
+  );
+  const roomsNeedingAttention = useMemo(
+    () => getRoomsNeedingAttention({ rooms: homeRooms, routines, history }),
+    [history, homeRooms, routines]
+  );
   const referenceRoutines = useMemo(
     () =>
       routines.filter(
@@ -169,6 +187,13 @@ export default function Routines({
     setShowArchived(false);
   }
 
+  const quickCleanCopy = roomsNeedingAttention.length
+    ? `${roomsNeedingAttention
+        .slice(0, 2)
+        .map((item) => item.room)
+        .join(" and ")}${roomsNeedingAttention.length > 2 ? " and more" : ""} may need attention based on completed routines. Quick Clean can put them first.`
+    : "Pick 5–60 minutes and the rooms that matter. Quick Clean can use your completed routines to avoid treating every room as equally recent.";
+
   return (
     <div className="screen-stack routines-screen">
       <section className="panel home-routines-panel">
@@ -193,7 +218,7 @@ export default function Routines({
             <span aria-hidden="true" className="quick-clean-launch-mark">15</span>
             <div>
               <strong>Have a few minutes? Let Clean30 choose.</strong>
-              <span>Pick 5–60 minutes and the rooms that matter. Get a sensible checklist without planning the clean yourself.</span>
+              <span>{quickCleanCopy}</span>
             </div>
           </div>
           <button className="button primary" onClick={() => setQuickCleanOpen(true)} type="button">
@@ -205,9 +230,10 @@ export default function Routines({
           <div className="home-room-grid" role="list" aria-label="Rooms in your home">
             {homeRooms.map((room) => {
               const suggestionCount = getSuggestedTaskCountForRoom(room);
+              const care = roomCareByName.get(room);
               return (
                 <button
-                  className="home-room-card"
+                  className={`home-room-card care-${care?.status || "untracked"}`}
                   key={room}
                   onClick={() => openTaskLibrary(room, true)}
                   role="listitem"
@@ -216,11 +242,15 @@ export default function Routines({
                   <span className="home-room-card-icon" aria-hidden="true" />
                   <span>
                     <strong>{room}</strong>
-                    <small>
-                      {suggestionCount
-                        ? `${suggestionCount} suggested tasks`
-                        : "Use your own routine tasks"}
+                    <small className="home-room-care-line">
+                      {care?.statusLabel ||
+                        (suggestionCount
+                          ? `${suggestionCount} suggested tasks`
+                          : "Use your own routine tasks")}
                     </small>
+                    {care?.status === "attention" || care?.status === "soon" ? (
+                      <small className="home-room-care-detail">{care.detail}</small>
+                    ) : null}
                   </span>
                   <span className="home-room-card-action">Choose tasks</span>
                 </button>
@@ -243,7 +273,7 @@ export default function Routines({
           <button className="button ghost small" onClick={() => openTaskLibrary("Whole home", true)} type="button">
             Choose a quick whole-home reset
           </button>
-          <span>Whole-home tasks stay available even if you have not configured every room.</span>
+          <span>Room care is guidance from full routine completions, not a required schedule. Nothing is added to Today automatically.</span>
         </div>
       </section>
 
@@ -523,6 +553,7 @@ export default function Routines({
         routines={routines}
       />
       <QuickCleanDialog
+        history={history}
         homeRooms={homeRooms}
         onAddToToday={(items) => onAddLibraryTasksToToday?.(items)}
         onBuildRoutine={(draft) => openCreate(draft)}

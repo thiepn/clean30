@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import useDialogFocus from "../hooks/useDialogFocus.js";
 import { createRoutineDraftFromLibraryItems } from "../utils/homeLibrary.js";
 import { buildQuickCleanPlan, quickCleanBudgets } from "../utils/quickClean.js";
+import { rankRoomsForCare } from "../utils/roomCare.js";
 
 function uniqueNames(values = []) {
   return [...new Set((Array.isArray(values) ? values : []).map((value) => String(value || "").trim()).filter(Boolean))];
@@ -11,6 +12,7 @@ export default function QuickCleanDialog({
   open,
   homeRooms = [],
   routines = [],
+  history = [],
   onAddToToday,
   onBuildRoutine,
   onClose
@@ -26,9 +28,14 @@ export default function QuickCleanDialog({
     setSelectedRooms(uniqueNames(homeRooms));
   }, [homeRooms, open]);
 
+  const rankedRooms = useMemo(
+    () => rankRoomsForCare({ rooms: homeRooms, routines, history }),
+    [history, homeRooms, routines]
+  );
+
   const plan = useMemo(
-    () => buildQuickCleanPlan({ minutes, rooms: selectedRooms, routines }),
-    [minutes, routines, selectedRooms]
+    () => buildQuickCleanPlan({ minutes, rooms: selectedRooms, routines, history }),
+    [history, minutes, routines, selectedRooms]
   );
 
   if (!open) return null;
@@ -117,7 +124,7 @@ export default function QuickCleanDialog({
                 <span className="quick-clean-step-number">2</span>
                 <div>
                   <h3 id="quick-clean-room-title">Choose rooms</h3>
-                  <p>Whole-home basics are always considered. Select the rooms you want extra attention on.</p>
+                  <p>Whole-home basics are always considered. Completed routines help Clean30 put less-recently covered rooms first when time is tight.</p>
                 </div>
               </div>
               {homeRooms.length ? (
@@ -137,20 +144,23 @@ export default function QuickCleanDialog({
 
             {homeRooms.length ? (
               <div className="quick-clean-room-grid" role="group" aria-label="Rooms for quick clean">
-                {homeRooms.map((room) => {
-                  const selected = selectedRooms.includes(room);
+                {rankedRooms.map((care) => {
+                  const selected = selectedRooms.includes(care.room);
                   return (
                     <button
                       aria-pressed={selected}
-                      className={selected ? "quick-clean-room selected" : "quick-clean-room"}
-                      key={room}
-                      onClick={() => toggleRoom(room)}
+                      className={`quick-clean-room care-${care.status}${selected ? " selected" : ""}`}
+                      key={care.room}
+                      onClick={() => toggleRoom(care.room)}
                       type="button"
                     >
                       <span aria-hidden="true" className="quick-clean-room-check">
                         {selected ? "✓" : ""}
                       </span>
-                      <span>{room}</span>
+                      <span className="quick-clean-room-copy">
+                        <strong>{care.room}</strong>
+                        <small>{care.statusLabel}</small>
+                      </span>
                     </button>
                   );
                 })}
@@ -169,7 +179,7 @@ export default function QuickCleanDialog({
                 <span className="quick-clean-step-number">3</span>
                 <div>
                   <h3 id="quick-clean-preview-title">Your suggested clean</h3>
-                  <p>Tasks are ordered from quick collection and tidying toward surfaces and floors.</p>
+                  <p>Tasks are still ordered from collection and tidying toward surfaces and floors. Room priority only changes which selected rooms get attention first.</p>
                 </div>
               </div>
               <div className="quick-clean-summary" aria-live="polite">

@@ -8,7 +8,7 @@ const guideSections = [
   },
   {
     title: "Routines",
-    body: "Routines are reusable cleaning checklists. Start, create, or edit them directly from Routines. Use Quick clean when you only know how much time you have, or start with a room or the Task Library when you do not want to plan."
+    body: "Routines are reusable cleaning checklists. Start, create, or edit them directly from Routines. Use Quick clean when you only know how much time you have. Completed routines also help Clean30 show which rooms may deserve attention next; this is guidance, not a required schedule."
   },
   {
     title: "Progress",

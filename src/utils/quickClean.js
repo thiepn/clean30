@@ -1,4 +1,5 @@
 import { getTaskLibraryItems } from "./homeLibrary.js";
+import { rankRoomsForCare } from "./roomCare.js";
 
 export const quickCleanBudgets = [5, 10, 15, 30, 45, 60];
 
@@ -81,11 +82,24 @@ export function groupQuickCleanItems(items = []) {
   return [...groups.entries()].map(([room, tasks]) => ({ room, tasks }));
 }
 
-export function buildQuickCleanPlan({ minutes = 15, rooms = [], routines = [] } = {}) {
+export function buildQuickCleanPlan({
+  minutes = 15,
+  rooms = [],
+  routines = [],
+  history = [],
+  currentDateKey
+} = {}) {
   const requestedMinutes = Math.max(5, Math.min(120, Math.round(Number(minutes) || 15)));
   const selectedRooms = uniqueNames(rooms);
+  const roomCare = rankRoomsForCare({
+    rooms: selectedRooms,
+    routines,
+    history,
+    currentDateKey
+  });
+  const prioritizedRooms = roomCare.map((item) => item.room);
   const allowedRooms = new Set(["Whole home", ...selectedRooms]);
-  const roomOrder = ["Whole home", ...selectedRooms];
+  const roomOrder = ["Whole home", ...prioritizedRooms];
   const compareItems = itemComparator(roomOrder);
 
   const candidates = dedupeByTitle(
@@ -111,7 +125,7 @@ export function buildQuickCleanPlan({ minutes = 15, rooms = [], routines = [] } 
     if (next !== spent) spent = next;
   }
 
-  for (const room of selectedRooms) {
+  for (const room of prioritizedRooms) {
     const roomCandidates = candidates
       .filter((item) => item.room === room && !selectedIds.has(item.id))
       .sort((first, second) => {
@@ -149,10 +163,18 @@ export function buildQuickCleanPlan({ minutes = 15, rooms = [], routines = [] } 
           spent + minutesFor(item) <= requestedMinutes
       )
       .sort((first, second) => {
+        const firstRoomPriority = prioritizedRooms.indexOf(first.room);
+        const secondRoomPriority = prioritizedRooms.indexOf(second.room);
+        const firstKnownPriority = firstRoomPriority >= 0 ? firstRoomPriority : prioritizedRooms.length;
+        const secondKnownPriority = secondRoomPriority >= 0 ? secondRoomPriority : prioritizedRooms.length;
         const firstCount = roomCounts.get(first.room) || 0;
         const secondCount = roomCounts.get(second.room) || 0;
-        if (first.room !== "Whole home" && second.room !== "Whole home" && firstCount !== secondCount) {
-          return firstCount - secondCount;
+
+        if (first.room !== "Whole home" && second.room !== "Whole home") {
+          if (firstCount !== secondCount) return firstCount - secondCount;
+          if (firstKnownPriority !== secondKnownPriority) {
+            return firstKnownPriority - secondKnownPriority;
+          }
         }
         return compareItems(first, second);
       })[0];
@@ -183,6 +205,8 @@ export function buildQuickCleanPlan({ minutes = 15, rooms = [], routines = [] } 
     remainingMinutes: Math.max(0, requestedMinutes - spent),
     fitsBudget: spent <= requestedMinutes,
     selectedRooms,
+    prioritizedRooms,
+    roomCare,
     items: orderedItems,
     groups: groupQuickCleanItems(orderedItems)
   };
