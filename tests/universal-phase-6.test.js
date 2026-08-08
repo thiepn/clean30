@@ -27,8 +27,8 @@ test("Today keeps destructive task removal inside task details", () => {
   const dashboard = textFile("../src/components/Dashboard.jsx");
   assert.match(dashboard, /today-task-detail-actions/);
   assert.match(dashboard, /Remove task/);
-  assert.match(dashboard, />Details</);
-  const detailsButton = dashboard.indexOf(">Details");
+  assert.match(dashboard, />\s*Details\s*</);
+  const detailsButton = dashboard.indexOf("Details");
   const removeTask = dashboard.indexOf("Remove task");
   assert.ok(detailsButton >= 0);
   assert.ok(removeTask > detailsButton);
