@@ -137,6 +137,13 @@ test("archived routine activity can still describe which rooms that routine cove
   );
 });
 
+test("routine drag reorder uses the post-removal target index for downward moves", () => {
+  const editor = textFile("../src/components/RoutineEditorDialog.jsx");
+  assert.match(editor, /sourcePhase\.tasks\.splice\(sourceIndex, 1\)/);
+  assert.match(editor, /targetPhase\.tasks\.findIndex\(\(item\) => item\.id === targetTaskId\)/);
+  assert.doesNotMatch(editor, /sourceIndex\s*<\s*targetIndex\)\s*targetIndex\s*-=\s*1/);
+});
+
 test("Phase 15 data-integrity fixes remain schema-free", () => {
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
