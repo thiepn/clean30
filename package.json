@@ -10,7 +10,8 @@
     "test": "node --test",
     "export:personal-template": "node scripts/export-personal-template.mjs",
     "verify:release": "node scripts/verify-release.mjs",
-    "audit:release": "npm audit --audit-level=low"
+    "audit:release": "npm audit --audit-level=low",
+    "verify:release-candidate": "npm run audit:release && npm test && npm run build && npm run verify:release && node --check public/sw.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.2.0",
