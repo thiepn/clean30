@@ -1,4 +1,5 @@
 import { getTodayKey, parseDate } from "./dates.js";
+import { parseDurationMinutes } from "./duration.js";
 import {
   getHistoryDurationMinutes,
   isDailyRulesHistoryEntry
@@ -18,10 +19,7 @@ export function historyEntryDateKey(entry) {
 }
 
 function durationTextMinutes(value) {
-  const match = String(value || "").match(/(\d+(?:\.\d+)?)/);
-  if (!match) return null;
-  const minutes = Number(match[1]);
-  return Number.isFinite(minutes) && minutes > 0 ? minutes : null;
+  return parseDurationMinutes(value, null);
 }
 
 function findRoutineTask(template, routineId, taskId) {

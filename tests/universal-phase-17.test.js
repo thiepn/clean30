@@ -63,9 +63,10 @@ test("advanced routine editing becomes read-only while the active template has a
 test("Advanced Settings blocks starter restore while that cleaning plan has an active session", () => {
   const settings = textFile("../src/components/Settings.jsx");
 
-  assert.match(settings, /import \{ loadAppState \} from "\.\.\/utils\/storage\.js"/);
+  assert.doesNotMatch(settings, /loadAppState\(\)/);
+  assert.match(settings, /activeSession/);
   assert.match(settings, /const starterRestoreLocked = Boolean\(/);
-  assert.match(settings, /loadAppState\(\)\.activeSession\?\.templateId === template\.id/);
+  assert.match(settings, /activeSession\?\.templateId === template\.id/);
   assert.match(settings, /disabled=\{starterRestoreLocked\}/);
   assert.match(settings, /Unavailable while a clean from this plan is active/);
 });

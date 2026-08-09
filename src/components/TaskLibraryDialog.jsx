@@ -44,6 +44,10 @@ export default function TaskLibraryDialog({
     () => allItems.filter((item) => selectedIds.has(item.id)),
     [allItems, selectedIds]
   );
+  const customRoomOptions = useMemo(
+    () => roomOptions.filter((roomName) => roomName !== "All" && roomName !== "Whole home"),
+    [roomOptions]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -57,14 +61,14 @@ export default function TaskLibraryDialog({
     setCustomRoom(
       resolvedRoom && resolvedRoom !== "All" && resolvedRoom !== "Whole home"
         ? resolvedRoom
-        : homeRooms[0] || "Other"
+        : customRoomOptions[0] || "Other"
     );
     setMessage("");
     const initialIds = preselectRecommended
       ? getRecommendedTaskIdsForRoom(resolvedRoom, homeRooms, routines)
       : [];
     setSelectedIds(new Set(initialIds));
-  }, [homeRooms, initialRoom, open, preselectRecommended, routines]);
+  }, [customRoomOptions, homeRooms, initialRoom, open, preselectRecommended, routines]);
 
   if (!open) return null;
 
@@ -94,6 +98,17 @@ export default function TaskLibraryDialog({
   function addCustomTask() {
     const item = createCustomLibraryItem(customTitle, customRoom || "Other");
     if (!item) return;
+    const key = `${item.room.trim().toLowerCase()}::${item.title.trim().toLowerCase()}`;
+    const existing = allItems.find(
+      (candidate) =>
+        `${candidate.room.trim().toLowerCase()}::${candidate.title.trim().toLowerCase()}` === key
+    );
+    if (existing) {
+      setSelectedIds((current) => new Set([...current, existing.id]));
+      setCustomTitle("");
+      setMessage(`${existing.title} is already available and was selected.`);
+      return;
+    }
     setExtraItems((current) => [...current, item]);
     setSelectedIds((current) => new Set([...current, item.id]));
     setCustomTitle("");
@@ -150,6 +165,9 @@ export default function TaskLibraryDialog({
                 key={roomName}
                 onClick={() => {
                   setRoom(roomName);
+                  if (roomName !== "All" && roomName !== "Whole home") {
+                    setCustomRoom(roomName);
+                  }
                   setMessage("");
                 }}
                 type="button"
@@ -169,7 +187,7 @@ export default function TaskLibraryDialog({
                 Select visible
               </button>
             ) : null}
-            {selectedIds.size ? (
+            {selectedItems.length ? (
               <button className="button text-button small" onClick={() => setSelectedIds(new Set())} type="button">
                 Clear selection
               </button>
@@ -232,7 +250,7 @@ export default function TaskLibraryDialog({
                 value={customTitle}
               />
               <select aria-label="Custom task room" onChange={(event) => setCustomRoom(event.target.value)} value={customRoom}>
-                {[...new Set([...homeRooms, "Other"])].map((roomName) => (
+                {customRoomOptions.map((roomName) => (
                   <option key={roomName} value={roomName}>{roomName}</option>
                 ))}
               </select>

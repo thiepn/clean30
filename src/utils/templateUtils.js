@@ -360,15 +360,15 @@ export function normalizeTemplate(template, options = {}) {
       homeName: text(profile.homeName, fallback.profile?.homeName || "Home") || "Home",
       apartmentSizeText: text(
         profile.apartmentSizeText,
-        fallback.profile?.apartmentSizeText || "30 m2"
+        fallback.profile?.apartmentSizeText || "Not set"
       ),
       apartmentTypeText: text(
         profile.apartmentTypeText,
-        fallback.profile?.apartmentTypeText || "Erdgeschoss / ground floor"
+        fallback.profile?.apartmentTypeText || "Home"
       ),
       goalText: text(
         profile.goalText,
-        fallback.profile?.goalText || "Guest-ready within 10 minutes"
+        fallback.profile?.goalText || "A cleaner home, one task at a time"
       )
     },
     zones: normalizeZones(saved.zones || fallback.zones),

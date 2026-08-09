@@ -495,30 +495,51 @@ function normalizeAppSettings(value) {
 function normalizeHistory(value) {
   if (!Array.isArray(value)) return [];
   const usedIds = new Set();
+  const latestAllowedMs = Date.now() + MAX_CLOCK_SKEW_MS;
   return value
-    .filter(
-      (entry) =>
-        isPlainObject(entry) &&
-        typeof entry.id === "string" &&
-        Boolean(entry.id.trim()) &&
-        typeof entry.routineId === "string" &&
-        Boolean(entry.routineId.trim()) &&
-        typeof entry.routineTitle === "string" &&
-        normalizeDateString(entry.startedAt) &&
-        normalizeDateString(entry.finishedAt)
-    )
+    .filter((entry) => {
+      if (
+        !isPlainObject(entry) ||
+        typeof entry.id !== "string" ||
+        !entry.id.trim() ||
+        typeof entry.routineId !== "string" ||
+        !entry.routineId.trim() ||
+        typeof entry.routineTitle !== "string"
+      ) {
+        return false;
+      }
+      const startedAt = normalizeDateString(entry.startedAt);
+      const finishedAt = normalizeDateString(entry.finishedAt);
+      if (!startedAt || !finishedAt) return false;
+      const startedAtMs = new Date(startedAt).getTime();
+      const finishedAtMs = new Date(finishedAt).getTime();
+      return (
+        startedAtMs <= finishedAtMs &&
+        startedAtMs <= latestAllowedMs &&
+        finishedAtMs <= latestAllowedMs
+      );
+    })
     .map((entry, index) => {
-      const completedTasks = Number(entry.completedTasks);
-      const totalTasks = Number(entry.totalTasks);
+      const totalTasksValue = Number(entry.totalTasks);
+      const totalTasks = Number.isFinite(totalTasksValue) ? Math.max(0, totalTasksValue) : 0;
+      const completedTasksValue = Number(entry.completedTasks);
+      const completedTasks = Number.isFinite(completedTasksValue)
+        ? Math.min(totalTasks, Math.max(0, completedTasksValue))
+        : 0;
       const percent = Number(entry.percent);
+      const completedAt = normalizeDateString(entry.completedAt);
+      const safeCompletedAt =
+        completedAt && new Date(completedAt).getTime() <= latestAllowedMs
+          ? completedAt
+          : null;
       return {
         id: uniqueStableId(entry.id, `history-${index + 1}`, usedIds),
         routineId: entry.routineId.trim(),
         routineTitle: entry.routineTitle,
         startedAt: normalizeDateString(entry.startedAt),
         finishedAt: normalizeDateString(entry.finishedAt),
-        completedTasks: Number.isFinite(completedTasks) ? Math.max(0, completedTasks) : 0,
-        totalTasks: Number.isFinite(totalTasks) ? Math.max(0, totalTasks) : 0,
+        completedTasks,
+        totalTasks,
         percent: Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0,
         notes: typeof entry.notes === "string" ? entry.notes : "",
         templateId: typeof entry.templateId === "string" ? entry.templateId : null,
@@ -526,7 +547,7 @@ function normalizeHistory(value) {
         kind: typeof entry.kind === "string" ? entry.kind : "session",
         source: typeof entry.source === "string" ? entry.source : "session",
         date: normalizeDateKey(entry.date),
-        completedAt: normalizeDateString(entry.completedAt),
+        completedAt: safeCompletedAt,
         elapsedMs: normalizeOptionalNonNegativeNumber(entry.elapsedMs),
         elapsedMinutes: normalizeOptionalNonNegativeNumber(entry.elapsedMinutes),
         estimatedDurationMinutes: normalizeOptionalNonNegativeNumber(
@@ -1383,6 +1404,8 @@ function isValidCurrentHistoryBackupEntry(entry) {
   const startedAtMs = new Date(entry.startedAt).getTime();
   const finishedAtMs = new Date(entry.finishedAt).getTime();
   if (finishedAtMs < startedAtMs) return false;
+  const latestAllowedMs = Date.now() + MAX_CLOCK_SKEW_MS;
+  if (startedAtMs > latestAllowedMs || finishedAtMs > latestAllowedMs) return false;
 
   if (
     typeof entry.completedTasks !== "number" ||
@@ -1419,7 +1442,9 @@ function isValidCurrentHistoryBackupEntry(entry) {
   if (isTodayEntry) {
     return (
       (entry.date === null || Boolean(normalizeDateKey(entry.date))) &&
-      (entry.completedAt === null || Boolean(normalizeDateString(entry.completedAt)))
+      (entry.completedAt === null ||
+        (Boolean(normalizeDateString(entry.completedAt)) &&
+          new Date(entry.completedAt).getTime() <= latestAllowedMs))
     );
   }
 

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { createServer } from "node:net";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,8 +8,21 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(currentDir, "..");
 const viteBin = resolve(rootDir, "node_modules", "vite", "bin", "vite.js");
 const host = "127.0.0.1";
-const port = 4173;
 const basePath = "/clean30/";
+
+async function findAvailablePort() {
+  return new Promise((resolvePort, reject) => {
+    const server = createServer();
+    server.once("error", reject);
+    server.listen(0, host, () => {
+      const address = server.address();
+      const port = typeof address === "object" && address ? address.port : 4173;
+      server.close((error) => (error ? reject(error) : resolvePort(port)));
+    });
+  });
+}
+
+const port = await findAvailablePort();
 const baseUrl = `http://${host}:${port}`;
 const appUrl = `${baseUrl}${basePath}`;
 const serverOutput = [];
@@ -120,7 +134,13 @@ try {
   console.log(`- manifest icons verified over HTTP: ${(manifest.icons || []).length}`);
   console.log("- service worker served from /clean30/sw.js");
 } finally {
-  if (!preview.killed) preview.kill("SIGTERM");
+  if (!preview.killed) {
+    if (process.platform === "win32") {
+      spawnSync("taskkill", ["/pid", String(preview.pid), "/T", "/F"], { stdio: "ignore" });
+    } else {
+      preview.kill("SIGTERM");
+    }
+  }
   await new Promise((resolveWait) => {
     if (preview.exitCode !== null) {
       resolveWait();

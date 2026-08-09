@@ -10,6 +10,7 @@ function uniqueNames(values = []) {
 
 export default function QuickCleanDialog({
   open,
+  activeTemplateId = "",
   homeRooms = [],
   routines = [],
   history = [],
@@ -29,13 +30,13 @@ export default function QuickCleanDialog({
   }, [homeRooms, open]);
 
   const rankedRooms = useMemo(
-    () => rankRoomsForCare({ rooms: homeRooms, routines, history }),
-    [history, homeRooms, routines]
+    () => rankRoomsForCare({ rooms: homeRooms, routines, history, templateId: activeTemplateId }),
+    [activeTemplateId, history, homeRooms, routines]
   );
 
   const plan = useMemo(
-    () => buildQuickCleanPlan({ minutes, rooms: selectedRooms, routines, history }),
-    [history, minutes, routines, selectedRooms]
+    () => buildQuickCleanPlan({ minutes, rooms: selectedRooms, routines, history, templateId: activeTemplateId }),
+    [activeTemplateId, history, minutes, routines, selectedRooms]
   );
 
   if (!open) return null;

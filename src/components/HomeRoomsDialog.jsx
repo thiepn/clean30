@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { homeRoomPresets } from "../utils/homeLibrary.js";
+import {
+  getCanonicalHomeRoomName,
+  homeRoomPresets,
+  isReservedHomeRoomName
+} from "../utils/homeLibrary.js";
 import useDialogFocus from "../hooks/useDialogFocus.js";
 
 const keyOf = (value) => String(value || "").trim().toLowerCase();
@@ -7,10 +11,10 @@ const keyOf = (value) => String(value || "").trim().toLowerCase();
 function uniqueRooms(values = []) {
   const seen = new Set();
   return values
-    .map((value) => String(value || "").trim())
+    .map(getCanonicalHomeRoomName)
     .filter((value) => {
       const key = keyOf(value);
-      if (!key || seen.has(key)) return false;
+      if (!key || isReservedHomeRoomName(value) || seen.has(key)) return false;
       seen.add(key);
       return true;
     });
@@ -47,8 +51,13 @@ export default function HomeRoomsDialog({ open, rooms = [], onSave, onClose }) {
   }
 
   function addCustomRoom() {
-    const name = customRoom.trim();
-    if (!name) return;
+    const rawName = customRoom.trim();
+    if (!rawName) return;
+    if (isReservedHomeRoomName(rawName)) {
+      setMessage(`Choose a specific room name instead of “${rawName}”.`);
+      return;
+    }
+    const name = getCanonicalHomeRoomName(rawName);
     if (selectedRooms.some((room) => keyOf(room) === keyOf(name))) {
       setMessage("That room is already in your home.");
       return;
@@ -111,6 +120,7 @@ export default function HomeRoomsDialog({ open, rooms = [], onSave, onClose }) {
                   addCustomRoom();
                 }
               }}
+              maxLength={60}
               placeholder="Guest room, nursery, storage room…"
               ref={customInputRef}
               type="text"

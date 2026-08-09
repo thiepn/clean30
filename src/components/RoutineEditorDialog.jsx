@@ -11,6 +11,7 @@ import {
   getTaskSuggestions,
   hasDuplicateRoutineTitle,
   optimizeRoutineTaskOrder,
+  moveRoutineTaskByDrop,
   parseRoutineTaskText,
   sanitizeRoutineDraft
 } from "../utils/routineLibrary.js";
@@ -87,8 +88,12 @@ export default function RoutineEditorDialog({
 
   const availableSuggestionRooms = useMemo(() => {
     if (!homeRooms.length) return suggestionRooms;
-    const wanted = new Set(["All", "Whole home", "Other", ...homeRooms]);
-    return suggestionRooms.filter((room) => wanted.has(room));
+    const wanted = new Set(
+      ["All", "Whole home", "Other", ...homeRooms].map((room) =>
+        String(room).trim().toLowerCase()
+      )
+    );
+    return suggestionRooms.filter((room) => wanted.has(room.toLowerCase()));
   }, [homeRooms]);
 
   useEffect(() => {
@@ -175,22 +180,9 @@ export default function RoutineEditorDialog({
 
   function moveDraggedTask(targetPhaseId, targetTaskId) {
     if (!draggedTask) return;
-    setDraft((current) => {
-      const next = {
-        ...current,
-        phases: current.phases.map((phase) => ({ ...phase, tasks: [...phase.tasks] }))
-      };
-      const sourcePhase = next.phases.find((phase) => phase.id === draggedTask.phaseId);
-      const targetPhase = next.phases.find((phase) => phase.id === targetPhaseId);
-      if (!sourcePhase || !targetPhase) return current;
-      const sourceIndex = sourcePhase.tasks.findIndex((task) => task.id === draggedTask.taskId);
-      if (sourceIndex < 0) return current;
-      const [task] = sourcePhase.tasks.splice(sourceIndex, 1);
-      let targetIndex = targetPhase.tasks.findIndex((item) => item.id === targetTaskId);
-      if (targetIndex < 0) targetIndex = targetPhase.tasks.length;
-      targetPhase.tasks.splice(targetIndex, 0, task);
-      return next;
-    });
+    setDraft((current) =>
+      moveRoutineTaskByDrop(current, draggedTask, targetPhaseId, targetTaskId)
+    );
     setDraggedTask(null);
   }
 

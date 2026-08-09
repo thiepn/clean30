@@ -377,6 +377,16 @@ export default function App() {
   }
 
   function resetCurrentTemplateToDefault() {
+    if (appState.activeSession?.templateId === activeTemplate.id) {
+      requestConfirmation({
+        title: "Cleaning plan is in use",
+        message: "Finish or discard the current clean before restoring the starter plan.",
+        confirmLabel: "Keep plan",
+        onConfirm: () => {}
+      });
+      return;
+    }
+
     requestConfirmation({
       title: "Reset current template?",
       message:
@@ -384,6 +394,7 @@ export default function App() {
       confirmLabel: "Reset template",
       onConfirm: () => {
         setAppState((current) => {
+          if (current.activeSession?.templateId === current.activeTemplateId) return current;
           const defaultTemplate = createDefaultTemplate();
           const active = current.templates.find(
             (template) => template.id === current.activeTemplateId
@@ -839,23 +850,42 @@ export default function App() {
     const dateKey = getTodayKey();
     setAppState((current) => {
       const currentTasks = getTodayTasksFromState(current, dateKey);
-      const existingTitles = new Set(
-        currentTasks.map((task) => String(task.text || "").trim().toLowerCase()).filter(Boolean)
-      );
-      const additions = [];
+      const globalTitles = new Set();
+      const roomKeys = new Set();
+      const allTitles = new Set();
 
+      for (const task of currentTasks) {
+        const titleKey = String(task.text || "").trim().toLowerCase();
+        if (!titleKey) continue;
+        allTitles.add(titleKey);
+        const roomMatch = String(task.note || "").match(/^Room:\s*(.+)$/i);
+        if (roomMatch?.[1]?.trim()) {
+          roomKeys.add(`${roomMatch[1].trim().toLowerCase()}::${titleKey}`);
+        } else {
+          globalTitles.add(titleKey);
+        }
+      }
+
+      const additions = [];
       for (const item of Array.isArray(items) ? items : []) {
         const title = String(item?.title || "").trim();
-        const key = title.toLowerCase();
-        if (!title || existingTitles.has(key)) continue;
-        existingTitles.add(key);
+        const titleKey = title.toLowerCase();
+        if (!title) continue;
+        const room = String(item?.room || "").trim();
+        const specificRoom = room && room !== "Whole home" && room !== "Other";
+        const roomKey = specificRoom ? `${room.toLowerCase()}::${titleKey}` : "";
+        if (specificRoom) {
+          if (globalTitles.has(titleKey) || roomKeys.has(roomKey)) continue;
+          roomKeys.add(roomKey);
+        } else {
+          if (allTitles.has(titleKey)) continue;
+          globalTitles.add(titleKey);
+        }
+        allTitles.add(titleKey);
         const task = createTodayTask(title, dateKey);
         additions.push({
           ...task,
-          note:
-            item.room && item.room !== "Whole home" && item.room !== "Other"
-              ? `Room: ${item.room}`
-              : ""
+          note: specificRoom ? `Room: ${room}` : ""
         });
       }
 
@@ -1218,6 +1248,7 @@ export default function App() {
     content = (
       <Settings
         template={activeTemplate}
+        activeSession={appState.activeSession}
         onExportFullBackup={exportFullBackup}
         onImportFullBackup={importFullBackup}
         lastFullBackupExportedAt={appState.lastFullBackupExportedAt}

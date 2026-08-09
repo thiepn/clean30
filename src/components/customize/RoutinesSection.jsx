@@ -105,12 +105,13 @@ export default function RoutinesSection({
   const [routineReorderMode, setRoutineReorderMode] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [phaseEditorOpen, setPhaseEditorOpen] = useState(false);
+  const allEditableRoutines = useMemo(
+    () => routines.filter((routine) => routine.id !== "daily-rules"),
+    [routines]
+  );
   const visibleRoutines = useMemo(
-    () =>
-      routines.filter(
-        (routine) => routine.id !== "daily-rules" && (showArchived || !routine.archived)
-      ),
-    [routines, showArchived]
+    () => allEditableRoutines.filter((routine) => showArchived || !routine.archived),
+    [allEditableRoutines, showArchived]
   );
   const [selectedPhaseId, setSelectedPhaseId] = useState(selectedRoutine?.phases[0]?.id || "");
   const selectedPhase = useMemo(() => {
@@ -123,7 +124,7 @@ export default function RoutinesSection({
   const selectedPhaseIndex = selectedPhase
     ? selectedRoutine.phases.findIndex((phase) => phase.id === selectedPhase.id)
     : -1;
-  const routineTitleError = getRoutineTitleError(selectedRoutine, visibleRoutines);
+  const routineTitleError = getRoutineTitleError(selectedRoutine, allEditableRoutines);
   const routineDurationError = selectedRoutine ? getDurationError(durationDraft) : "";
   const phaseTitleError =
     selectedRoutine && selectedPhase
@@ -176,6 +177,11 @@ export default function RoutinesSection({
 
   function addRoutine() {
     const routine = createRoutine();
+    routine.title = makeUniqueName(
+      routine.title,
+      allEditableRoutines.map((item) => item.title),
+      "New Routine"
+    );
     onEditTemplate((draft) => {
       draft.routines.push(routine);
     });
@@ -215,7 +221,7 @@ export default function RoutinesSection({
 
   function duplicateRoutine(routine) {
     if (!routine || !canEdit) return;
-    const siblingNames = visibleRoutines.map((item) => item.title);
+    const siblingNames = allEditableRoutines.map((item) => item.title);
     const duplicate = createRoutineDuplicate(routine, siblingNames);
     onEditTemplate((draft) => {
       const index = draft.routines.findIndex((item) => item.id === routine.id);
@@ -320,7 +326,7 @@ export default function RoutinesSection({
     if (!selectedRoutine) return;
     const title = makeUniqueName(
       selectedRoutine.title,
-      visibleRoutines.filter((routine) => routine.id !== selectedRoutine.id).map((routine) => routine.title),
+      allEditableRoutines.filter((routine) => routine.id !== selectedRoutine.id).map((routine) => routine.title),
       "New routine"
     );
     if (title !== selectedRoutine.title) updateRoutine("title", title);

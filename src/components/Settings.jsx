@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import packageInfo from "../../package.json";
 import { formatRelativeDays } from "../utils/dates.js";
-import { loadAppState } from "../utils/storage.js";
 import {
   appearancePresets,
   getAppearancePresetId
@@ -111,6 +110,7 @@ function SettingsPageHeader({ title, description, onBack }) {
 
 export default function Settings({
   template,
+  activeSession,
   onExportFullBackup,
   onImportFullBackup,
   lastFullBackupExportedAt,
@@ -134,7 +134,7 @@ export default function Settings({
   const activePresetId = getAppearancePresetId(appAppearance);
   const activePreset = appearancePresets.find((preset) => preset.id === activePresetId);
   const starterRestoreLocked = Boolean(
-    loadAppState().activeSession?.templateId === template.id
+    activeSession?.templateId === template.id
   );
 
   function handleImportFile(event) {

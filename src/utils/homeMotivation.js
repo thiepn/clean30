@@ -42,9 +42,16 @@ export function getHomeCareSummary({
   rooms = [],
   routines = [],
   history = [],
-  currentDateKey = getTodayKey()
+  currentDateKey = getTodayKey(),
+  templateId = ""
 } = {}) {
-  const ranked = rankRoomsForCare({ rooms, routines, history, currentDateKey }).map(
+  const ranked = rankRoomsForCare({
+    rooms,
+    routines,
+    history,
+    currentDateKey,
+    templateId
+  }).map(
     (care) => ({
       ...care,
       freshness: getRoomFreshnessPresentation(care)

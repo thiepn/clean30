@@ -64,14 +64,14 @@ export default function Routines({
       new Map(
         homeRooms.map((room) => [
           room,
-          getRoomCareStatus({ room, routines, history })
+          getRoomCareStatus({ room, routines, history, templateId: activeTemplateId })
         ])
       ),
-    [history, homeRooms, routines]
+    [activeTemplateId, history, homeRooms, routines]
   );
   const roomsNeedingAttention = useMemo(
-    () => getRoomsNeedingAttention({ rooms: homeRooms, routines, history }),
-    [history, homeRooms, routines]
+    () => getRoomsNeedingAttention({ rooms: homeRooms, routines, history, templateId: activeTemplateId }),
+    [activeTemplateId, history, homeRooms, routines]
   );
   const referenceRoutines = useMemo(
     () =>
@@ -100,7 +100,8 @@ export default function Routines({
   );
   const hasLegacyStarterSet =
     routines.some((routine) => routine.id === "initial-reset") &&
-    legacyStarterRoutines.length >= 4;
+    legacyStarterRoutines.length >= 4 &&
+    legacyStarterRoutines.some((routine) => !routine.archived);
 
   useEffect(() => {
     if (!selectedRoutine && referenceRoutines[0]) {
@@ -197,7 +198,8 @@ export default function Routines({
       minutes,
       rooms: homeRooms,
       routines,
-      history
+      history,
+      templateId: activeTemplateId
     });
     if (!plan.items.length) {
       setQuickCleanOpen(true);
@@ -430,7 +432,7 @@ export default function Routines({
                       <small>
                         {isCurrent
                           ? "Current clean"
-                          : getLastRoutineDoneLabel(history, routine.id)}
+                          : getLastRoutineDoneLabel(history, routine.id, activeTemplateId)}
                       </small>
                     </span>
                     {routine.archived ? (
@@ -533,7 +535,7 @@ export default function Routines({
               <p>
                 {getRoutineTotalTasks(selectedRoutine)} tasks ·{" "}
                 {formatRoutineDuration(selectedRoutine)} ·{" "}
-                {getLastRoutineDoneLabel(history, selectedRoutine.id)}
+                {getLastRoutineDoneLabel(history, selectedRoutine.id, activeTemplateId)}
               </p>
               {isCurrentRoutine(selectedRoutine.id) ? (
                 <p className="muted compact-empty">
@@ -617,6 +619,7 @@ export default function Routines({
         routines={routines}
       />
       <QuickCleanDialog
+        activeTemplateId={activeTemplateId}
         history={history}
         homeRooms={homeRooms}
         onAddToToday={(items) => onAddLibraryTasksToToday?.(items)}

@@ -102,9 +102,10 @@ export default function History({
         rooms: homeRooms,
         routines,
         history,
-        currentDateKey
+        currentDateKey,
+        templateId: template?.id || ""
       }),
-    [currentDateKey, history, homeRooms, routines]
+    [currentDateKey, history, homeRooms, routines, template?.id]
   );
   const routineRoomsById = useMemo(
     () =>
@@ -152,8 +153,12 @@ export default function History({
     () =>
       filter === "all"
         ? displayEntries
-        : displayEntries.filter((entry) => entry.routineId === filter),
-    [displayEntries, filter]
+        : displayEntries.filter(
+            (entry) =>
+              entry.routineId === filter &&
+              (!entry.templateId || entry.templateId === template?.id)
+          ),
+    [displayEntries, filter, template?.id]
   );
   const visibleEntries = showAll ? filtered : filtered.slice(0, 6);
 
@@ -345,7 +350,10 @@ export default function History({
                 const selected = selectedId === entry.id;
                 const daily = isDailyRulesHistoryEntry(entry);
                 const dateKey = historyEntryDateKey(entry);
-                const impactRooms = daily ? [] : routineRoomsById.get(entry.routineId) || [];
+                const impactRooms =
+                  daily || (entry.templateId && entry.templateId !== template?.id)
+                    ? []
+                    : routineRoomsById.get(entry.routineId) || [];
                 return (
                   <article className={selected ? "progress-activity-item selected" : "progress-activity-item"} key={entry.id}>
                     <button

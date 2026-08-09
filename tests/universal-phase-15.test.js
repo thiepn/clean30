@@ -137,11 +137,12 @@ test("archived routine activity can still describe which rooms that routine cove
   );
 });
 
-test("routine drag reorder uses the post-removal target index for downward moves", () => {
+test("routine drag reorder delegates to the tested drop helper", () => {
   const editor = textFile("../src/components/RoutineEditorDialog.jsx");
-  assert.match(editor, /sourcePhase\.tasks\.splice\(sourceIndex, 1\)/);
-  assert.match(editor, /targetPhase\.tasks\.findIndex\(\(item\) => item\.id === targetTaskId\)/);
-  assert.doesNotMatch(editor, /sourceIndex\s*<\s*targetIndex\)\s*targetIndex\s*-=\s*1/);
+  const library = textFile("../src/utils/routineLibrary.js");
+  assert.match(editor, /moveRoutineTaskByDrop/);
+  assert.match(library, /targetIndexBefore/);
+  assert.match(library, /sourceIndex < targetIndexBefore/);
 });
 
 test("Restore starter always uses the current source starter instead of a stale stored default", () => {
