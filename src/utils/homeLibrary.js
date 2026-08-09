@@ -1,8 +1,10 @@
 import { cleaningTaskCatalog } from "../data/taskSuggestions.js";
+import { parseDurationMinutes } from "./duration.js";
 import { createId } from "./templateUtils.js";
 import { createSimpleRoutineDraft, estimateRoutineMinutes } from "./routineLibrary.js";
 
 const UTILITY_ZONE_NAMES = new Set(["floors", "other"]);
+const VIRTUAL_ROOM_NAMES = new Set(["all", "whole home"]);
 const GENERIC_SECTION_NAMES = new Set([
   "tasks",
   "task",
@@ -32,6 +34,17 @@ function normalized(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+export function getCanonicalHomeRoomName(value) {
+  const name = String(value || "").trim();
+  if (!name) return "";
+  return homeRoomPresets.find((preset) => normalized(preset.name) === normalized(name))?.name || name;
+}
+
+export function isReservedHomeRoomName(value) {
+  const key = normalized(value);
+  return UTILITY_ZONE_NAMES.has(key) || VIRTUAL_ROOM_NAMES.has(key);
+}
+
 function roomNameFromZone(zone) {
   return typeof zone === "string" ? zone.trim() : String(zone?.name || "").trim();
 }
@@ -49,20 +62,18 @@ function uniqueNames(values = []) {
   return result;
 }
 
-function parseMinutes(value, fallback = 3) {
-  const matches = String(value || "").match(/\d+(?:\.\d+)?/g);
-  if (!matches?.length) return fallback;
-  const numbers = matches.map(Number).filter((item) => Number.isFinite(item) && item > 0);
-  if (!numbers.length) return fallback;
-  if (numbers.length > 1) return Math.max(1, Math.round((numbers[0] + numbers[1]) / 2));
-  return Math.max(1, Math.round(numbers[0]));
+function catalogTaskForTitle(title) {
+  return cleaningTaskCatalog.find(
+    (item) => normalized(item.title) === normalized(title)
+  ) || null;
 }
 
 export function getHomeRoomNames(zones = []) {
   return uniqueNames(
     (Array.isArray(zones) ? zones : [])
       .map(roomNameFromZone)
-      .filter((name) => !UTILITY_ZONE_NAMES.has(normalized(name)))
+      .map(getCanonicalHomeRoomName)
+      .filter((name) => name && !isReservedHomeRoomName(name))
   );
 }
 
@@ -79,8 +90,13 @@ export function mergeHomeRoomsWithZones(currentZones = [], roomNames = []) {
   const utilityNames = current
     .map(roomNameFromZone)
     .filter((name) => UTILITY_ZONE_NAMES.has(normalized(name)));
+  const safeRooms = uniqueNames(
+    (Array.isArray(roomNames) ? roomNames : [])
+      .map(getCanonicalHomeRoomName)
+      .filter((name) => name && !isReservedHomeRoomName(name))
+  );
 
-  return uniqueNames([...roomNames, ...utilityNames]).map((name) => {
+  return uniqueNames([...safeRooms, ...utilityNames]).map((name) => {
     const existing = existingByName.get(normalized(name));
     return {
       id: existing?.id || createId("zone"),
@@ -90,15 +106,17 @@ export function mergeHomeRoomsWithZones(currentZones = [], roomNames = []) {
 }
 
 function inferTaskRoom(task, phaseTitle, homeRooms) {
-  const suggestion = cleaningTaskCatalog.find(
-    (item) => normalized(item.title) === normalized(task?.title)
-  );
-  if (suggestion) return suggestion.room;
-
   const phase = String(phaseTitle || "").trim();
   const homeMatch = homeRooms.find((room) => normalized(room) === normalized(phase));
   if (homeMatch) return homeMatch;
-  if (phase && !GENERIC_SECTION_NAMES.has(normalized(phase))) return phase;
+  if (phase && !GENERIC_SECTION_NAMES.has(normalized(phase)) && !isReservedHomeRoomName(phase)) {
+    return getCanonicalHomeRoomName(phase);
+  }
+
+  const suggestion = catalogTaskForTitle(task?.title);
+  if (suggestion) {
+    return homeRooms.find((room) => normalized(room) === normalized(suggestion.room)) || suggestion.room;
+  }
   return "Other";
 }
 
@@ -110,16 +128,18 @@ function routineTaskItems(routines = [], homeRooms = []) {
       for (const task of phase.tasks || []) {
         const title = String(task?.title || "").trim();
         if (!title) continue;
+        const room = inferTaskRoom(task, phase.title, homeRooms);
+        const suggestion = catalogTaskForTitle(title);
         items.push({
           id: `routine:${routine.id}:${task.id}`,
           title,
-          room: inferTaskRoom(task, phase.title, homeRooms),
-          minutes: parseMinutes(task.duration, 3),
-          stage: 55,
-          keywords: [routine.title, phase.title].filter(Boolean),
+          room,
+          minutes: parseDurationMinutes(task.duration, 3),
+          stage: suggestion?.stage ?? 55,
+          keywords: [routine.title, phase.title, ...(suggestion?.keywords || [])].filter(Boolean),
           source: "routine",
           sourceLabel: routine.title,
-          recommended: false
+          recommended: Boolean(suggestion && normalized(suggestion.room) === normalized(room))
         });
       }
     }
@@ -138,10 +158,15 @@ function builtInTaskItems() {
 }
 
 export function getHomeLibraryRooms(homeRooms = [], routines = []) {
-  const inferred = routineTaskItems(routines, homeRooms)
+  const configured = uniqueNames(
+    homeRooms
+      .map(getCanonicalHomeRoomName)
+      .filter((room) => room && !isReservedHomeRoomName(room))
+  );
+  const inferred = routineTaskItems(routines, configured)
     .map((item) => item.room)
-    .filter((room) => room && room !== "Other" && room !== "Whole home");
-  return ["All", "Whole home", ...uniqueNames([...homeRooms, ...inferred]), "Other"];
+    .filter((room) => room && !isReservedHomeRoomName(room));
+  return uniqueNames(["All", "Whole home", ...configured, ...inferred, "Other"]);
 }
 
 export function getTaskLibraryItems({
@@ -151,21 +176,42 @@ export function getTaskLibraryItems({
   query = "",
   extraItems = []
 } = {}) {
-  const allowedRooms = new Set(["Whole home", "Other", ...homeRooms]);
-  const builtIns = builtInTaskItems().filter(
-    (item) => !homeRooms.length || allowedRooms.has(item.room)
+  const configured = uniqueNames(
+    homeRooms
+      .map(getCanonicalHomeRoomName)
+      .filter((name) => name && !isReservedHomeRoomName(name))
   );
-  const combined = [...extraItems, ...builtIns, ...routineTaskItems(routines, homeRooms)];
+  const configuredByKey = new Map(configured.map((name) => [normalized(name), name]));
+  const allowedRoomKeys = new Set(["whole home", "other", ...configuredByKey.keys()]);
+  const builtIns = builtInTaskItems()
+    .filter((item) => !configured.length || allowedRoomKeys.has(normalized(item.room)))
+    .map((item) => ({
+      ...item,
+      room: configuredByKey.get(normalized(item.room)) || item.room
+    }));
+  const routineItems = routineTaskItems(routines, configured);
+  const combined = [...extraItems, ...routineItems, ...builtIns];
   const deduped = [];
-  const seen = new Set();
+  const indexByKey = new Map();
 
   for (const item of combined) {
     const title = String(item?.title || "").trim();
-    const itemRoom = String(item?.room || "Other").trim() || "Other";
+    const itemRoom = getCanonicalHomeRoomName(item?.room || "Other") || "Other";
     if (!title) continue;
     const key = `${normalized(itemRoom)}::${normalized(title)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const existingIndex = indexByKey.get(key);
+    if (existingIndex !== undefined) {
+      const existing = deduped[existingIndex];
+      if (existing.source !== "catalog" && item.source === "catalog") {
+        existing.recommended = true;
+        existing.stage = item.stage ?? existing.stage;
+        existing.keywords = [
+          ...new Set([...(existing.keywords || []), ...(item.keywords || [])])
+        ];
+      }
+      continue;
+    }
+    indexByKey.set(key, deduped.length);
     deduped.push({
       ...item,
       id: item.id || createId("library-task"),
@@ -179,8 +225,9 @@ export function getTaskLibraryItems({
   }
 
   const needle = normalized(query);
+  const roomKey = normalized(room);
   return deduped
-    .filter((item) => room === "All" || item.room === room)
+    .filter((item) => roomKey === "all" || normalized(item.room) === roomKey)
     .filter((item) => {
       if (!needle) return true;
       return [item.title, item.room, item.sourceLabel, ...(item.keywords || [])]
@@ -196,16 +243,18 @@ export function getTaskLibraryItems({
 }
 
 export function getRecommendedTaskIdsForRoom(room, homeRooms = [], routines = []) {
-  if (!room || room === "All" || room === "Other") return [];
+  const roomKey = normalized(room);
+  if (!room || roomKey === "all" || roomKey === "other") return [];
   return getTaskLibraryItems({ routines, homeRooms, room })
-    .filter((item) => item.source === "catalog")
+    .filter((item) => item.recommended)
     .sort((first, second) => (first.stage || 55) - (second.stage || 55))
-    .slice(0, room === "Whole home" ? 7 : 10)
+    .slice(0, roomKey === "whole home" ? 7 : 10)
     .map((item) => item.id);
 }
 
 export function getSuggestedTaskCountForRoom(room) {
-  return cleaningTaskCatalog.filter((item) => item.room === room).length;
+  const roomKey = normalized(room);
+  return cleaningTaskCatalog.filter((item) => normalized(item.room) === roomKey).length;
 }
 
 export function createCustomLibraryItem(title, room = "Other") {
@@ -214,7 +263,7 @@ export function createCustomLibraryItem(title, room = "Other") {
   return {
     id: createId("library-custom"),
     title: cleanTitle,
-    room: String(room || "Other").trim() || "Other",
+    room: getCanonicalHomeRoomName(room) || "Other",
     minutes: 3,
     stage: 55,
     keywords: [],
@@ -229,11 +278,12 @@ export function createRoutineDraftFromLibraryItems(items = []) {
   const seen = new Set();
   for (const item of items) {
     const title = String(item?.title || "").trim();
+    const room = getCanonicalHomeRoomName(item?.room || "Other") || "Other";
     if (!title) continue;
-    const key = normalized(title);
+    const key = `${normalized(room)}::${normalized(title)}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    unique.push(item);
+    unique.push({ ...item, title, room });
   }
 
   const draft = createSimpleRoutineDraft();
@@ -241,18 +291,18 @@ export function createRoutineDraftFromLibraryItems(items = []) {
 
   const groups = new Map();
   for (const item of unique) {
-    const room = String(item.room || "Other").trim() || "Other";
-    if (!groups.has(room)) groups.set(room, []);
-    groups.get(room).push(item);
+    if (!groups.has(item.room)) groups.set(item.room, []);
+    groups.get(item.room).push(item);
   }
 
   const onlyRoom = groups.size === 1 ? [...groups.keys()][0] : "";
-  draft.title = onlyRoom && onlyRoom !== "Whole home" && onlyRoom !== "Other"
-    ? `${onlyRoom} clean`
-    : "My clean";
-  draft.phases = [...groups.entries()].map(([room, roomItems]) => ({
+  draft.title =
+    onlyRoom && onlyRoom !== "Whole home" && onlyRoom !== "Other"
+      ? `${onlyRoom} clean`
+      : "My clean";
+  draft.phases = [...groups.entries()].map(([roomName, roomItems]) => ({
     id: createId("phase"),
-    title: room === "Whole home" ? "Tasks" : room,
+    title: roomName === "Whole home" ? "Tasks" : roomName,
     tasks: roomItems.map((item) => ({
       id: createId("task"),
       title: item.title,
