@@ -159,10 +159,17 @@ export default function Routines({
   }
 
   function openEdit(routineId) {
+    if (isCurrentRoutine(routineId)) return;
     setEditorSeed(null);
     setEditorRoutineId(routineId);
     setEditorOpen(true);
     setOpenMenuId("");
+  }
+
+  function openAdvancedEdit(routineId) {
+    if (isCurrentRoutine(routineId)) return;
+    setOpenMenuId("");
+    onAdvancedEdit(routineId);
   }
 
   function openTaskLibrary(room = "All", preselectRecommended = false) {
@@ -458,14 +465,18 @@ export default function Routines({
                       className="routine-card-menu"
                       id={menuId}
                     >
-                      <button onClick={() => openEdit(routine.id)} type="button">
+                      <button
+                        disabled={isCurrent}
+                        onClick={() => openEdit(routine.id)}
+                        title={isCurrent ? "Finish or discard the current clean before editing this routine." : undefined}
+                        type="button"
+                      >
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          setOpenMenuId("");
-                          onAdvancedEdit(routine.id);
-                        }}
+                        disabled={isCurrent}
+                        onClick={() => openAdvancedEdit(routine.id)}
+                        title={isCurrent ? "Finish or discard the current clean before editing this routine." : undefined}
                         type="button"
                       >
                         Advanced structure
@@ -524,6 +535,11 @@ export default function Routines({
                 {formatRoutineDuration(selectedRoutine)} ·{" "}
                 {getLastRoutineDoneLabel(history, selectedRoutine.id)}
               </p>
+              {isCurrentRoutine(selectedRoutine.id) ? (
+                <p className="muted compact-empty">
+                  Finish or discard the current clean before editing this routine. Its saved checklist stays stable while the clean is in progress.
+                </p>
+              ) : null}
             </div>
             <div className="routine-detail-actions">
               <button
@@ -541,7 +557,9 @@ export default function Routines({
               </button>
               <button
                 className="button ghost"
+                disabled={isCurrentRoutine(selectedRoutine.id)}
                 onClick={() => openEdit(selectedRoutine.id)}
+                title={isCurrentRoutine(selectedRoutine.id) ? "Finish or discard the current clean before editing this routine." : undefined}
                 type="button"
               >
                 Edit routine
@@ -571,7 +589,7 @@ export default function Routines({
 
       <RoutineEditorDialog
         homeRooms={homeRooms}
-        onAdvancedEdit={onAdvancedEdit}
+        onAdvancedEdit={openAdvancedEdit}
         onClose={() => {
           setEditorOpen(false);
           setEditorSeed(null);
