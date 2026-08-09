@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import packageInfo from "../../package.json";
 import { formatRelativeDays } from "../utils/dates.js";
+import { loadAppState } from "../utils/storage.js";
 import {
   appearancePresets,
   getAppearancePresetId
@@ -132,6 +133,9 @@ export default function Settings({
   const health = backupStatus(lastFullBackupExportedAt, backupDue);
   const activePresetId = getAppearancePresetId(appAppearance);
   const activePreset = appearancePresets.find((preset) => preset.id === activePresetId);
+  const starterRestoreLocked = Boolean(
+    loadAppState().activeSession?.templateId === template.id
+  );
 
   function handleImportFile(event) {
     const file = event.target.files?.[0];
@@ -562,10 +566,24 @@ export default function Settings({
         </div>
 
         <div className="settings-action-list">
-          <button className="settings-action-row" onClick={onResetTemplate} type="button">
+          <button
+            className="settings-action-row"
+            disabled={starterRestoreLocked}
+            onClick={onResetTemplate}
+            title={
+              starterRestoreLocked
+                ? "Finish or discard the current clean before restoring the starter plan."
+                : undefined
+            }
+            type="button"
+          >
             <span>
               <strong>Restore starter</strong>
-              <small>Replace the current cleaning plan with the Clean30 starter. Progress is kept.</small>
+              <small>
+                {starterRestoreLocked
+                  ? "Unavailable while a clean from this plan is active."
+                  : "Replace the current cleaning plan with the Clean30 starter. Progress is kept."}
+              </small>
             </span>
             <span aria-hidden="true">›</span>
           </button>
