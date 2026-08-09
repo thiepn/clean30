@@ -12,16 +12,15 @@ function textFile(path) {
   return readFileSync(new URL(path, import.meta.url), "utf8");
 }
 
-test("Phase 17 establishes a fresh PWA release cache and removes older Clean30 caches", () => {
+test("Phase 17 establishes versioned PWA release caches and removes older Clean30 caches", () => {
   const sw = textFile("../public/sw.js");
   const verifier = textFile("../scripts/verify-release.mjs");
 
-  assert.match(sw, /app-shell-v17/);
+  assert.match(sw, /app-shell-v\d+/);
   assert.match(sw, /const CACHE_PREFIX = "clean30-"/);
   assert.match(sw, /key\.startsWith\(CACHE_PREFIX\) && key !== CACHE_NAME/);
   assert.match(sw, /caches\.delete\(key\)/);
-  assert.match(verifier, /app-shell-v17/);
-  assert.match(verifier, /Phase 17 app-shell cache boundary/);
+  assert.match(verifier, /service-worker cache boundary/);
 });
 
 test("PWA update handoff still waits for explicit reload and then claims the new controller", () => {
