@@ -94,8 +94,9 @@ test("Phase 19 production runtime smoke verification is part of local and CI rel
   assert.match(releaseCommand, /npm run verify:runtime/);
   assert.match(ci, /name: Verify production runtime/);
   assert.match(ci, /run: npm run verify:runtime/);
-  assert.match(runtimeVerifier, /npmCommand/);
-  assert.match(runtimeVerifier, /npm run preview|\["run", "preview"/);
+  assert.match(runtimeVerifier, /const viteBin = resolve/);
+  assert.match(runtimeVerifier, /spawn\(\s*process\.execPath/);
+  assert.match(runtimeVerifier, /"preview", "--host"/);
   assert.match(runtimeVerifier, /\/clean30\//);
   assert.match(runtimeVerifier, /scoped HTML assets verified/);
   assert.match(runtimeVerifier, /manifest icons verified over HTTP/);
