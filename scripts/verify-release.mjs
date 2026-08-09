@@ -84,8 +84,13 @@ assert.match(
 );
 assert.match(
   serviceWorker,
-  /app-shell-v7/,
-  "Phase 7 must use a fresh app-shell cache name."
+  /app-shell-v17/,
+  "The release candidate must use the Phase 17 app-shell cache boundary."
+);
+assert.match(
+  serviceWorker,
+  /key\.startsWith\(CACHE_PREFIX\) && key !== CACHE_NAME/,
+  "Service worker activation must remove older Clean30 release caches."
 );
 assert.match(
   serviceWorker,
@@ -131,5 +136,6 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
+console.log("- Phase 17 service-worker cache boundary verified");
 console.log("- service worker offline fallback verified");
 console.log("- node_modules ignore rule verified");
