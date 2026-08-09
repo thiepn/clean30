@@ -2,19 +2,22 @@ import {
   cleaningTaskCatalog,
   routineStarterTemplates
 } from "../data/taskSuggestions.js";
+import { parseDurationMinutes } from "./duration.js";
 import { cloneDeep, createId, normalizeRoutine, normalizeTask } from "./templateUtils.js";
 
 function normalizedTitle(value) {
   return String(value || "").trim().toLowerCase();
 }
 
-function parseMinutes(value) {
-  const matches = String(value || "").match(/\d+(?:\.\d+)?/g);
-  if (!matches?.length) return null;
-  const numbers = matches.map(Number).filter((item) => Number.isFinite(item) && item > 0);
-  if (!numbers.length) return null;
-  if (numbers.length > 1) return Math.round((numbers[0] + numbers[1]) / 2);
-  return Math.round(numbers[0]);
+const GLOBAL_TASK_SECTION_NAMES = new Set(["tasks", "whole home"]);
+
+function sectionScope(sectionTitle) {
+  const key = normalizedTitle(sectionTitle);
+  return !key || GLOBAL_TASK_SECTION_NAMES.has(key) ? "__global__" : key;
+}
+
+function scopedTaskKey(sectionTitle, taskTitle) {
+  return `${sectionScope(sectionTitle)}::${normalizedTitle(taskTitle)}`;
 }
 
 function stageForTitle(title) {
@@ -62,11 +65,19 @@ function createTaskFromTitle(title) {
   };
 }
 
+function isDefaultEmptySection(phase) {
+  return Boolean(
+    phase &&
+      normalizedTitle(phase.title) === "tasks" &&
+      (phase.tasks || []).every((task) => !String(task?.title || "").trim())
+  );
+}
+
 export function getRoutineMinutes(routine) {
   const direct = Number(routine?.estimatedMinutes);
   if (Number.isFinite(direct) && direct > 0) return Math.round(direct);
-  const match = String(routine?.estimatedTime || "").match(/(\d+)/);
-  return match ? Math.max(1, Math.min(600, Number(match[1]))) : 30;
+  const parsed = parseDurationMinutes(routine?.estimatedTime, null);
+  return parsed ? Math.max(1, Math.min(600, parsed)) : 30;
 }
 
 export function hasDuplicateRoutineTitle(title, routines = [], ignoreId = "") {
@@ -122,8 +133,9 @@ export function getSuggestedTaskInfo(title) {
 
 export function getTaskSuggestions(query = "", room = "All", limit = 18) {
   const needle = normalizedTitle(query);
+  const roomKey = normalizedTitle(room);
   return cleaningTaskCatalog
-    .filter((task) => room === "All" || task.room === room)
+    .filter((task) => roomKey === "all" || normalizedTitle(task.room) === roomKey)
     .filter((task) => {
       if (!needle) return true;
       return [task.title, task.room, ...(task.keywords || [])]
@@ -158,7 +170,7 @@ export function parseRoutineTaskText(text) {
 
     const title = cleanListLine(trimmed);
     if (!title) continue;
-    const key = normalizedTitle(title);
+    const key = scopedTaskKey(current.title, title);
     if (seen.has(key)) continue;
     seen.add(key);
     current.tasks.push(title);
@@ -178,7 +190,11 @@ export function appendParsedTaskText(draft, text) {
 
   const next = cloneDeep(draft);
   const existingKeys = new Set(
-    next.phases.flatMap((phase) => phase.tasks.map((task) => normalizedTitle(task.title))).filter(Boolean)
+    next.phases.flatMap((phase) =>
+      (phase.tasks || [])
+        .map((task) => scopedTaskKey(phase.title, task.title))
+        .filter((key) => !key.endsWith("::"))
+    )
   );
 
   if (!parsed.hasHeadings && parsed.sections.length === 1) {
@@ -188,10 +204,11 @@ export function appendParsedTaskText(draft, text) {
       tasks: []
     };
     if (!next.phases.length) next.phases.push(target);
-    const blankOnly = target.tasks.length === 1 && !String(target.tasks[0]?.title || "").trim();
+    const blankOnly =
+      target.tasks.length === 1 && !String(target.tasks[0]?.title || "").trim();
     if (blankOnly) target.tasks = [];
     for (const title of parsed.sections[0].tasks) {
-      const key = normalizedTitle(title);
+      const key = scopedTaskKey(target.title, title);
       if (existingKeys.has(key)) continue;
       existingKeys.add(key);
       target.tasks.push(createTaskFromTitle(title));
@@ -199,11 +216,7 @@ export function appendParsedTaskText(draft, text) {
     return next;
   }
 
-  if (
-    next.phases.length === 1 &&
-    next.phases[0].title === "Tasks" &&
-    next.phases[0].tasks.every((task) => !String(task.title || "").trim())
-  ) {
+  if (next.phases.length === 1 && isDefaultEmptySection(next.phases[0])) {
     next.phases = [];
   }
 
@@ -216,7 +229,7 @@ export function appendParsedTaskText(draft, text) {
       next.phases.push(target);
     }
     for (const title of section.tasks) {
-      const key = normalizedTitle(title);
+      const key = scopedTaskKey(target.title, title);
       if (existingKeys.has(key)) continue;
       existingKeys.add(key);
       target.tasks.push(createTaskFromTitle(title));
@@ -229,19 +242,35 @@ export function addSuggestedTaskToDraft(draft, suggestion, phaseId = "") {
   const next = cloneDeep(draft);
   const title = suggestion?.title || suggestion;
   if (!String(title || "").trim()) return next;
-  const key = normalizedTitle(title);
-  if (
-    next.phases.some((phase) =>
-      phase.tasks.some((task) => normalizedTitle(task.title) === key)
-    )
-  ) {
-    return next;
+  const room = typeof suggestion === "object" ? String(suggestion?.room || "").trim() : "";
+
+  let target = phaseId ? next.phases.find((phase) => phase.id === phaseId) : null;
+  if (!target && room) {
+    const desiredTitle = normalizedTitle(room) === "whole home" ? "Tasks" : room;
+    target = next.phases.find(
+      (phase) => normalizedTitle(phase.title) === normalizedTitle(desiredTitle)
+    );
+    if (!target && next.phases.length === 1 && isDefaultEmptySection(next.phases[0])) {
+      target = next.phases[0];
+      target.title = desiredTitle;
+    }
+    if (!target) {
+      target = { id: createId("phase"), title: desiredTitle || "Tasks", tasks: [] };
+      next.phases.push(target);
+    }
   }
-  let target = next.phases.find((phase) => phase.id === phaseId) || next.phases[0];
+  target ||= next.phases[0];
   if (!target) {
     target = { id: createId("phase"), title: "Tasks", tasks: [] };
     next.phases.push(target);
   }
+
+  const key = scopedTaskKey(target.title, title);
+  const duplicate = next.phases.some((phase) =>
+    (phase.tasks || []).some((task) => scopedTaskKey(phase.title, task.title) === key)
+  );
+  if (duplicate) return next;
+
   if (target.tasks.length === 1 && !String(target.tasks[0]?.title || "").trim()) {
     target.tasks = [];
   }
@@ -272,7 +301,7 @@ export function estimateRoutineMinutes(routine) {
       sum +
       (phase.tasks || []).reduce((taskSum, task) => {
         if (!String(task?.title || "").trim()) return taskSum;
-        const direct = parseMinutes(task.duration);
+        const direct = parseDurationMinutes(task.duration, null);
         const suggested = getSuggestedTaskInfo(task.title)?.minutes;
         return taskSum + (direct || suggested || 3);
       }, 0),
@@ -292,6 +321,31 @@ export function optimizeRoutineTaskOrder(draft) {
       return stageForTitle(first?.title) - stageForTitle(second?.title);
     })
   }));
+  return next;
+}
+
+export function moveRoutineTaskByDrop(draft, draggedTask, targetPhaseId, targetTaskId) {
+  if (!draggedTask?.phaseId || !draggedTask?.taskId || !targetPhaseId || !targetTaskId) {
+    return cloneDeep(draft);
+  }
+
+  const next = cloneDeep(draft);
+  const sourcePhase = next.phases.find((phase) => phase.id === draggedTask.phaseId);
+  const targetPhase = next.phases.find((phase) => phase.id === targetPhaseId);
+  if (!sourcePhase || !targetPhase) return next;
+
+  const sourceIndex = sourcePhase.tasks.findIndex((task) => task.id === draggedTask.taskId);
+  const targetIndexBefore = targetPhase.tasks.findIndex((task) => task.id === targetTaskId);
+  if (sourceIndex < 0 || targetIndexBefore < 0) return next;
+  if (sourcePhase.id === targetPhase.id && draggedTask.taskId === targetTaskId) return next;
+
+  const [task] = sourcePhase.tasks.splice(sourceIndex, 1);
+  let targetIndex = targetPhase.tasks.findIndex((item) => item.id === targetTaskId);
+  if (targetIndex < 0) targetIndex = targetPhase.tasks.length;
+  if (sourcePhase.id === targetPhase.id && sourceIndex < targetIndexBefore) {
+    targetIndex += 1;
+  }
+  targetPhase.tasks.splice(targetIndex, 0, task);
   return next;
 }
 
