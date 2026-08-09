@@ -70,7 +70,12 @@ test("backup and privacy remain understandable without exposing data-format inte
 
 test("advanced controls are isolated from everyday Settings", () => {
   const settings = textFile("../src/components/Settings.jsx");
-  assert.match(settings, /Open advanced plan editor/);
+  assert.match(settings, /Manage regular tasks/);
+  assert.match(settings, /Manage routines/);
+  assert.match(settings, /Home details/);
+  assert.match(settings, /Schedule/);
+  assert.match(settings, /Import and export/);
+  assert.match(settings, /Restore starter/);
   assert.match(settings, /Start each day empty/);
   assert.match(settings, /Reset Progress/);
   assert.match(settings, /Reset all local data/);
