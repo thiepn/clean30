@@ -103,8 +103,8 @@ assert.match(
 );
 assert.match(
   serviceWorker,
-  /app-shell-v18/,
-  "The release candidate must use the Phase 18 app-shell cache boundary."
+  /app-shell-v19/,
+  "The final release candidate must use the Phase 19 app-shell cache boundary."
 );
 assert.match(
   serviceWorker,
@@ -195,7 +195,7 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
-console.log("- Phase 18 service-worker cache boundary verified");
+console.log("- Phase 19 service-worker cache boundary verified");
 console.log(`- dependency floor verified: Vite ${lockedVite}, React ${lockedReact}`);
 console.log(`- security floor verified: PostCSS ${lockedPostcss}, esbuild ${lockedEsbuild}`);
 console.log("- service worker offline fallback verified");
