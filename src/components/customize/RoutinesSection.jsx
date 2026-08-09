@@ -96,7 +96,8 @@ export default function RoutinesSection({
   activeSession,
   templateId,
   autoAddRoutine = false,
-  initialEditorTab = "routines"
+  initialEditorTab = "routines",
+  focusedTodayOnly = false
 }) {
   const autoAddHandled = useRef(false);
   const [editorTab, setEditorTab] = useState(initialEditorTab);
@@ -402,56 +403,58 @@ export default function RoutinesSection({
 
   return (
     <>
-      <section className="panel">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Routines</p>
-            <h2>Routines</h2>
-            <p>Edit reusable cleaning sessions. Today defaults are in the tab beside them.</p>
-          </div>
-          {editorTab === "routines" ? (
-            <div className="card-actions compact-actions routine-editor-toolbar">
-              <button
-                className={routineReorderMode ? "button edit-action small" : "button ghost small"}
-                type="button"
-                disabled={!canEdit || visibleRoutines.length < 2}
-                onClick={() => setRoutineReorderMode((current) => !current)}
-              >
-                Reorder
-              </button>
-              <button
-                className={showArchived ? "button edit-action small" : "button ghost small"}
-                type="button"
-                onClick={() => setShowArchived((current) => !current)}
-              >
-                {showArchived ? "Hide archived" : "Show archived"}
-              </button>
-              <button className="button edit-action small" type="button" disabled={!canEdit} onClick={addRoutine}>
-                Add
-              </button>
+      {!focusedTodayOnly ? (
+        <section className="panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Routines</p>
+              <h2>Routines</h2>
+              <p>Edit reusable cleaning sessions. Today defaults are in the tab beside them.</p>
             </div>
-          ) : null}
-        </div>
+            {editorTab === "routines" ? (
+              <div className="card-actions compact-actions routine-editor-toolbar">
+                <button
+                  className={routineReorderMode ? "button edit-action small" : "button ghost small"}
+                  type="button"
+                  disabled={!canEdit || visibleRoutines.length < 2}
+                  onClick={() => setRoutineReorderMode((current) => !current)}
+                >
+                  Reorder
+                </button>
+                <button
+                  className={showArchived ? "button edit-action small" : "button ghost small"}
+                  type="button"
+                  onClick={() => setShowArchived((current) => !current)}
+                >
+                  {showArchived ? "Hide archived" : "Show archived"}
+                </button>
+                <button className="button edit-action small" type="button" disabled={!canEdit} onClick={addRoutine}>
+                  Add
+                </button>
+              </div>
+            ) : null}
+          </div>
 
-        <div className="tab-row" role="tablist" aria-label="Routine editor sections">
-          <button
-            className={editorTab === "today" ? "tab active" : "tab"}
-            type="button"
-            onClick={() => setEditorTab("today")}
-          >
-            Today defaults
-          </button>
-          <button
-            className={editorTab === "routines" ? "tab active" : "tab"}
-            type="button"
-            onClick={() => setEditorTab("routines")}
-          >
-            Routines
-          </button>
-        </div>
-      </section>
+          <div className="tab-row" role="tablist" aria-label="Routine editor sections">
+            <button
+              className={editorTab === "today" ? "tab active" : "tab"}
+              type="button"
+              onClick={() => setEditorTab("today")}
+            >
+              Today defaults
+            </button>
+            <button
+              className={editorTab === "routines" ? "tab active" : "tab"}
+              type="button"
+              onClick={() => setEditorTab("routines")}
+            >
+              Routines
+            </button>
+          </div>
+        </section>
+      ) : null}
 
-      {editorTab === "today" ? (
+      {focusedTodayOnly || editorTab === "today" ? (
         <DailyRulesSection
           dailyRules={todayDefaults}
           weekdayDefaultsEnabled={todayWeekdayDefaultsEnabled}
@@ -462,7 +465,7 @@ export default function RoutinesSection({
         />
       ) : null}
 
-      {editorTab === "routines" ? (
+      {!focusedTodayOnly && editorTab === "routines" ? (
         <>
       <section className="panel">
         {visibleRoutines.length ? (
