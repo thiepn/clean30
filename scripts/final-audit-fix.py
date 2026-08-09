@@ -20,7 +20,13 @@ def replace_once(path, old, new):
 
 def regex_once(path, pattern, replacement):
     text = read(path)
-    updated, count = re.subn(pattern, replacement, text, count=1, flags=re.S)
+    updated, count = re.subn(
+        pattern,
+        lambda _match: replacement,
+        text,
+        count=1,
+        flags=re.S
+    )
     if count != 1:
         raise SystemExit(f"Expected one regex match in {path}, found {count}: {pattern[:100]!r}")
     write(path, updated)
@@ -212,7 +218,6 @@ replace_once(
       templateId: activeTemplateId
     });'''
 )
-# Both routine-card and detail labels should be template-aware.
 text = read("src/components/Routines.jsx")
 text = text.replace(
     'getLastRoutineDoneLabel(history, routine.id)',
