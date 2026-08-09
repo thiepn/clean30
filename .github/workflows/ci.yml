@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit release dependencies
+        run: npm run audit:release
+
       - name: Verify personal template export
         run: |
           npm run export:personal-template
