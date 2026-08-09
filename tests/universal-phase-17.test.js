@@ -56,6 +56,7 @@ test("advanced routine editing becomes read-only while the active template has a
   assert.match(customize, /const routinesCanEdit = focusedTodayEditor/);
   assert.match(customize, /canEdit=\{routinesCanEdit\}/);
   assert.match(customize, /Editing paused while a clean is active/);
+  assert.match(customize, /const editorStatus = activeSection === "routines" && !routinesCanEdit/);
   assert.match(customize, /resetTemplateLocked=\{activePlanSession\}/);
   assert.match(customize, /disabled=\{resetTemplateLocked\}/);
 });
@@ -68,6 +69,15 @@ test("Advanced Settings blocks starter restore while that cleaning plan has an a
   assert.match(settings, /loadAppState\(\)\.activeSession\?\.templateId === template\.id/);
   assert.match(settings, /disabled=\{starterRestoreLocked\}/);
   assert.match(settings, /Unavailable while a clean from this plan is active/);
+});
+
+test("release CI uses current Node 24-based GitHub Action majors while testing the app on Node 22", () => {
+  const ci = textFile("../.github/workflows/ci.yml");
+
+  assert.match(ci, /uses: actions\/checkout@v7/);
+  assert.match(ci, /uses: actions\/setup-node@v7/);
+  assert.match(ci, /node-version: 22/);
+  assert.doesNotMatch(ci, /actions\/(?:checkout|setup-node)@v4/);
 });
 
 test("Phase 17 release hardening remains schema-free and preserves deployment and persistence invariants", () => {
