@@ -105,7 +105,7 @@ function inferTaskRoom(task, phaseTitle, homeRooms) {
 function routineTaskItems(routines = [], homeRooms = []) {
   const items = [];
   for (const routine of Array.isArray(routines) ? routines : []) {
-    if (routine.id === "daily-rules") continue;
+    if (routine.id === "daily-rules" || routine.archived) continue;
     for (const phase of routine.phases || []) {
       for (const task of phase.tasks || []) {
         const title = String(task?.title || "").trim();
