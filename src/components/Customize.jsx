@@ -88,6 +88,15 @@ export default function Customize({
   });
   const [message, setMessage] = useState("");
   const focusedTodayEditor = activeSection === "routines" && entryIntent === "today";
+  const activePlanSession = Boolean(
+    activeSession?.templateId === activeTemplate.id
+  );
+  const todayDefaultsLocked = Boolean(
+    activePlanSession && activeSession?.routineId === "daily-rules"
+  );
+  const routinesCanEdit = focusedTodayEditor
+    ? !todayDefaultsLocked
+    : !activePlanSession;
 
   const selectedRoutine = useMemo(() => {
     const visibleRoutines = activeTemplate.routines.filter((routine) => routine.id !== "daily-rules");
@@ -203,6 +212,7 @@ export default function Customize({
           onResetTemplate={onResetTemplate}
           onResetHistory={onResetHistory}
           onResetAll={onResetAll}
+          resetTemplateLocked={activePlanSession}
         />
       );
     }
@@ -215,7 +225,7 @@ export default function Customize({
         todayWeekdayDefaults={activeTemplate.todayWeekdayDefaults}
         selectedRoutine={selectedRoutine}
         selectedRoutineId={selectedRoutineId}
-        canEdit
+        canEdit={routinesCanEdit}
         onSelectRoutine={setSelectedRoutineId}
         onEditTemplate={editTemplate}
         onConfirmEdit={confirmTemplateEdit}
@@ -229,6 +239,9 @@ export default function Customize({
   }
 
   const activeSectionMeta = editorSections.find((section) => section.id === activeSection);
+  const editingLockMessage = focusedTodayEditor
+    ? "A legacy Today session is active. Finish or discard it before changing regular Today tasks."
+    : "A current clean is active. Finish or discard it before editing routines so its saved checklist stays consistent.";
 
   return (
     <div className="screen-stack">
@@ -251,6 +264,13 @@ export default function Customize({
           </button>
         ) : null}
       </section>
+
+      {activeSection === "routines" && !routinesCanEdit ? (
+        <div className="callout small" role="status">
+          <strong>Editing paused while a clean is active.</strong>
+          <span>{editingLockMessage}</span>
+        </div>
+      ) : null}
 
       {!focusedTodayEditor ? (
         <section className="panel advanced-menu-panel">
@@ -329,7 +349,8 @@ function ImportExportSection({
   onImportFullBackupClick,
   onResetTemplate,
   onResetHistory,
-  onResetAll
+  onResetAll,
+  resetTemplateLocked = false
 }) {
   return (
     <section className="panel">
@@ -386,7 +407,17 @@ function ImportExportSection({
           <span className="button danger-ghost small">Open</span>
         </summary>
         <div className="settings-actions">
-          <button className="button danger-ghost" type="button" onClick={onResetTemplate}>
+          <button
+            className="button danger-ghost"
+            type="button"
+            disabled={resetTemplateLocked}
+            onClick={onResetTemplate}
+            title={
+              resetTemplateLocked
+                ? "Finish or discard the current clean before resetting this cleaning plan."
+                : undefined
+            }
+          >
             Reset current template
           </button>
           <button className="button danger-ghost" type="button" onClick={onResetHistory}>
@@ -396,6 +427,11 @@ function ImportExportSection({
             Reset all data
           </button>
         </div>
+        {resetTemplateLocked ? (
+          <p className="muted compact-empty" role="status">
+            Reset current template is unavailable while a clean from this plan is active.
+          </p>
+        ) : null}
       </details>
 
       {message ? <p className="form-message">{message}</p> : null}
