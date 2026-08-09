@@ -74,14 +74,15 @@ test("release CI now treats dependency advisories as a release gate", () => {
   assert.match(ci, /run: npm run audit:release/);
 });
 
-test("Phase 18 advances the PWA cache so dependency-built assets cannot share the Phase 17 cache", () => {
+test("Phase 18 established a versioned PWA cache boundary that future release phases may advance", () => {
   const sw = textFile("../public/sw.js");
   const verifier = textFile("../scripts/verify-release.mjs");
+  const cacheMatch = sw.match(/app-shell-v(\d+)/);
 
-  assert.match(sw, /app-shell-v18/);
-  assert.doesNotMatch(sw, /app-shell-v17/);
-  assert.match(verifier, /app-shell-v18/);
-  assert.match(verifier, /Phase 18 service-worker cache boundary verified/);
+  assert.ok(cacheMatch, "The service worker must retain a versioned app-shell cache.");
+  assert.ok(Number(cacheMatch[1]) >= 18, "The current cache boundary must not regress below Phase 18.");
+  assert.match(verifier, /app-shell-v\d+/);
+  assert.match(verifier, /service-worker cache boundary verified/);
   assert.match(sw, /key\.startsWith\(CACHE_PREFIX\) && key !== CACHE_NAME/);
 });
 
