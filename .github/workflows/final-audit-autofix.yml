@@ -25,11 +25,13 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Recover and run audit patcher
+      - name: Apply final audit fixes
         run: |
-          git show b24eabe7a8da84de1d87fd9bfc152ae8260a8c51:.github/workflows/final-audit-autofix.yml > /tmp/final-audit-original.yml
-          sed -n "/python <<'PY'/,/^          PY$/p" /tmp/final-audit-original.yml | sed '1d;$d;s/^          //' > /tmp/final-audit-fix.py
-          python /tmp/final-audit-fix.py
+          if [ -f scripts/final-audit-fix.py ]; then
+            python scripts/final-audit-fix.py
+          else
+            echo "Final audit patch script is not present yet."
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -41,7 +43,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src scripts tests .github/workflows/deploy.yml
+          git add src scripts/verify-runtime.mjs tests .github/workflows/deploy.yml
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
