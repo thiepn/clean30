@@ -41,9 +41,9 @@ test("PWA manifest has stable Clean30 identity and universal copy", () => {
   assert.ok(manifest.icons.every((icon) => icon.src.startsWith("/clean30/")));
 });
 
-test("service worker uses a fresh cache and always returns an offline navigation response", () => {
+test("service worker uses the current release cache and always returns an offline navigation response", () => {
   const sw = textFile("../public/sw.js");
-  assert.match(sw, /app-shell-v7/);
+  assert.match(sw, /app-shell-v17/);
   assert.match(sw, /const BASE_PATH = "\/clean30\/";/);
   assert.match(sw, /async function getNavigationFallback/);
   assert.match(sw, /new Response\(OFFLINE_FALLBACK_HTML/);
