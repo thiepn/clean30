@@ -6,15 +6,17 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   refresh-lockfile:
     if: github.head_ref == 'redesign/friction-elimination'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Phase 18 branch
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -22,14 +24,27 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Refresh dependency lockfile within current major ranges
+      - name: Raise tested dependency floors
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
+          packageJson.dependencies['@vitejs/plugin-react'] = '^5.2.0';
+          packageJson.dependencies.react = '^19.2.8';
+          packageJson.dependencies['react-dom'] = '^19.2.8';
+          packageJson.dependencies.vite = '^7.3.6';
+          packageJson.scripts['audit:release'] = 'npm audit --audit-level=low';
+          writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
+          NODE
+
+      - name: Refresh dependency lockfile
         run: npm update --package-lock-only
 
       - name: Install refreshed dependency graph
         run: npm ci
 
       - name: Audit refreshed dependency graph
-        run: npm audit --audit-level=low
+        run: npm run audit:release
 
       - name: Run tests
         run: npm test
@@ -40,10 +55,14 @@ jobs:
       - name: Verify release artifacts
         run: npm run verify:release
 
-      - name: Upload refreshed lockfile
-        uses: actions/upload-artifact@v7
-        with:
-          name: phase18-package-lock
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit refreshed dependency baseline
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo "Dependency baseline already current."
+          else
+            git commit -m "Refresh Phase 18 dependency baseline"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
