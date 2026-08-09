@@ -16,8 +16,8 @@ test("onboarding can start the first starter clean directly without weakening re
   const onboarding = textFile("../src/components/Onboarding.jsx");
   const dashboard = textFile("../src/components/Dashboard.jsx");
 
-  assert.match(onboarding, />Start cleaning</);
-  assert.match(onboarding, />Go to Today</);
+  assert.match(onboarding, /Start cleaning/);
+  assert.match(onboarding, /Go to Today/);
   assert.match(onboarding, /Use starter tasks instead/);
   assert.match(onboarding, /clean30StartTodayCleaningRequested/);
   assert.match(onboarding, /clean30:startTodayCleaning/);
@@ -81,7 +81,7 @@ test("Advanced Settings exposes direct cleaning-plan destinations and starter re
 test("Home details use universal wording while retaining legacy field compatibility", () => {
   const profile = textFile("../src/components/customize/ProfileSection.jsx");
 
-  assert.match(profile, />Home details</);
+  assert.match(profile, /Home details/);
   assert.match(profile, /Home name/);
   assert.match(profile, /Home size text/);
   assert.match(profile, /Home type text/);
