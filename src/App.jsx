@@ -1181,7 +1181,7 @@ export default function App() {
             ? "Back to Settings"
             : editorContext.origin === "routines"
               ? "Back to Routines"
-              : "Back to Dashboard"
+              : "Back to Today"
         }
       />
     );
@@ -1229,7 +1229,10 @@ export default function App() {
         onUpdateStartTodayEmpty={updateStartTodayEmpty}
         onRestartOnboarding={restartOnboarding}
         onOpenHelp={() => setHelpOpen(true)}
-        onManageCustomize={() => openInternalEditor("profile", "settings")}
+        onManageCustomize={(section = "profile", intent = null) =>
+          openInternalEditor(section, "settings", intent)
+        }
+        onResetTemplate={resetCurrentTemplateToDefault}
         onResetAll={resetEverything}
         onResetHistory={resetOnlyHistory}
       />
