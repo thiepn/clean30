@@ -1,0 +1,49 @@
+name: Phase 18 dependency refresh
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  refresh-lockfile:
+    if: github.head_ref == 'redesign/friction-elimination'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Refresh dependency lockfile within current major ranges
+        run: npm update --package-lock-only
+
+      - name: Install refreshed dependency graph
+        run: npm ci
+
+      - name: Audit refreshed dependency graph
+        run: npm audit --audit-level=low
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify release artifacts
+        run: npm run verify:release
+
+      - name: Upload refreshed lockfile
+        uses: actions/upload-artifact@v7
+        with:
+          name: phase18-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 1
