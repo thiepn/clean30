@@ -63,7 +63,12 @@ export function routineCoversRoom(
   });
 }
 
-export function getLastFullRoomRoutineCompletion(room, routines = [], history = []) {
+export function getLastFullRoomRoutineCompletion(
+  room,
+  routines = [],
+  history = [],
+  templateId = ""
+) {
   const routineIds = new Set(
     (Array.isArray(routines) ? routines : [])
       .filter((routine) => routineCoversRoom(routine, room))
@@ -77,6 +82,7 @@ export function getLastFullRoomRoutineCompletion(room, routines = [], history = 
       .filter(
         (entry) =>
           routineIds.has(entry?.routineId) &&
+          (!templateId || !entry?.templateId || entry.templateId === templateId) &&
           Number(entry?.percent) >= 100 &&
           validFinishedAt(entry)
       )
@@ -89,10 +95,16 @@ export function getRoomCareStatus({
   room,
   routines = [],
   history = [],
-  currentDateKey = getTodayKey()
+  currentDateKey = getTodayKey(),
+  templateId = ""
 } = {}) {
   const suggestedIntervalDays = getSuggestedRoomCareDays(room);
-  const lastCompletedAt = getLastFullRoomRoutineCompletion(room, routines, history);
+  const lastCompletedAt = getLastFullRoomRoutineCompletion(
+    room,
+    routines,
+    history,
+    templateId
+  );
 
   if (!lastCompletedAt) {
     return {
@@ -147,7 +159,8 @@ export function rankRoomsForCare({
   rooms = [],
   routines = [],
   history = [],
-  currentDateKey = getTodayKey()
+  currentDateKey = getTodayKey(),
+  templateId = ""
 } = {}) {
   const originalOrder = new Map(
     (Array.isArray(rooms) ? rooms : []).map((room, index) => [room, index])
@@ -155,7 +168,7 @@ export function rankRoomsForCare({
 
   return (Array.isArray(rooms) ? rooms : [])
     .map((room) =>
-      getRoomCareStatus({ room, routines, history, currentDateKey })
+      getRoomCareStatus({ room, routines, history, currentDateKey, templateId })
     )
     .sort((first, second) => {
       const priorityDifference =
