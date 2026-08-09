@@ -5,12 +5,12 @@ import { fileURLToPath } from "node:url";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(currentDir, "..");
+const viteBin = resolve(rootDir, "node_modules", "vite", "bin", "vite.js");
 const host = "127.0.0.1";
 const port = 4173;
 const basePath = "/clean30/";
 const baseUrl = `http://${host}:${port}`;
 const appUrl = `${baseUrl}${basePath}`;
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const serverOutput = [];
 
 function collectOutput(chunk) {
@@ -59,8 +59,8 @@ async function fetchRequired(pathname, label = pathname) {
 }
 
 const preview = spawn(
-  npmCommand,
-  ["run", "preview", "--", "--host", host, "--port", String(port), "--strictPort"],
+  process.execPath,
+  [viteBin, "preview", "--host", host, "--port", String(port), "--strictPort"],
   {
     cwd: rootDir,
     env: { ...process.env, BROWSER: "none" },
@@ -122,6 +122,10 @@ try {
 } finally {
   if (!preview.killed) preview.kill("SIGTERM");
   await new Promise((resolveWait) => {
+    if (preview.exitCode !== null) {
+      resolveWait();
+      return;
+    }
     const timeout = setTimeout(resolveWait, 1500);
     preview.once("exit", () => {
       clearTimeout(timeout);
