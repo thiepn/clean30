@@ -1,0 +1,1536 @@
+name: Clean30 Final Audit Autofix
+
+on:
+  push:
+    branches:
+      - redesign/friction-elimination
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: redesign/friction-elimination
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Apply final audit fixes
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(path):
+              return Path(path).read_text(encoding="utf-8")
+
+          def write(path, text):
+              Path(path).write_text(text, encoding="utf-8")
+
+          def replace_once(path, old, new):
+              text = read(path)
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one match in {path}, got {count}: {old[:120]!r}")
+              write(path, text.replace(old, new, 1))
+
+          def sub_once(path, pattern, replacement, flags=re.S):
+              text = read(path)
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one regex match in {path}, got {count}: {pattern[:120]!r}")
+              write(path, updated)
+
+          # Shared duration parsing: task estimates must understand minutes, ranges, and hours.
+          write("src/utils/duration.js", '''function average(first, second = first) {
+            return (Number(first) + Number(second)) / 2;
+          }
+
+          export function parseDurationMinutes(value, fallback = null) {
+            const raw = String(value || "").trim().toLowerCase();
+            if (!raw) return fallback;
+
+            const hourRange = raw.match(
+              /(\d+(?:\.\d+)?)\s*(?:[-–]\s*(\d+(?:\.\d+)?))?\s*(?:hours?|hrs?|hr|h)\b/i
+            );
+            if (hourRange) {
+              let minutes = average(hourRange[1], hourRange[2] || hourRange[1]) * 60;
+              if (!hourRange[2]) {
+                const tail = raw.slice((hourRange.index || 0) + hourRange[0].length);
+                const minutePart = tail.match(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?|min|m)\b/i);
+                if (minutePart) minutes += Number(minutePart[1]);
+              }
+              return Number.isFinite(minutes) && minutes > 0 ? Math.max(1, Math.round(minutes)) : fallback;
+            }
+
+            const minuteRange = raw.match(
+              /(\d+(?:\.\d+)?)\s*(?:[-–]\s*(\d+(?:\.\d+)?))?\s*(?:minutes?|mins?|min|m)\b/i
+            );
+            if (minuteRange) {
+              const minutes = average(minuteRange[1], minuteRange[2] || minuteRange[1]);
+              return Number.isFinite(minutes) && minutes > 0 ? Math.max(1, Math.round(minutes)) : fallback;
+            }
+
+            const numbers = raw.match(/\d+(?:\.\d+)?/g)?.map(Number).filter(Number.isFinite) || [];
+            if (!numbers.length) return fallback;
+            const minutes = numbers.length > 1 ? average(numbers[0], numbers[1]) : numbers[0];
+            return minutes > 0 ? Math.max(1, Math.round(minutes)) : fallback;
+          }
+          '''.replace("          ", ""))
+
+          # Routine builder: room-scoped dedupe, accurate duration parsing, and correct drag/drop behavior.
+          replace_once(
+              "src/utils/routineLibrary.js",
+              'import { cleaningTaskCatalog, routineStarterTemplates } from "../data/taskSuggestions.js";\nimport { createId, normalizeRoutine } from "./templateUtils.js";',
+              'import { cleaningTaskCatalog, routineStarterTemplates } from "../data/taskSuggestions.js";\nimport { parseDurationMinutes } from "./duration.js";\nimport { createId, normalizeRoutine } from "./templateUtils.js";'
+          )
+          sub_once(
+              "src/utils/routineLibrary.js",
+              r'function parseMinutes\(value, fallback = null\) \{.*?\n\}\n\nfunction stageForTitle',
+              'function stageForTitle'
+          )
+          replace_once(
+              "src/utils/routineLibrary.js",
+              '''function normalizedTitle(value) {
+            return String(value || "").trim().toLowerCase();
+          }
+          '''.replace("          ", ""),
+              '''function normalizedTitle(value) {
+            return String(value || "").trim().toLowerCase();
+          }
+
+          const GLOBAL_TASK_SECTION_NAMES = new Set(["tasks", "whole home"]);
+
+          function sectionScope(sectionTitle) {
+            const key = normalizedTitle(sectionTitle);
+            return !key || GLOBAL_TASK_SECTION_NAMES.has(key) ? "__global__" : key;
+          }
+
+          function scopedTaskKey(sectionTitle, taskTitle) {
+            return `${sectionScope(sectionTitle)}::${normalizedTitle(taskTitle)}`;
+          }
+          '''.replace("          ", "")
+          )
+          sub_once(
+              "src/utils/routineLibrary.js",
+              r'export function parseRoutineTaskText\(text\) \{.*?\n\}\n\nexport function appendParsedTaskText',
+              '''export function parseRoutineTaskText(text) {
+            const sections = [];
+            let current = { title: "Tasks", tasks: [] };
+            let sawHeading = false;
+            const seen = new Set();
+
+            function pushCurrent() {
+              if (!current.tasks.length) return;
+              sections.push(current);
+              current = { title: "Tasks", tasks: [] };
+            }
+
+            for (const rawLine of String(text || "").split(/\\r?\\n/)) {
+              if (isHeadingLine(rawLine)) {
+                pushCurrent();
+                current = { title: headingText(rawLine), tasks: [] };
+                sawHeading = true;
+                continue;
+              }
+              const title = cleanTaskLine(rawLine);
+              if (!title) continue;
+              const key = scopedTaskKey(current.title, title);
+              if (seen.has(key)) continue;
+              seen.add(key);
+              current.tasks.push(title);
+            }
+            pushCurrent();
+
+            return {
+              sections,
+              taskCount: sections.reduce((total, section) => total + section.tasks.length, 0),
+              hasHeadings: sawHeading
+            };
+          }
+
+          export function appendParsedTaskText'''.replace("          ", "")
+          )
+          sub_once(
+              "src/utils/routineLibrary.js",
+              r'export function appendParsedTaskText\(draft, text\) \{.*?\n\}\n\nexport function estimateTaskMinutes',
+              '''export function appendParsedTaskText(draft, text) {
+            const parsed = parseRoutineTaskText(text);
+            if (!parsed.taskCount) return draft;
+            const next = createRoutineEditorDraft(draft);
+            const existingKeys = new Set(
+              next.phases.flatMap((phase) =>
+                phase.tasks
+                  .map((task) => scopedTaskKey(phase.title, task.title))
+                  .filter((key) => !key.endsWith("::"))
+              )
+            );
+
+            if (!parsed.hasHeadings) {
+              const target = next.phases[0] || { id: createId("phase"), title: "Tasks", tasks: [] };
+              if (!next.phases.length) next.phases.push(target);
+              for (const title of parsed.sections.flatMap((section) => section.tasks)) {
+                const key = scopedTaskKey(target.title, title);
+                if (existingKeys.has(key)) continue;
+                existingKeys.add(key);
+                target.tasks.push(createTaskFromTitle(title));
+              }
+              return next;
+            }
+
+            for (const section of parsed.sections) {
+              let target = next.phases.find(
+                (phase) => normalizedTitle(phase.title) === normalizedTitle(section.title)
+              );
+              if (!target) {
+                if (
+                  next.phases.length === 1 &&
+                  isDefaultEmptySection(next.phases[0]) &&
+                  normalizedTitle(next.phases[0].title) === "tasks"
+                ) {
+                  target = next.phases[0];
+                  target.title = section.title;
+                } else {
+                  target = { id: createId("phase"), title: section.title, tasks: [] };
+                  next.phases.push(target);
+                }
+              }
+              for (const title of section.tasks) {
+                const key = scopedTaskKey(target.title, title);
+                if (existingKeys.has(key)) continue;
+                existingKeys.add(key);
+                target.tasks.push(createTaskFromTitle(title));
+              }
+            }
+            return next;
+          }
+
+          export function estimateTaskMinutes'''.replace("          ", "")
+          )
+          replace_once(
+              "src/utils/routineLibrary.js",
+              '  const direct = parseMinutes(task?.duration, null);',
+              '  const direct = parseDurationMinutes(task?.duration, null);'
+          )
+          sub_once(
+              "src/utils/routineLibrary.js",
+              r'export function addSuggestedTaskToDraft\(draft, suggestion, phaseId = null\) \{.*?\n\}\n\nexport function optimizeRoutineTaskOrder',
+              '''export function addSuggestedTaskToDraft(draft, suggestion, phaseId = null) {
+            const title = typeof suggestion === "string" ? suggestion : suggestion?.title;
+            if (!String(title || "").trim()) return draft;
+            const room = typeof suggestion === "object" ? String(suggestion?.room || "").trim() : "";
+            const next = createRoutineEditorDraft(draft);
+
+            let target = phaseId ? next.phases.find((phase) => phase.id === phaseId) : null;
+            if (!target && room) {
+              const desiredTitle = room === "Whole home" ? "Tasks" : room;
+              target = next.phases.find(
+                (phase) => normalizedTitle(phase.title) === normalizedTitle(desiredTitle)
+              );
+              if (!target && next.phases.length === 1 && isDefaultEmptySection(next.phases[0])) {
+                target = next.phases[0];
+                target.title = desiredTitle;
+              }
+              if (!target) {
+                target = { id: createId("phase"), title: desiredTitle || "Tasks", tasks: [] };
+                next.phases.push(target);
+              }
+            }
+            target ||= next.phases[0];
+            if (!target) {
+              target = { id: createId("phase"), title: "Tasks", tasks: [] };
+              next.phases.push(target);
+            }
+
+            const key = scopedTaskKey(target.title, title);
+            if (
+              next.phases.some((phase) =>
+                phase.tasks.some(
+                  (task) => scopedTaskKey(phase.title, task.title) === key
+                )
+              )
+            ) {
+              return next;
+            }
+            target.tasks.push(createTaskFromTitle(String(title).trim()));
+            return next;
+          }
+
+          export function optimizeRoutineTaskOrder'''.replace("          ", "")
+          )
+          replace_once(
+              "src/utils/routineLibrary.js",
+              'export function createRoutineDraftFromTemplate(templateId) {',
+              '''export function moveRoutineTaskByDrop(draft, draggedTask, targetPhaseId, targetTaskId) {
+            if (!draggedTask?.phaseId || !draggedTask?.taskId || !targetPhaseId || !targetTaskId) {
+              return draft;
+            }
+            const next = createRoutineEditorDraft(draft);
+            const sourcePhase = next.phases.find((phase) => phase.id === draggedTask.phaseId);
+            const targetPhase = next.phases.find((phase) => phase.id === targetPhaseId);
+            if (!sourcePhase || !targetPhase) return draft;
+
+            const sourceIndex = sourcePhase.tasks.findIndex((task) => task.id === draggedTask.taskId);
+            const targetIndexBefore = targetPhase.tasks.findIndex((task) => task.id === targetTaskId);
+            if (sourceIndex < 0 || targetIndexBefore < 0) return draft;
+            if (sourcePhase.id === targetPhase.id && draggedTask.taskId === targetTaskId) return next;
+
+            const [task] = sourcePhase.tasks.splice(sourceIndex, 1);
+            let targetIndex = targetPhase.tasks.findIndex((item) => item.id === targetTaskId);
+            if (targetIndex < 0) targetIndex = targetPhase.tasks.length;
+            if (sourcePhase.id === targetPhase.id && sourceIndex < targetIndexBefore) {
+              targetIndex += 1;
+            }
+            targetPhase.tasks.splice(targetIndex, 0, task);
+            return next;
+          }
+
+          export function createRoutineDraftFromTemplate(templateId) {'''.replace("          ", "")
+          )
+
+          # Home/Task Library: canonical rooms, reserved-name safety, user-task precedence, and room-aware dedupe.
+          write("src/utils/homeLibrary.js", '''import { cleaningTaskCatalog } from "../data/taskSuggestions.js";
+          import { parseDurationMinutes } from "./duration.js";
+          import { createId } from "./templateUtils.js";
+          import { createSimpleRoutineDraft, estimateRoutineMinutes } from "./routineLibrary.js";
+
+          const UTILITY_ZONE_NAMES = new Set(["floors", "other"]);
+          const VIRTUAL_ROOM_NAMES = new Set(["all", "whole home"]);
+          const GENERIC_SECTION_NAMES = new Set([
+            "tasks",
+            "task",
+            "start",
+            "finish",
+            "final check",
+            "surfaces",
+            "floors",
+            "daily maintenance",
+            "minimum line",
+            "today defaults"
+          ]);
+
+          export const homeRoomPresets = [
+            { name: "Kitchen", description: "Dishes, counters, appliances, floor" },
+            { name: "Bathroom", description: "Toilet, sink, mirror, shower or bath" },
+            { name: "Bedroom", description: "Bed, clothes, furniture, floor" },
+            { name: "Living room", description: "Clutter, sofa, surfaces, floor" },
+            { name: "Entrance", description: "Shoes, entry surfaces, floor" },
+            { name: "Office", description: "Desk, electronics, shelves, floor" },
+            { name: "Dining room", description: "Table, chairs, surfaces, floor" },
+            { name: "Laundry", description: "Laundry area, machine, baskets" },
+            { name: "Balcony", description: "Furniture, railing, outdoor floor" }
+          ];
+
+          function normalized(value) {
+            return String(value || "").trim().toLowerCase();
+          }
+
+          export function getCanonicalHomeRoomName(value) {
+            const name = String(value || "").trim();
+            if (!name) return "";
+            return homeRoomPresets.find((preset) => normalized(preset.name) === normalized(name))?.name || name;
+          }
+
+          export function isReservedHomeRoomName(value) {
+            const key = normalized(value);
+            return UTILITY_ZONE_NAMES.has(key) || VIRTUAL_ROOM_NAMES.has(key);
+          }
+
+          function roomNameFromZone(zone) {
+            return typeof zone === "string" ? zone.trim() : String(zone?.name || "").trim();
+          }
+
+          function uniqueNames(values = []) {
+            const seen = new Set();
+            const result = [];
+            for (const value of values) {
+              const name = String(value || "").trim();
+              const key = normalized(name);
+              if (!name || seen.has(key)) continue;
+              seen.add(key);
+              result.push(name);
+            }
+            return result;
+          }
+
+          function catalogTaskForTitle(title) {
+            return cleaningTaskCatalog.find((item) => normalized(item.title) === normalized(title)) || null;
+          }
+
+          export function getHomeRoomNames(zones = []) {
+            return uniqueNames(
+              (Array.isArray(zones) ? zones : [])
+                .map(roomNameFromZone)
+                .map(getCanonicalHomeRoomName)
+                .filter((name) => name && !isReservedHomeRoomName(name))
+            );
+          }
+
+          export function mergeHomeRoomsWithZones(currentZones = [], roomNames = []) {
+            const current = Array.isArray(currentZones) ? currentZones : [];
+            const existingByName = new Map(
+              current
+                .map((zone) => {
+                  const name = roomNameFromZone(zone);
+                  return [normalized(name), typeof zone === "string" ? null : zone];
+                })
+                .filter(([key]) => key)
+            );
+            const utilityNames = current
+              .map(roomNameFromZone)
+              .filter((name) => UTILITY_ZONE_NAMES.has(normalized(name)));
+            const safeRooms = uniqueNames(
+              (Array.isArray(roomNames) ? roomNames : [])
+                .map(getCanonicalHomeRoomName)
+                .filter((name) => name && !isReservedHomeRoomName(name))
+            );
+
+            return uniqueNames([...safeRooms, ...utilityNames]).map((name) => {
+              const existing = existingByName.get(normalized(name));
+              return { id: existing?.id || createId("zone"), name };
+            });
+          }
+
+          function inferTaskRoom(task, phaseTitle, homeRooms) {
+            const phase = String(phaseTitle || "").trim();
+            const homeMatch = homeRooms.find((room) => normalized(room) === normalized(phase));
+            if (homeMatch) return homeMatch;
+            if (phase && !GENERIC_SECTION_NAMES.has(normalized(phase)) && !isReservedHomeRoomName(phase)) {
+              return getCanonicalHomeRoomName(phase);
+            }
+
+            const suggestion = catalogTaskForTitle(task?.title);
+            if (suggestion) {
+              return homeRooms.find((room) => normalized(room) === normalized(suggestion.room)) || suggestion.room;
+            }
+            return "Other";
+          }
+
+          function routineTaskItems(routines = [], homeRooms = []) {
+            const items = [];
+            for (const routine of Array.isArray(routines) ? routines : []) {
+              if (routine.id === "daily-rules" || routine.archived) continue;
+              for (const phase of routine.phases || []) {
+                for (const task of phase.tasks || []) {
+                  const title = String(task?.title || "").trim();
+                  if (!title) continue;
+                  const room = inferTaskRoom(task, phase.title, homeRooms);
+                  const suggestion = catalogTaskForTitle(title);
+                  items.push({
+                    id: `routine:${routine.id}:${task.id}`,
+                    title,
+                    room,
+                    minutes: parseDurationMinutes(task.duration, 3),
+                    stage: suggestion?.stage ?? 55,
+                    keywords: [routine.title, phase.title, ...(suggestion?.keywords || [])].filter(Boolean),
+                    source: "routine",
+                    sourceLabel: routine.title,
+                    recommended: Boolean(suggestion && normalized(suggestion.room) === normalized(room))
+                  });
+                }
+              }
+            }
+            return items;
+          }
+
+          function builtInTaskItems() {
+            return cleaningTaskCatalog.map((task, index) => ({
+              ...task,
+              id: `catalog:${index}:${normalized(task.room)}:${normalized(task.title)}`,
+              source: "catalog",
+              sourceLabel: "Clean30 suggestions",
+              recommended: true
+            }));
+          }
+
+          export function getHomeLibraryRooms(homeRooms = [], routines = []) {
+            const configured = uniqueNames(
+              homeRooms.map(getCanonicalHomeRoomName).filter((room) => room && !isReservedHomeRoomName(room))
+            );
+            const inferred = routineTaskItems(routines, configured)
+              .map((item) => item.room)
+              .filter((room) => room && !isReservedHomeRoomName(room));
+            return uniqueNames(["All", "Whole home", ...configured, ...inferred, "Other"]);
+          }
+
+          export function getTaskLibraryItems({ routines = [], homeRooms = [], room = "All", query = "", extraItems = [] } = {}) {
+            const configured = uniqueNames(
+              homeRooms.map(getCanonicalHomeRoomName).filter((name) => name && !isReservedHomeRoomName(name))
+            );
+            const configuredByKey = new Map(configured.map((name) => [normalized(name), name]));
+            const allowedRoomKeys = new Set(["whole home", "other", ...configuredByKey.keys()]);
+            const builtIns = builtInTaskItems()
+              .filter((item) => !configured.length || allowedRoomKeys.has(normalized(item.room)))
+              .map((item) => ({ ...item, room: configuredByKey.get(normalized(item.room)) || item.room }));
+            const routineItems = routineTaskItems(routines, configured);
+            const combined = [...extraItems, ...routineItems, ...builtIns];
+            const deduped = [];
+            const indexByKey = new Map();
+
+            for (const item of combined) {
+              const title = String(item?.title || "").trim();
+              const itemRoom = getCanonicalHomeRoomName(item?.room || "Other") || "Other";
+              if (!title) continue;
+              const key = `${normalized(itemRoom)}::${normalized(title)}`;
+              const existingIndex = indexByKey.get(key);
+              if (existingIndex !== undefined) {
+                const existing = deduped[existingIndex];
+                if (existing.source !== "catalog" && item.source === "catalog") {
+                  existing.recommended = true;
+                  existing.stage = item.stage ?? existing.stage;
+                  existing.keywords = [...new Set([...(existing.keywords || []), ...(item.keywords || [])])];
+                }
+                continue;
+              }
+              indexByKey.set(key, deduped.length);
+              deduped.push({
+                ...item,
+                id: item.id || createId("library-task"),
+                title,
+                room: itemRoom,
+                minutes: Math.max(1, Math.round(Number(item.minutes) || 3)),
+                source: item.source || "custom",
+                sourceLabel: item.sourceLabel || "Custom task",
+                recommended: Boolean(item.recommended)
+              });
+            }
+
+            const needle = normalized(query);
+            const roomKey = normalized(room);
+            return deduped
+              .filter((item) => roomKey === "all" || normalized(item.room) === roomKey)
+              .filter((item) => {
+                if (!needle) return true;
+                return [item.title, item.room, item.sourceLabel, ...(item.keywords || [])]
+                  .join(" ")
+                  .toLowerCase()
+                  .includes(needle);
+              })
+              .sort((first, second) => {
+                if (first.room !== second.room) return first.room.localeCompare(second.room);
+                if (first.recommended !== second.recommended) return first.recommended ? -1 : 1;
+                return first.title.localeCompare(second.title);
+              });
+          }
+
+          export function getRecommendedTaskIdsForRoom(room, homeRooms = [], routines = []) {
+            if (!room || normalized(room) === "all" || normalized(room) === "other") return [];
+            return getTaskLibraryItems({ routines, homeRooms, room })
+              .filter((item) => item.recommended)
+              .sort((first, second) => (first.stage || 55) - (second.stage || 55))
+              .slice(0, normalized(room) === "whole home" ? 7 : 10)
+              .map((item) => item.id);
+          }
+
+          export function getSuggestedTaskCountForRoom(room) {
+            return cleaningTaskCatalog.filter((item) => normalized(item.room) === normalized(room)).length;
+          }
+
+          export function createCustomLibraryItem(title, room = "Other") {
+            const cleanTitle = String(title || "").trim();
+            if (!cleanTitle) return null;
+            return {
+              id: createId("library-custom"),
+              title: cleanTitle,
+              room: getCanonicalHomeRoomName(room) || "Other",
+              minutes: 3,
+              stage: 55,
+              keywords: [],
+              source: "custom",
+              sourceLabel: "Custom task",
+              recommended: false
+            };
+          }
+
+          export function createRoutineDraftFromLibraryItems(items = []) {
+            const unique = [];
+            const seen = new Set();
+            for (const item of items) {
+              const title = String(item?.title || "").trim();
+              const room = getCanonicalHomeRoomName(item?.room || "Other") || "Other";
+              if (!title) continue;
+              const key = `${normalized(room)}::${normalized(title)}`;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              unique.push({ ...item, title, room });
+            }
+
+            const draft = createSimpleRoutineDraft();
+            if (!unique.length) return draft;
+
+            const groups = new Map();
+            for (const item of unique) {
+              if (!groups.has(item.room)) groups.set(item.room, []);
+              groups.get(item.room).push(item);
+            }
+
+            const onlyRoom = groups.size === 1 ? [...groups.keys()][0] : "";
+            draft.title = onlyRoom && onlyRoom !== "Whole home" && onlyRoom !== "Other" ? `${onlyRoom} clean` : "My clean";
+            draft.phases = [...groups.entries()].map(([roomName, roomItems]) => ({
+              id: createId("phase"),
+              title: roomName === "Whole home" ? "Tasks" : roomName,
+              tasks: roomItems.map((item) => ({
+                id: createId("task"),
+                title: item.title,
+                duration: `${Math.max(1, Math.round(Number(item.minutes) || 3))} min`,
+                detail: "",
+                note: "",
+                tags: [],
+                priority: "normal"
+              }))
+            }));
+            const minutes = estimateRoutineMinutes(draft);
+            draft.estimatedMinutes = minutes;
+            draft.estimatedTime = `${minutes} min`;
+            return draft;
+          }
+          '''.replace("          ", ""))
+
+          # Quick Clean: keep same-named tasks when they belong to different rooms and scope history by template.
+          text = read("src/utils/quickClean.js")
+          text = text.replace('function dedupeByTitle(items = []) {', 'function dedupeByRoomAndTitle(items = []) {')
+          text = text.replace('const key = normalized(item?.title);', 'const key = `${normalized(item?.room)}::${normalized(item?.title)}`;')
+          text = text.replace('const candidates = dedupeByTitle(', 'const candidates = dedupeByRoomAndTitle(')
+          text = text.replace('  currentDateKey\n} = {}) {', '  currentDateKey,\n  templateId = ""\n} = {}) {')
+          text = text.replace('    currentDateKey\n  });', '    currentDateKey,\n    templateId\n  });')
+          write("src/utils/quickClean.js", text)
+
+          # Room care: explicit template identity prevents same routine IDs in another plan from contaminating guidance.
+          text = read("src/utils/roomCare.js")
+          text = text.replace(
+              'export function getLastFullRoomRoutineCompletion(room, routines = [], history = []) {',
+              'export function getLastFullRoomRoutineCompletion(room, routines = [], history = [], templateId = "") {'
+          )
+          text = text.replace(
+              '          routineIds.has(entry?.routineId) &&\n          Number(entry?.percent) >= 100 &&',
+              '          routineIds.has(entry?.routineId) &&\n          (!templateId || !entry?.templateId || entry.templateId === templateId) &&\n          Number(entry?.percent) >= 100 &&'
+          )
+          text = text.replace(
+              '  currentDateKey = getTodayKey()\n} = {}) {',
+              '  currentDateKey = getTodayKey(),\n  templateId = ""\n} = {}) {'
+          )
+          text = text.replace(
+              '  const lastCompletedAt = getLastFullRoomRoutineCompletion(room, routines, history);',
+              '  const lastCompletedAt = getLastFullRoomRoutineCompletion(room, routines, history, templateId);'
+          )
+          text = text.replace(
+              '  currentDateKey = getTodayKey()\n} = {}) {',
+              '  currentDateKey = getTodayKey(),\n  templateId = ""\n} = {}) {'
+          )
+          text = text.replace(
+              '      getRoomCareStatus({ room, routines, history, currentDateKey })',
+              '      getRoomCareStatus({ room, routines, history, currentDateKey, templateId })'
+          )
+          write("src/utils/roomCare.js", text)
+
+          # Home setup: canonicalize preset casing and reject virtual/utility room names that disappear after save.
+          replace_once(
+              "src/components/HomeRoomsDialog.jsx",
+              'import { homeRoomPresets } from "../utils/homeLibrary.js";',
+              'import {\n  getCanonicalHomeRoomName,\n  homeRoomPresets,\n  isReservedHomeRoomName\n} from "../utils/homeLibrary.js";'
+          )
+          sub_once(
+              "src/components/HomeRoomsDialog.jsx",
+              r'function uniqueRooms\(values = \[\]\) \{.*?\n\}',
+              '''function uniqueRooms(values = []) {
+            const seen = new Set();
+            return values
+              .map(getCanonicalHomeRoomName)
+              .filter((value) => {
+                const key = keyOf(value);
+                if (!key || isReservedHomeRoomName(value) || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+          }'''.replace("          ", "")
+          )
+          sub_once(
+              "src/components/HomeRoomsDialog.jsx",
+              r'  function addCustomRoom\(\) \{.*?\n  \}',
+              '''  function addCustomRoom() {
+              const rawName = customRoom.trim();
+              if (!rawName) return;
+              if (isReservedHomeRoomName(rawName)) {
+                setMessage(`Choose a specific room name instead of “${rawName}”.`);
+                return;
+              }
+              const name = getCanonicalHomeRoomName(rawName);
+              if (selectedRooms.some((room) => keyOf(room) === keyOf(name))) {
+                setMessage("That room is already in your home.");
+                return;
+              }
+              setSelectedRooms((current) => [...current, name]);
+              setCustomRoom("");
+              setMessage(`${name} added.`);
+              window.requestAnimationFrame(() => customInputRef.current?.focus());
+            }'''.replace("            ", "  ")
+          )
+          replace_once(
+              "src/components/HomeRoomsDialog.jsx",
+              '              placeholder="Guest room, nursery, storage room…"\n              ref={customInputRef}',
+              '              maxLength={60}\n              placeholder="Guest room, nursery, storage room…"\n              ref={customInputRef}'
+          )
+
+          # Task Library: custom tasks follow the active room and duplicate custom entries select the existing task.
+          replace_once(
+              "src/components/TaskLibraryDialog.jsx",
+              '''  const selectedItems = useMemo(
+              () => allItems.filter((item) => selectedIds.has(item.id)),
+              [allItems, selectedIds]
+            );'''.replace("            ", ""),
+              '''  const selectedItems = useMemo(
+              () => allItems.filter((item) => selectedIds.has(item.id)),
+              [allItems, selectedIds]
+            );
+            const customRoomOptions = useMemo(
+              () => roomOptions.filter((roomName) => roomName !== "All" && roomName !== "Whole home"),
+              [roomOptions]
+            );'''.replace("            ", "")
+          )
+          replace_once(
+              "src/components/TaskLibraryDialog.jsx",
+              '''    setCustomRoom(
+              resolvedRoom && resolvedRoom !== "All" && resolvedRoom !== "Whole home"
+                ? resolvedRoom
+                : homeRooms[0] || "Other"
+            );'''.replace("            ", ""),
+              '''    setCustomRoom(
+              resolvedRoom && resolvedRoom !== "All" && resolvedRoom !== "Whole home"
+                ? resolvedRoom
+                : customRoomOptions[0] || "Other"
+            );'''.replace("            ", "")
+          )
+          replace_once(
+              "src/components/TaskLibraryDialog.jsx",
+              '  }, [homeRooms, initialRoom, open, preselectRecommended, routines]);',
+              '  }, [customRoomOptions, homeRooms, initialRoom, open, preselectRecommended, routines]);'
+          )
+          sub_once(
+              "src/components/TaskLibraryDialog.jsx",
+              r'  function addCustomTask\(\) \{.*?\n  \}',
+              '''  function addCustomTask() {
+              const item = createCustomLibraryItem(customTitle, customRoom || "Other");
+              if (!item) return;
+              const key = `${item.room.trim().toLowerCase()}::${item.title.trim().toLowerCase()}`;
+              const existing = allItems.find(
+                (candidate) => `${candidate.room.trim().toLowerCase()}::${candidate.title.trim().toLowerCase()}` === key
+              );
+              if (existing) {
+                setSelectedIds((current) => new Set([...current, existing.id]));
+                setCustomTitle("");
+                setMessage(`${existing.title} is already available and was selected.`);
+                return;
+              }
+              setExtraItems((current) => [...current, item]);
+              setSelectedIds((current) => new Set([...current, item.id]));
+              setCustomTitle("");
+              setMessage(`${item.title} selected.`);
+            }'''.replace("            ", "  ")
+          )
+          replace_once(
+              "src/components/TaskLibraryDialog.jsx",
+              '''                  setRoom(roomName);
+                  setMessage("");'''.replace("                  ", ""),
+              '''                  setRoom(roomName);
+                  if (roomName !== "All" && roomName !== "Whole home") setCustomRoom(roomName);
+                  setMessage("");'''.replace("                  ", "")
+          )
+          replace_once(
+              "src/components/TaskLibraryDialog.jsx",
+              '{selectedIds.size ? (',
+              '{selectedItems.length ? ('
+          )
+          replace_once(
+              "src/components/TaskLibraryDialog.jsx",
+              '{[...new Set([...homeRooms, "Other"])].map((roomName) => (',
+              '{customRoomOptions.map((roomName) => ('
+          )
+
+          # Routine editor delegates DnD to a tested pure helper and handles configured room casing.
+          replace_once(
+              "src/components/RoutineEditorDialog.jsx",
+              '  optimizeRoutineTaskOrder,\n  parseRoutineTaskText,',
+              '  optimizeRoutineTaskOrder,\n  moveRoutineTaskByDrop,\n  parseRoutineTaskText,'
+          )
+          sub_once(
+              "src/components/RoutineEditorDialog.jsx",
+              r'  function moveDraggedTask\(targetPhaseId, targetTaskId\) \{.*?\n  \}',
+              '''  function moveDraggedTask(targetPhaseId, targetTaskId) {
+              if (!draggedTask) return;
+              setDraft((current) =>
+                moveRoutineTaskByDrop(current, draggedTask, targetPhaseId, targetTaskId)
+              );
+              setDraggedTask(null);
+            }'''.replace("            ", "  ")
+          )
+          replace_once(
+              "src/components/RoutineEditorDialog.jsx",
+              '''    const wanted = new Set(["All", "Whole home", "Other", ...homeRooms]);
+            return suggestionRooms.filter((room) => wanted.has(room));'''.replace("            ", ""),
+              '''    const wanted = new Set(
+              ["All", "Whole home", "Other", ...homeRooms].map((room) => String(room).trim().toLowerCase())
+            );
+            return suggestionRooms.filter((room) => wanted.has(room.toLowerCase()));'''.replace("            ", "")
+          )
+
+          # Routines: template-scoped recency and don't repeatedly offer to archive already archived legacy examples.
+          text = read("src/components/Routines.jsx")
+          text = text.replace(
+              'getRoomCareStatus({ room, routines, history })',
+              'getRoomCareStatus({ room, routines, history, templateId: activeTemplateId })'
+          )
+          text = text.replace(
+              'getRoomsNeedingAttention({ rooms: homeRooms, routines, history })',
+              'getRoomsNeedingAttention({ rooms: homeRooms, routines, history, templateId: activeTemplateId })'
+          )
+          text = text.replace(
+              '    legacyStarterRoutines.length >= 4;',
+              '    legacyStarterRoutines.length >= 4 &&\n    legacyStarterRoutines.some((routine) => !routine.archived);'
+          )
+          text = text.replace(
+              '      history\n    });',
+              '      history,\n      templateId: activeTemplateId\n    });',
+              1
+          )
+          text = text.replace(
+              'getLastRoutineDoneLabel(history, routine.id)',
+              'getLastRoutineDoneLabel(history, routine.id, activeTemplateId)'
+          )
+          text = text.replace(
+              'getLastRoutineDoneLabel(history, selectedRoutine.id)',
+              'getLastRoutineDoneLabel(history, selectedRoutine.id, activeTemplateId)'
+          )
+          text = text.replace(
+              '      <QuickCleanDialog\n        history={history}',
+              '      <QuickCleanDialog\n        activeTemplateId={activeTemplateId}\n        history={history}'
+          )
+          write("src/components/Routines.jsx", text)
+
+          # Quick Clean dialog forwards template identity.
+          replace_once(
+              "src/components/QuickCleanDialog.jsx",
+              'export default function QuickCleanDialog({\n  open,',
+              'export default function QuickCleanDialog({\n  open,\n  activeTemplateId = "",'
+          )
+          replace_once(
+              "src/components/QuickCleanDialog.jsx",
+              '    () => rankRoomsForCare({ rooms: homeRooms, routines, history }),\n    [history, homeRooms, routines]',
+              '    () => rankRoomsForCare({ rooms: homeRooms, routines, history, templateId: activeTemplateId }),\n    [activeTemplateId, history, homeRooms, routines]'
+          )
+          replace_once(
+              "src/components/QuickCleanDialog.jsx",
+              '    () => buildQuickCleanPlan({ minutes, rooms: selectedRooms, routines, history }),\n    [history, minutes, routines, selectedRooms]',
+              '    () => buildQuickCleanPlan({ minutes, rooms: selectedRooms, routines, history, templateId: activeTemplateId }),\n    [activeTemplateId, history, minutes, routines, selectedRooms]'
+          )
+
+          # Session/history utilities: collision-resistant session IDs, accurate durations, and template-aware last-done labels.
+          replace_once(
+              "src/utils/calculations.js",
+              'import { daysBetween, parseDate } from "./dates.js";\nimport { cloneDeep } from "./templateUtils.js";',
+              'import { daysBetween, parseDate } from "./dates.js";\nimport { parseDurationMinutes } from "./duration.js";\nimport { cloneDeep, createId } from "./templateUtils.js";'
+          )
+          replace_once("src/utils/calculations.js", '    id: `session-${Date.now()}`,', '    id: createId("session"),')
+          sub_once(
+              "src/utils/calculations.js",
+              r'export function getLastRoutineFinishedAt\(history, routineId\) \{.*?\n\}\n\nexport function getLastRoutineDoneLabel\(history, routineId\) \{.*?\n\}',
+              '''export function getLastRoutineFinishedAt(history, routineId, templateId = "") {
+            return (history || [])
+              .filter((entry) => entry?.routineId === routineId && !isDailyRulesHistoryEntry(entry))
+              .filter((entry) => !templateId || !entry?.templateId || entry.templateId === templateId)
+              .filter((entry) => !Number.isNaN(new Date(entry.finishedAt).getTime()))
+              .sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0]?.finishedAt || null;
+          }
+
+          export function getLastRoutineDoneLabel(history, routineId, templateId = "") {
+            const finishedAt = getLastRoutineFinishedAt(history, routineId, templateId);
+            if (!finishedAt) return "Not done yet";
+            const elapsed = daysBetween(finishedAt);
+            if (elapsed === null) return "Not done yet";
+            if (elapsed <= 0) return "Last done today";
+            if (elapsed === 1) return "Last done yesterday";
+            return `Last done ${elapsed} days ago`;
+          }'''.replace("          ", "")
+          )
+          sub_once(
+              "src/utils/calculations.js",
+              r'function estimateTodayTaskMinutes\(tasks\) \{.*?\n\}',
+              '''function estimateTodayTaskMinutes(tasks) {
+            return (tasks || []).reduce(
+              (total, rule) => total + (parseDurationMinutes(rule.duration, 0) || 0),
+              0
+            );
+          }'''.replace("          ", "")
+          )
+
+          # Today activity uses the same duration parser.
+          replace_once(
+              "src/utils/activity.js",
+              'import { getTodayKey, parseDate } from "./dates.js";',
+              'import { getTodayKey, parseDate } from "./dates.js";\nimport { parseDurationMinutes } from "./duration.js";'
+          )
+          sub_once(
+              "src/utils/activity.js",
+              r'function durationTextMinutes\(value\) \{.*?\n\}',
+              '''function durationTextMinutes(value) {
+            return parseDurationMinutes(value, null);
+          }'''.replace("          ", "")
+          )
+
+          # Home motivation carries active-template identity through the room-care engine.
+          replace_once(
+              "src/utils/homeMotivation.js",
+              '  currentDateKey = getTodayKey()\n} = {}) {',
+              '  currentDateKey = getTodayKey(),\n  templateId = ""\n} = {}) {'
+          )
+          replace_once(
+              "src/utils/homeMotivation.js",
+              '  const ranked = rankRoomsForCare({ rooms, routines, history, currentDateKey }).map(',
+              '  const ranked = rankRoomsForCare({ rooms, routines, history, currentDateKey, templateId }).map('
+          )
+
+          # Progress: room snapshot/filter impact and routine insights must not borrow explicit history from another template.
+          replace_once(
+              "src/components/History.jsx",
+              '''        history,
+                currentDateKey
+              }),'''.replace("                ", ""),
+              '''        history,
+                currentDateKey,
+                templateId: template?.id || ""
+              }),'''.replace("                ", "")
+          )
+          replace_once(
+              "src/components/History.jsx",
+              '    [currentDateKey, history, homeRooms, routines]',
+              '    [currentDateKey, history, homeRooms, routines, template?.id]'
+          )
+          replace_once(
+              "src/components/History.jsx",
+              '''      filter === "all"
+                ? displayEntries
+                : displayEntries.filter((entry) => entry.routineId === filter),
+            [displayEntries, filter]'''.replace("            ", ""),
+              '''      filter === "all"
+                ? displayEntries
+                : displayEntries.filter(
+                    (entry) =>
+                      entry.routineId === filter &&
+                      (!entry.templateId || entry.templateId === template?.id)
+                  ),
+            [displayEntries, filter, template?.id]'''.replace("            ", "")
+          )
+          replace_once(
+              "src/components/History.jsx",
+              '                const impactRooms = daily ? [] : routineRoomsById.get(entry.routineId) || [];',
+              '                const impactRooms =\n                  daily || (entry.templateId && entry.templateId !== template?.id)\n                    ? []\n                    : routineRoomsById.get(entry.routineId) || [];'
+          )
+
+          # Routine insights are scoped to the active template when history has explicit template identity.
+          replace_once(
+              "src/utils/historyInsights.js",
+              '  const sessionEntries = entries.filter((entry) => !isDailyRulesHistoryEntry(entry));',
+              '  const sessionEntries = entries\n    .filter((entry) => !isDailyRulesHistoryEntry(entry))\n    .filter((entry) => !template?.id || !entry?.templateId || entry.templateId === template.id);'
+          )
+          replace_once(
+              "src/utils/historyInsights.js",
+              '    const matching = entries\n      .filter((entry) => entry.routineId === routineId && validDate(entry.finishedAt))',
+              '    const matching = sessionEntries\n      .filter((entry) => entry.routineId === routineId && validDate(entry.finishedAt))'
+          )
+          replace_once("src/utils/historyInsights.js", '      id: "weekly-overdue",\n      message: "Weekly reset is overdue.",', '      id: "weekly-attention",\n      message: "Weekly clean may need attention.",')
+          replace_once("src/utils/historyInsights.js", '      id: "monthly-due",\n      message: "Monthly deep clean is due.",', '      id: "monthly-attention",\n      message: "Deep clean may be worth considering.",')
+
+          # Advanced routine editor validates names against archived siblings too and creates unique new routine names.
+          replace_once(
+              "src/components/customize/RoutinesSection.jsx",
+              '''  const visibleRoutines = useMemo(
+              () =>
+                routines.filter(
+                  (routine) => routine.id !== "daily-rules" && (showArchived || !routine.archived)
+                ),
+              [routines, showArchived]
+            );'''.replace("            ", ""),
+              '''  const allEditableRoutines = useMemo(
+              () => routines.filter((routine) => routine.id !== "daily-rules"),
+              [routines]
+            );
+            const visibleRoutines = useMemo(
+              () => allEditableRoutines.filter((routine) => showArchived || !routine.archived),
+              [allEditableRoutines, showArchived]
+            );'''.replace("            ", "")
+          )
+          replace_once(
+              "src/components/customize/RoutinesSection.jsx",
+              '  const routineTitleError = getRoutineTitleError(selectedRoutine, visibleRoutines);',
+              '  const routineTitleError = getRoutineTitleError(selectedRoutine, allEditableRoutines);'
+          )
+          replace_once(
+              "src/components/customize/RoutinesSection.jsx",
+              '''  function addRoutine() {
+              const routine = createRoutine();'''.replace("              ", ""),
+              '''  function addRoutine() {
+              const routine = createRoutine();
+              routine.title = makeUniqueName(
+                routine.title,
+                allEditableRoutines.map((item) => item.title),
+                "New Routine"
+              );'''.replace("              ", "")
+          )
+          replace_once(
+              "src/components/customize/RoutinesSection.jsx",
+              '    const siblingNames = visibleRoutines.map((item) => item.title);',
+              '    const siblingNames = allEditableRoutines.map((item) => item.title);'
+          )
+          replace_once(
+              "src/components/customize/RoutinesSection.jsx",
+              '      visibleRoutines.filter((routine) => routine.id !== selectedRoutine.id).map((routine) => routine.title),',
+              '      allEditableRoutines.filter((routine) => routine.id !== selectedRoutine.id).map((routine) => routine.title),'
+          )
+
+          # Active-session integrity: Settings uses live React state and App rechecks at confirmation time.
+          replace_once("src/components/Settings.jsx", 'import { loadAppState } from "../utils/storage.js";\n', '')
+          replace_once(
+              "src/components/Settings.jsx",
+              'export default function Settings({\n  template,',
+              'export default function Settings({\n  template,\n  activeSession,'
+          )
+          replace_once(
+              "src/components/Settings.jsx",
+              '''  const starterRestoreLocked = Boolean(
+              loadAppState().activeSession?.templateId === template.id
+            );'''.replace("            ", ""),
+              '''  const starterRestoreLocked = Boolean(
+              activeSession?.templateId === template.id
+            );'''.replace("            ", "")
+          )
+          replace_once(
+              "src/App.jsx",
+              '      <Settings\n        template={activeTemplate}',
+              '      <Settings\n        template={activeTemplate}\n        activeSession={appState.activeSession}'
+          )
+          sub_once(
+              "src/App.jsx",
+              r'  function resetCurrentTemplateToDefault\(\) \{.*?\n  \}\n\n  function exportTemplate',
+              '''  function resetCurrentTemplateToDefault() {
+            if (appState.activeSession?.templateId === activeTemplate.id) {
+              requestConfirmation({
+                title: "Cleaning plan is in use",
+                message: "Finish or discard the current clean before restoring the starter plan.",
+                confirmLabel: "Keep plan",
+                onConfirm: () => {}
+              });
+              return;
+            }
+            requestConfirmation({
+              title: "Reset current template?",
+              message:
+                "This replaces the active template with the Clean30 starter content. History is kept.",
+              confirmLabel: "Reset template",
+              onConfirm: () => {
+                setAppState((current) => {
+                  if (current.activeSession?.templateId === current.activeTemplateId) return current;
+                  const defaultTemplate = createDefaultTemplate();
+                  const active = current.templates.find(
+                    (template) => template.id === current.activeTemplateId
+                  );
+                  if (!active) return current;
+                  const resetTemplate = normalizeTemplate(
+                    {
+                      ...defaultTemplate,
+                      id: active.id,
+                      name: active.name,
+                      readOnly: false
+                    },
+                    { readOnly: false }
+                  );
+                  return {
+                    ...current,
+                    templates: current.templates.map((template) =>
+                      template.id === active.id ? resetTemplate : template
+                    )
+                  };
+                });
+              }
+            });
+          }
+
+          function exportTemplate'''.replace("          ", "")
+          )
+
+          # Today library handoff keeps same-named room-specific tasks instead of collapsing them globally.
+          sub_once(
+              "src/App.jsx",
+              r'  function addLibraryTasksToToday\(items = \[\]\) \{.*?\n  \}\n\n  function deleteTodayTask',
+              '''  function addLibraryTasksToToday(items = []) {
+            const dateKey = getTodayKey();
+            setAppState((current) => {
+              const currentTasks = getTodayTasksFromState(current, dateKey);
+              const globalTitles = new Set();
+              const roomKeys = new Set();
+              const allTitles = new Set();
+
+              for (const task of currentTasks) {
+                const titleKey = String(task.text || "").trim().toLowerCase();
+                if (!titleKey) continue;
+                allTitles.add(titleKey);
+                const roomMatch = String(task.note || "").match(/^Room:\\s*(.+)$/i);
+                if (roomMatch?.[1]?.trim()) {
+                  roomKeys.add(`${roomMatch[1].trim().toLowerCase()}::${titleKey}`);
+                } else {
+                  globalTitles.add(titleKey);
+                }
+              }
+
+              const additions = [];
+              for (const item of Array.isArray(items) ? items : []) {
+                const title = String(item?.title || "").trim();
+                const titleKey = title.toLowerCase();
+                if (!title) continue;
+                const room = String(item?.room || "").trim();
+                const specificRoom = room && room !== "Whole home" && room !== "Other";
+                const roomKey = specificRoom ? `${room.toLowerCase()}::${titleKey}` : "";
+                if (specificRoom) {
+                  if (globalTitles.has(titleKey) || roomKeys.has(roomKey)) continue;
+                  roomKeys.add(roomKey);
+                } else {
+                  if (allTitles.has(titleKey)) continue;
+                  globalTitles.add(titleKey);
+                }
+                allTitles.add(titleKey);
+                const task = createTodayTask(title, dateKey);
+                additions.push({ ...task, note: specificRoom ? `Room: ${room}` : "" });
+              }
+
+              if (!additions.length) return current;
+              return markMeaningfulUse(
+                applyTodayTasksToState(current, dateKey, [...currentTasks, ...additions])
+              );
+            });
+            setCurrentView("dashboard");
+          }
+
+          function deleteTodayTask'''.replace("          ", "")
+          )
+
+          # Template fallbacks must stay universal when old/incomplete plans are normalized.
+          replace_once("src/utils/templateUtils.js", 'fallback.profile?.apartmentSizeText || "30 m2"', 'fallback.profile?.apartmentSizeText || "Not set"')
+          replace_once("src/utils/templateUtils.js", 'fallback.profile?.apartmentTypeText || "Erdgeschoss / ground floor"', 'fallback.profile?.apartmentTypeText || "Home"')
+          replace_once("src/utils/templateUtils.js", 'fallback.profile?.goalText || "Guest-ready within 10 minutes"', 'fallback.profile?.goalText || "A cleaner home, one task at a time"')
+
+          # History normalization/validation rejects impossible and implausibly future sessions instead of letting them distort Progress.
+          sub_once(
+              "src/utils/storage.js",
+              r'function normalizeHistory\(value\) \{.*?\n\}\n\nfunction normalizeOptionalNonNegativeNumber',
+              '''function normalizeHistory(value) {
+            if (!Array.isArray(value)) return [];
+            const usedIds = new Set();
+            const latestAllowedMs = Date.now() + MAX_CLOCK_SKEW_MS;
+            return value
+              .filter((entry) => {
+                if (
+                  !isPlainObject(entry) ||
+                  typeof entry.id !== "string" ||
+                  !entry.id.trim() ||
+                  typeof entry.routineId !== "string" ||
+                  !entry.routineId.trim() ||
+                  typeof entry.routineTitle !== "string"
+                ) {
+                  return false;
+                }
+                const startedAt = normalizeDateString(entry.startedAt);
+                const finishedAt = normalizeDateString(entry.finishedAt);
+                if (!startedAt || !finishedAt) return false;
+                const startedAtMs = new Date(startedAt).getTime();
+                const finishedAtMs = new Date(finishedAt).getTime();
+                return (
+                  startedAtMs <= finishedAtMs &&
+                  startedAtMs <= latestAllowedMs &&
+                  finishedAtMs <= latestAllowedMs
+                );
+              })
+              .map((entry, index) => {
+                const totalTasksValue = Number(entry.totalTasks);
+                const totalTasks = Number.isFinite(totalTasksValue) ? Math.max(0, totalTasksValue) : 0;
+                const completedTasksValue = Number(entry.completedTasks);
+                const completedTasks = Number.isFinite(completedTasksValue)
+                  ? Math.min(totalTasks, Math.max(0, completedTasksValue))
+                  : 0;
+                const percent = Number(entry.percent);
+                const completedAt = normalizeDateString(entry.completedAt);
+                const safeCompletedAt =
+                  completedAt && new Date(completedAt).getTime() <= latestAllowedMs
+                    ? completedAt
+                    : null;
+                return {
+                  id: uniqueStableId(entry.id, `history-${index + 1}`, usedIds),
+                  routineId: entry.routineId.trim(),
+                  routineTitle: entry.routineTitle,
+                  startedAt: normalizeDateString(entry.startedAt),
+                  finishedAt: normalizeDateString(entry.finishedAt),
+                  completedTasks,
+                  totalTasks,
+                  percent: Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0,
+                  notes: typeof entry.notes === "string" ? entry.notes : "",
+                  templateId: typeof entry.templateId === "string" ? entry.templateId : null,
+                  templateName: typeof entry.templateName === "string" ? entry.templateName : "",
+                  kind: typeof entry.kind === "string" ? entry.kind : "session",
+                  source: typeof entry.source === "string" ? entry.source : "session",
+                  date: normalizeDateKey(entry.date),
+                  completedAt: safeCompletedAt,
+                  elapsedMs: normalizeOptionalNonNegativeNumber(entry.elapsedMs),
+                  elapsedMinutes: normalizeOptionalNonNegativeNumber(entry.elapsedMinutes),
+                  estimatedDurationMinutes: normalizeOptionalNonNegativeNumber(entry.estimatedDurationMinutes)
+                };
+              });
+          }
+
+          function normalizeOptionalNonNegativeNumber'''.replace("          ", "")
+          )
+          replace_once(
+              "src/utils/storage.js",
+              '  if (finishedAtMs < startedAtMs) return false;',
+              '  if (finishedAtMs < startedAtMs) return false;\n  const latestAllowedMs = Date.now() + MAX_CLOCK_SKEW_MS;\n  if (startedAtMs > latestAllowedMs || finishedAtMs > latestAllowedMs) return false;'
+          )
+          replace_once(
+              "src/utils/storage.js",
+              '''      (entry.completedAt === null || Boolean(normalizeDateString(entry.completedAt)))
+            );'''.replace("            ", ""),
+              '''      (entry.completedAt === null ||
+                (Boolean(normalizeDateString(entry.completedAt)) &&
+                  new Date(entry.completedAt).getTime() <= latestAllowedMs))
+            );'''.replace("            ", "")
+          )
+
+          # Runtime acceptance must not fail merely because port 4173 is already in use locally.
+          replace_once(
+              "scripts/verify-runtime.mjs",
+              'import { spawn } from "node:child_process";',
+              'import { spawn, spawnSync } from "node:child_process";\nimport { createServer } from "node:net";'
+          )
+          replace_once(
+              "scripts/verify-runtime.mjs",
+              '''const host = "127.0.0.1";
+            const port = 4173;
+            const basePath = "/clean30/";
+            const baseUrl = `http://${host}:${port}`;
+            const appUrl = `${baseUrl}${basePath}`;'''.replace("            ", ""),
+              '''const host = "127.0.0.1";
+            const basePath = "/clean30/";
+
+            async function findAvailablePort() {
+              return new Promise((resolvePort, reject) => {
+                const server = createServer();
+                server.once("error", reject);
+                server.listen(0, host, () => {
+                  const address = server.address();
+                  const port = typeof address === "object" && address ? address.port : 4173;
+                  server.close((error) => (error ? reject(error) : resolvePort(port)));
+                });
+              });
+            }
+
+            const port = await findAvailablePort();
+            const baseUrl = `http://${host}:${port}`;
+            const appUrl = `${baseUrl}${basePath}`;'''.replace("            ", "")
+          )
+          replace_once(
+              "scripts/verify-runtime.mjs",
+              '''  if (!preview.killed) preview.kill("SIGTERM");
+              await new Promise((resolveWait) => {'''.replace("              ", ""),
+              '''  if (!preview.killed) {
+                if (process.platform === "win32") {
+                  spawnSync("taskkill", ["/pid", String(preview.pid), "/T", "/F"], { stdio: "ignore" });
+                } else {
+                  preview.kill("SIGTERM");
+                }
+              }
+              await new Promise((resolveWait) => {'''.replace("              ", "")
+          )
+
+          # Deployment itself now runs the same release-candidate gate that CI validates.
+          write(".github/workflows/deploy.yml", '''name: Deploy to GitHub Pages
+
+          on:
+            push:
+              branches:
+                - main
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+            pages: write
+            id-token: write
+
+          concurrency:
+            group: pages
+            cancel-in-progress: false
+
+          jobs:
+            build:
+              runs-on: ubuntu-latest
+              steps:
+                - name: Checkout
+                  uses: actions/checkout@v7
+
+                - name: Setup Node
+                  uses: actions/setup-node@v7
+                  with:
+                    node-version: 22
+                    cache: npm
+
+                - name: Install dependencies
+                  run: npm ci
+
+                - name: Verify release candidate
+                  run: npm run verify:release-candidate
+
+                - name: Upload Pages artifact
+                  uses: actions/upload-pages-artifact@v3
+                  with:
+                    path: dist
+
+            deploy:
+              environment:
+                name: github-pages
+                url: ${{ steps.deployment.outputs.page_url }}
+              runs-on: ubuntu-latest
+              needs: build
+              steps:
+                - name: Deploy to GitHub Pages
+                  id: deployment
+                  uses: actions/deploy-pages@v4
+          '''.replace("          ", ""))
+
+          # Update historical regression contracts superseded by the final fixes.
+          replace_once(
+              "tests/universal-phase-17.test.js",
+              '''  assert.match(settings, /import \\{ loadAppState \\} from "\\.\\.\\/utils\\/storage\\.js"/);
+            assert.match(settings, /const starterRestoreLocked = Boolean\\(/);
+            assert.match(settings, /loadAppState\\(\\)\\.activeSession\\?\\.templateId === template\\.id/);'''.replace("            ", ""),
+              '''  assert.doesNotMatch(settings, /loadAppState\\(\\)/);
+            assert.match(settings, /activeSession/);
+            assert.match(settings, /const starterRestoreLocked = Boolean\\(/);
+            assert.match(settings, /activeSession\\?\\.templateId === template\\.id/);'''.replace("            ", "")
+          )
+          sub_once(
+              "tests/universal-phase-15.test.js",
+              r'test\("routine drag reorder uses the post-removal target index for downward moves", \(\) => \{.*?\n\}\);',
+              '''test("routine drag reorder delegates to the tested room-aware drop helper", () => {
+            const editor = textFile("../src/components/RoutineEditorDialog.jsx");
+            const library = textFile("../src/utils/routineLibrary.js");
+            assert.match(editor, /moveRoutineTaskByDrop/);
+            assert.match(library, /targetIndexBefore/);
+            assert.match(library, /sourceIndex < targetIndexBefore/);
+          });'''.replace("          ", "")
+          )
+
+          # Final audit behavior tests.
+          write("tests/final-release-audit.test.js", '''import assert from "node:assert/strict";
+          import { readFileSync } from "node:fs";
+          import test from "node:test";
+
+          import { createSession, getLastRoutineFinishedAt } from "../src/utils/calculations.js";
+          import { parseDurationMinutes } from "../src/utils/duration.js";
+          import {
+            createRoutineDraftFromLibraryItems,
+            getCanonicalHomeRoomName,
+            getHomeRoomNames,
+            getTaskLibraryItems,
+            isReservedHomeRoomName
+          } from "../src/utils/homeLibrary.js";
+          import { buildQuickCleanPlan } from "../src/utils/quickClean.js";
+          import { getLastFullRoomRoutineCompletion } from "../src/utils/roomCare.js";
+          import {
+            appendParsedTaskText,
+            createSimpleRoutineDraft,
+            moveRoutineTaskByDrop,
+            parseRoutineTaskText
+          } from "../src/utils/routineLibrary.js";
+          import { CURRENT_BACKUP_VERSION, normalizeAppState } from "../src/utils/storage.js";
+          import { createDefaultTemplate, createTemplateExport } from "../src/utils/templateUtils.js";
+
+          function textFile(path) {
+            return readFileSync(new URL(path, import.meta.url), "utf8");
+          }
+
+          function roomRoutine(id, room, title = "Polish shelf") {
+            return {
+              id,
+              title: `${room} clean`,
+              archived: false,
+              estimatedMinutes: 5,
+              estimatedTime: "5 min",
+              phases: [{ id: `${id}-phase`, title: room, tasks: [{ id: `${id}-task`, title, duration: "2 min" }] }]
+            };
+          }
+
+          test("duration parsing handles hour units, compound durations, and ranges", () => {
+            assert.equal(parseDurationMinutes("90 min"), 90);
+            assert.equal(parseDurationMinutes("1h 30m"), 90);
+            assert.equal(parseDurationMinutes("1-2 hr"), 90);
+            assert.equal(parseDurationMinutes("30-45 min"), 38);
+          });
+
+          test("bulk routine parsing keeps the same action in different rooms but dedupes within a room", () => {
+            const parsed = parseRoutineTaskText("Bedroom:\\nVacuum floor\\nVacuum floor\\n\\nLiving room:\\nVacuum floor");
+            assert.equal(parsed.taskCount, 2);
+            assert.deepEqual(parsed.sections.map((section) => section.tasks), [["Vacuum floor"], ["Vacuum floor"]]);
+
+            const draft = createSimpleRoutineDraft();
+            draft.phases[0].title = "Bedroom";
+            draft.phases[0].tasks[0].title = "Vacuum floor";
+            const appended = appendParsedTaskText(draft, "Bedroom:\\nVacuum floor\\nLiving room:\\nVacuum floor");
+            assert.equal(appended.phases.flatMap((phase) => phase.tasks).filter((task) => task.title === "Vacuum floor").length, 2);
+          });
+
+          test("Task Library and routine drafts preserve same-named tasks that belong to different rooms", () => {
+            const items = [
+              { id: "bed", title: "Vacuum floor", room: "Bedroom", minutes: 3 },
+              { id: "living", title: "Vacuum floor", room: "Living room", minutes: 4 }
+            ];
+            const draft = createRoutineDraftFromLibraryItems(items);
+            assert.equal(draft.phases.length, 2);
+            assert.equal(draft.phases.flatMap((phase) => phase.tasks).length, 2);
+          });
+
+          test("an explicit routine room wins over catalog-title inference", () => {
+            const routine = roomRoutine("office-custom", "Office", "Wipe electronics");
+            const items = getTaskLibraryItems({ routines: [routine], homeRooms: ["Office", "Living room"], room: "Office" });
+            const item = items.find((candidate) => candidate.title === "Wipe electronics");
+            assert.ok(item);
+            assert.equal(item.room, "Office");
+            assert.equal(item.source, "routine");
+          });
+
+          test("Home canonicalizes preset casing and hides reserved virtual/utility room names", () => {
+            assert.equal(getCanonicalHomeRoomName("kItChEn"), "Kitchen");
+            for (const name of ["All", "Whole home", "Other", "Floors"]) assert.equal(isReservedHomeRoomName(name), true);
+            assert.deepEqual(
+              getHomeRoomNames(["kitchen", "All", "Whole home", "Floors", "Other", "Guest room"]),
+              ["Kitchen", "Guest room"]
+            );
+            const kitchenItems = getTaskLibraryItems({ routines: [], homeRooms: ["kitchen"], room: "KITCHEN" });
+            assert.ok(kitchenItems.some((item) => item.title === "Clean the kitchen sink"));
+          });
+
+          test("Quick Clean keeps same-named custom tasks in two selected rooms", () => {
+            const routines = [roomRoutine("studio", "Studio"), roomRoutine("guest", "Guest room")];
+            const plan = buildQuickCleanPlan({ minutes: 30, rooms: ["Studio", "Guest room"], routines, history: [] });
+            const matching = plan.items.filter((item) => item.title === "Polish shelf");
+            assert.equal(matching.length, 2);
+            assert.deepEqual(new Set(matching.map((item) => item.room)), new Set(["Studio", "Guest room"]));
+          });
+
+          test("dragging down onto the next task actually moves it after the target", () => {
+            const draft = createSimpleRoutineDraft();
+            draft.phases[0].tasks = [
+              { id: "a", title: "A" },
+              { id: "b", title: "B" },
+              { id: "c", title: "C" }
+            ];
+            const down = moveRoutineTaskByDrop(draft, { phaseId: draft.phases[0].id, taskId: "b" }, draft.phases[0].id, "c");
+            assert.deepEqual(down.phases[0].tasks.map((task) => task.id), ["a", "c", "b"]);
+            const up = moveRoutineTaskByDrop(down, { phaseId: down.phases[0].id, taskId: "b" }, down.phases[0].id, "a");
+            assert.deepEqual(up.phases[0].tasks.map((task) => task.id), ["b", "a", "c"]);
+          });
+
+          test("explicit template identity prevents same routine IDs in another plan from changing recency", () => {
+            const routine = roomRoutine("shared-id", "Kitchen", "Clean the kitchen sink");
+            const history = [
+              { routineId: "shared-id", templateId: "other", percent: 100, finishedAt: "2026-08-09T10:00:00.000Z" },
+              { routineId: "shared-id", templateId: "current", percent: 100, finishedAt: "2026-08-01T10:00:00.000Z" }
+            ];
+            assert.equal(getLastFullRoomRoutineCompletion("Kitchen", [routine], history, "current"), "2026-08-01T10:00:00.000Z");
+            assert.equal(getLastRoutineFinishedAt(history, "shared-id", "current"), "2026-08-01T10:00:00.000Z");
+          });
+
+          test("session IDs remain unique even when sessions begin in the same millisecond", () => {
+            const template = createDefaultTemplate();
+            const routine = template.routines.find((item) => item.id !== "daily-rules");
+            const originalNow = Date.now;
+            Date.now = () => 123456789;
+            try {
+              const first = createSession(routine, template);
+              const second = createSession(routine, template);
+              assert.notEqual(first.id, second.id);
+              assert.match(first.id, /^session-/);
+            } finally {
+              Date.now = originalNow;
+            }
+          });
+
+          test("local normalization drops impossible/future History and caps impossible completed counts", () => {
+            const template = createDefaultTemplate();
+            const state = normalizeAppState({
+              templates: [template],
+              activeTemplateId: template.id,
+              history: [
+                { id: "future", routineId: "x", routineTitle: "X", startedAt: "2999-01-01T00:00:00.000Z", finishedAt: "2999-01-01T00:10:00.000Z", completedTasks: 1, totalTasks: 1, percent: 100 },
+                { id: "backwards", routineId: "x", routineTitle: "X", startedAt: "2026-08-08T12:00:00.000Z", finishedAt: "2026-08-08T11:00:00.000Z", completedTasks: 1, totalTasks: 1, percent: 100 },
+                { id: "valid", routineId: "x", routineTitle: "X", startedAt: "2026-08-08T10:00:00.000Z", finishedAt: "2026-08-08T10:10:00.000Z", completedTasks: 9, totalTasks: 2, percent: 100 }
+              ]
+            });
+            assert.deepEqual(state.history.map((entry) => entry.id), ["valid"]);
+            assert.equal(state.history[0].completedTasks, 2);
+          });
+
+          test("starter restore is guarded by live active-session state at both UI and mutation boundaries", () => {
+            const app = textFile("../src/App.jsx");
+            const settings = textFile("../src/components/Settings.jsx");
+            assert.match(app, /appState\.activeSession\?\.templateId === activeTemplate\.id/);
+            assert.match(app, /current\.activeSession\?\.templateId === current\.activeTemplateId/);
+            assert.match(app, /activeSession=\{appState\.activeSession\}/);
+            assert.doesNotMatch(settings, /loadAppState\(\)/);
+            assert.match(settings, /activeSession\?\.templateId === template\.id/);
+          });
+
+          test("final release deployment and runtime verification are hardened", () => {
+            const deploy = textFile("../.github/workflows/deploy.yml");
+            const runtime = textFile("../scripts/verify-runtime.mjs");
+            assert.match(deploy, /actions\/checkout@v7/);
+            assert.match(deploy, /actions\/setup-node@v7/);
+            assert.match(deploy, /npm run verify:release-candidate/);
+            assert.match(runtime, /findAvailablePort/);
+            assert.match(runtime, /server\.listen\(0, host/);
+            assert.doesNotMatch(runtime, /const port = 4173;/);
+          });
+
+          test("final audit remains schema-free and preserves deployment/persistence invariants", () => {
+            const app = textFile("../src/App.jsx");
+            const vite = textFile("../vite.config.js");
+            assert.equal(CURRENT_BACKUP_VERSION, 3);
+            assert.equal(createTemplateExport(createDefaultTemplate()).version, 2);
+            assert.match(vite, /base:\s*["']\/clean30\/["']/);
+            assert.match(app, /useEffect\(\(\) => \{\s*saveAppState\(appState\);\s*\}, \[appState\]\);/s);
+          });
+          '''.replace("          ", ""))
+
+          print("Final audit patches applied.")
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify patched release candidate
+        run: npm run verify:release-candidate
+
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src scripts tests .github/workflows/deploy.yml
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Fix final release audit regressions"
+          git push origin HEAD:redesign/friction-elimination
