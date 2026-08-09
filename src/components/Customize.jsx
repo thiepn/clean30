@@ -242,6 +242,9 @@ export default function Customize({
   const editingLockMessage = focusedTodayEditor
     ? "A legacy Today session is active. Finish or discard it before changing regular Today tasks."
     : "A current clean is active. Finish or discard it before editing routines so its saved checklist stays consistent.";
+  const editorStatus = activeSection === "routines" && !routinesCanEdit
+    ? "Read only"
+    : "Editable";
 
   return (
     <div className="screen-stack">
@@ -256,7 +259,7 @@ export default function Customize({
                 : "Edit regular tasks, routines, schedule, and home details."}
             </p>
           </div>
-          <span className="pill">Editable</span>
+          <span className="pill">{editorStatus}</span>
         </div>
         {onBack ? (
           <button className="button ghost" type="button" onClick={onBack}>
