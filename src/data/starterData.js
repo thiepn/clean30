@@ -185,9 +185,7 @@ export const starterZones = [
   "Bathroom",
   "Bedroom",
   "Living room",
-  "Entrance",
-  "Floors",
-  "Other"
+  "Entrance"
 ];
 
 export const starterSystems = {

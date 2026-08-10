@@ -4,15 +4,15 @@ import useDialogFocus from "../hooks/useDialogFocus.js";
 const guideSections = [
   {
     title: "Today",
-    body: "Add tasks, check them off, or use Start cleaning for a focused task-by-task view."
+    body: "Add tasks, check them off, or use Start cleaning for a focused task-by-task view. Quick clean is also available from the header when you want Clean30 to decide what fits your available time."
   },
   {
     title: "Routines",
-    body: "Routines are reusable cleaning checklists. Start, create, or edit them directly from Routines."
+    body: "Routines are reusable cleaning checklists. Start, create, or edit them directly from Routines. Use Quick clean when you only know how much time you have. The 5, 15, and 30 minute buttons can send a ready-made plan straight to Today, while Plan a quick clean lets you choose the exact time and rooms."
   },
   {
     title: "Progress",
-    body: "Progress starts with recent activity and this week, then gives you a Calendar and optional deeper Insights."
+    body: "Progress starts with recent activity and this week, then shows Home snapshot, Calendar, and optional deeper Insights. Home snapshot turns full room-routine completions into simple Fresh, Looking good, Could use attention, or Needs attention guidance. It is maintenance context, not a score or deadline."
   },
   {
     title: "Data",

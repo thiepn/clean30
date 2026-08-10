@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   formatElapsedTime,
-  formatRoutineDuration,
-  getLastRoutineDoneLabel,
   getRoutineById,
-  getRoutineTotalTasks,
   getSessionElapsedMs,
   getSessionProgress
 } from "../utils/calculations.js";
@@ -75,15 +72,12 @@ export default function Dashboard({
 }) {
   const sessionAnchorRef = useRef(null);
   const routinePickerCloseRef = useRef(null);
-  const routineStartCloseRef = useRef(null);
   const [taskText, setTaskText] = useState("");
   const [expandedTaskId, setExpandedTaskId] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
   const [completedOpen, setCompletedOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [routinePicker, setRoutinePicker] = useState(closedRoutinePickerState);
-  const [routineStartOpen, setRoutineStartOpen] = useState(false);
-  const [routineStartId, setRoutineStartId] = useState("");
   const [customTagText, setCustomTagText] = useState("");
   const [timerNow, setTimerNow] = useState(Date.now());
   const [cleanModeOpen, setCleanModeOpen] = useState(false);
@@ -96,11 +90,6 @@ export default function Dashboard({
     open: routinePicker.open,
     onClose: closeRoutinePicker,
     initialFocusRef: routinePickerCloseRef
-  });
-  const routineStartDialogRef = useDialogFocus({
-    open: routineStartOpen,
-    onClose: closeRoutineStart,
-    initialFocusRef: routineStartCloseRef
   });
 
   const incompleteTasks = useMemo(
@@ -138,10 +127,6 @@ export default function Dashboard({
       ),
     [todayTasks]
   );
-  const selectedRoutineForStart =
-    routineOptions.find((routine) => routine.id === routineStartId) ||
-    routineOptions[0] ||
-    null;
   const activeRoutine = useMemo(
     () =>
       activeSession
@@ -205,24 +190,31 @@ export default function Dashboard({
   ]);
 
   useEffect(() => {
+    function consumeStartTodayCleaningRequest() {
+      if (typeof window === "undefined") return;
+      if (!window.clean30StartTodayCleaningRequested) return;
+      window.clean30StartTodayCleaningRequested = false;
+      setTodayCleaningOpen(true);
+    }
+
+    consumeStartTodayCleaningRequest();
+    window.addEventListener(
+      "clean30:startTodayCleaning",
+      consumeStartTodayCleaningRequest
+    );
+    return () => {
+      window.removeEventListener(
+        "clean30:startTodayCleaning",
+        consumeStartTodayCleaningRequest
+      );
+    };
+  }, []);
+
+  useEffect(() => {
     setRoutinePicker((current) =>
       reconcileRoutinePickerState(current, routineOptions)
     );
   }, [routineOptions]);
-
-  useEffect(() => {
-    if (
-      routineStartId &&
-      routineOptions.some((routine) => routine.id === routineStartId)
-    ) {
-      return;
-    }
-    setRoutineStartId(
-      routineOptions.find((routine) => routine.id === selectedRoutineId)?.id ||
-        routineOptions[0]?.id ||
-        ""
-    );
-  }, [routineOptions, routineStartId, selectedRoutineId]);
 
   function submitTask(event) {
     event.preventDefault();
@@ -272,27 +264,6 @@ export default function Dashboard({
 
   function closeRoutinePicker() {
     setRoutinePicker(closedRoutinePickerState());
-  }
-
-  function openRoutineStart() {
-    const initialId =
-      routineOptions.find((routine) => routine.id === selectedRoutineId)?.id ||
-      routineOptions[0]?.id ||
-      "";
-    setRoutineStartId(initialId);
-    setMoreOpen(false);
-    setRoutineStartOpen(true);
-  }
-
-  function closeRoutineStart() {
-    setRoutineStartOpen(false);
-  }
-
-  function startSelectedRoutine() {
-    if (!selectedRoutineForStart) return;
-    onSelectRoutine?.(selectedRoutineForStart.id);
-    closeRoutineStart();
-    onStartRoutine(selectedRoutineForStart.id);
   }
 
   function scrollToSession() {
@@ -658,15 +629,7 @@ export default function Dashboard({
         {moreOpen ? (
           <div className="today-more-panel" aria-label="More Today actions" id="today-more-actions">
             <button className="button ghost" onClick={openRoutinePicker} type="button">
-              Add from routine
-            </button>
-            <button
-              className="button ghost"
-              disabled={!routineOptions.length}
-              onClick={openRoutineStart}
-              type="button"
-            >
-              Start a routine
+              Add tasks from routine
             </button>
             {todayTasks.length ? (
               <button
@@ -696,7 +659,7 @@ export default function Dashboard({
                 }}
                 type="button"
               >
-                Reset today&apos;s list
+                Reset today
               </button>
             ) : null}
           </div>
@@ -726,7 +689,7 @@ export default function Dashboard({
         ) : (
           <div className="today-empty-state">
             <h3>No tasks yet</h3>
-            <p>Add one task above or use More to pull tasks from a routine.</p>
+            <p>Add one task above or use More to add tasks from a routine.</p>
           </div>
         )}
 
@@ -757,6 +720,12 @@ export default function Dashboard({
             ) : null}
           </section>
         ) : null}
+
+        <div className="today-weekly-activity-link">
+          <button className="button text-button small" onClick={onViewHistory} type="button">
+            View weekly activity in Progress
+          </button>
+        </div>
 
         {deletedTodayTask ? (
           <div className="undo-toast" role="status">
@@ -878,7 +847,7 @@ export default function Dashboard({
             <div className="dialog-header">
               <div>
                 <p className="eyebrow">Today</p>
-                <h2 id="routine-import-title">Add from routine</h2>
+                <h2 id="routine-import-title">Add tasks from routine</h2>
               </div>
               <button
                 aria-label="Close routine picker"
@@ -968,123 +937,6 @@ export default function Dashboard({
                 Cancel
               </button>
             </div>
-          </section>
-        </div>
-      ) : null}
-
-      {routineStartOpen ? (
-        <div
-          className="dialog-backdrop compact-backdrop"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeRoutineStart();
-          }}
-          role="presentation"
-        >
-          <section
-            aria-labelledby="routine-start-title"
-            aria-modal="true"
-            className="dialog today-routine-start-dialog"
-            ref={routineStartDialogRef}
-            role="dialog"
-            tabIndex={-1}
-          >
-            <div className="dialog-header">
-              <div>
-                <p className="eyebrow">Routine</p>
-                <h2 id="routine-start-title">Start a routine</h2>
-              </div>
-              <button
-                aria-label="Close routine start dialog"
-                className="icon-button"
-                onClick={closeRoutineStart}
-                ref={routineStartCloseRef}
-                type="button"
-              >
-                ×
-              </button>
-            </div>
-
-            {routineOptions.length ? (
-              <>
-                <div className="today-routine-choice-list" role="list">
-                  {routineOptions.map((routine) => (
-                    <button
-                      aria-pressed={selectedRoutineForStart?.id === routine.id}
-                      className={
-                        selectedRoutineForStart?.id === routine.id
-                          ? "today-routine-choice active"
-                          : "today-routine-choice"
-                      }
-                      key={routine.id}
-                      onClick={() => {
-                        setRoutineStartId(routine.id);
-                        onSelectRoutine?.(routine.id);
-                      }}
-                      type="button"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={`routine-color-dot color-${
-                          routine.colorLabel || "none"
-                        }`}
-                      />
-                      <span>
-                        <strong>{routine.title}</strong>
-                        <small>
-                          {formatRoutineDuration(routine)} ·{" "}
-                          {getRoutineTotalTasks(routine)} tasks
-                        </small>
-                        <small>{getLastRoutineDoneLabel(history, routine.id)}</small>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                <div className="card-actions today-routine-start-actions">
-                  <button
-                    className="button primary"
-                    onClick={startSelectedRoutine}
-                    type="button"
-                  >
-                    Start {selectedRoutineForStart?.title || "routine"}
-                  </button>
-                  <button
-                    className="button ghost"
-                    onClick={() => {
-                      closeRoutineStart();
-                      onEditRoutines();
-                    }}
-                    type="button"
-                  >
-                    Manage routines
-                  </button>
-                  <button
-                    className="button ghost"
-                    onClick={() => {
-                      closeRoutineStart();
-                      onAddRoutine();
-                    }}
-                    type="button"
-                  >
-                    Add routine
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="today-empty-state">
-                <h3>No active routines</h3>
-                <p>Add a routine before starting a reusable cleaning session.</p>
-                <button
-                  className="button primary"
-                  onClick={() => {
-                    closeRoutineStart();
-                    onAddRoutine();
-                  }}
-                  type="button"
-                >
-                  Add routine
-                </button>
-              </div>
-            )}
           </section>
         </div>
       ) : null}

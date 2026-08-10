@@ -22,9 +22,9 @@ export default function ProfileSection({
     <section className="panel">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Apartment Profile</p>
-          <h2>Display and Home Details</h2>
-          <p>These labels appear in the header, dashboard, exports, and routine context.</p>
+          <p className="eyebrow">Home</p>
+          <h2>Home details</h2>
+          <p>Optional labels used in your cleaning plan and exports.</p>
         </div>
       </div>
 
@@ -67,7 +67,7 @@ export default function ProfileSection({
         </label>
 
         <label className="field-label" htmlFor="home-name">
-          Apartment/home name
+          Home name
           <input
             id="home-name"
             value={template.profile.homeName}
@@ -77,7 +77,7 @@ export default function ProfileSection({
         </label>
 
         <label className="field-label" htmlFor="apartment-size">
-          Apartment size text
+          Home size text
           <input
             id="apartment-size"
             value={template.profile.apartmentSizeText}
@@ -87,7 +87,7 @@ export default function ProfileSection({
         </label>
 
         <label className="field-label" htmlFor="apartment-type">
-          Apartment type text
+          Home type text
           <input
             id="apartment-type"
             value={template.profile.apartmentTypeText}

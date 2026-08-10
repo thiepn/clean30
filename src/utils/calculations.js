@@ -1,5 +1,6 @@
 import { daysBetween, parseDate } from "./dates.js";
-import { cloneDeep } from "./templateUtils.js";
+import { parseDurationMinutes } from "./duration.js";
+import { cloneDeep, createId } from "./templateUtils.js";
 
 export function getRoutineById(routines, routineId) {
   return (routines || []).find((routine) => routine.id === routineId);
@@ -24,7 +25,7 @@ export function getRoutineTotalTasks(routine) {
 export function createSession(routine, template) {
   const now = new Date().toISOString();
   return {
-    id: `session-${Date.now()}`,
+    id: createId("session"),
     routineId: routine.id,
     templateId: template.id,
     startedAt: now,
@@ -84,19 +85,20 @@ export function formatRoutineDuration(routine) {
   return `${Math.round(minutes)} min`;
 }
 
-export function getLastRoutineFinishedAt(history, routineId) {
+export function getLastRoutineFinishedAt(history, routineId, templateId = "") {
   return (history || [])
     .filter((entry) => entry?.routineId === routineId && !isDailyRulesHistoryEntry(entry))
+    .filter((entry) => !templateId || !entry?.templateId || entry.templateId === templateId)
     .filter((entry) => !Number.isNaN(new Date(entry.finishedAt).getTime()))
     .sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0]?.finishedAt || null;
 }
 
-export function getLastRoutineDoneLabel(history, routineId) {
-  const finishedAt = getLastRoutineFinishedAt(history, routineId);
+export function getLastRoutineDoneLabel(history, routineId, templateId = "") {
+  const finishedAt = getLastRoutineFinishedAt(history, routineId, templateId);
   if (!finishedAt) return "Not done yet";
   const elapsed = daysBetween(finishedAt);
   if (elapsed === null) return "Not done yet";
-  if (elapsed === 0) return "Last done today";
+  if (elapsed <= 0) return "Last done today";
   if (elapsed === 1) return "Last done yesterday";
   return `Last done ${elapsed} days ago`;
 }
@@ -128,10 +130,10 @@ export function createHistoryEntry(
 }
 
 function estimateTodayTaskMinutes(tasks) {
-  return (tasks || []).reduce((total, rule) => {
-    const match = String(rule.duration || "").match(/(\d+(?:\.\d+)?)/);
-    return total + (match ? Number(match[1]) : 0);
-  }, 0);
+  return (tasks || []).reduce(
+    (total, rule) => total + (parseDurationMinutes(rule.duration, 0) || 0),
+    0
+  );
 }
 
 export function createDailyRulesHistoryEntry({

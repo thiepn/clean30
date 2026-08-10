@@ -110,6 +110,7 @@ function SettingsPageHeader({ title, description, onBack }) {
 
 export default function Settings({
   template,
+  activeSession,
   onExportFullBackup,
   onImportFullBackup,
   lastFullBackupExportedAt,
@@ -122,6 +123,7 @@ export default function Settings({
   onRestartOnboarding,
   onOpenHelp,
   onManageCustomize,
+  onResetTemplate,
   onResetAll,
   onResetHistory
 }) {
@@ -131,6 +133,9 @@ export default function Settings({
   const health = backupStatus(lastFullBackupExportedAt, backupDue);
   const activePresetId = getAppearancePresetId(appAppearance);
   const activePreset = appearancePresets.find((preset) => preset.id === activePresetId);
+  const starterRestoreLocked = Boolean(
+    activeSession?.templateId === template.id
+  );
 
   function handleImportFile(event) {
     const file = event.target.files?.[0];
@@ -489,12 +494,58 @@ export default function Settings({
         />
 
         <div className="settings-action-list">
-          <button className="settings-action-row" onClick={onManageCustomize} type="button">
+          <button
+            className="settings-action-row"
+            onClick={() => onManageCustomize("routines", "today")}
+            type="button"
+          >
             <span>
-              <strong>Open advanced plan editor</strong>
-              <small>
-                Manage regular tasks, routines, home details, schedules, and cleaning-plan files.
-              </small>
+              <strong>Manage regular tasks</strong>
+              <small>Change the tasks used when Clean30 creates a new Today list.</small>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <button
+            className="settings-action-row"
+            onClick={() => onManageCustomize("routines")}
+            type="button"
+          >
+            <span>
+              <strong>Manage routines</strong>
+              <small>Edit reusable routines and their detailed structure.</small>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <button
+            className="settings-action-row"
+            onClick={() => onManageCustomize("profile")}
+            type="button"
+          >
+            <span>
+              <strong>Home details</strong>
+              <small>Edit optional home labels and cleaning-plan details.</small>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <button
+            className="settings-action-row"
+            onClick={() => onManageCustomize("schedule")}
+            type="button"
+          >
+            <span>
+              <strong>Schedule</strong>
+              <small>Adjust reset timing and existing schedule thresholds.</small>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <button
+            className="settings-action-row"
+            onClick={() => onManageCustomize("import-export")}
+            type="button"
+          >
+            <span>
+              <strong>Import and export</strong>
+              <small>Share a cleaning plan or open the detailed backup tools.</small>
             </span>
             <span aria-hidden="true">›</span>
           </button>
@@ -514,12 +565,28 @@ export default function Settings({
           </label>
         </div>
 
-        <div className="settings-info-box">
-          <strong>Cleaning plans</strong>
-          <p>
-            The advanced editor contains starter-plan restore, cleaning-plan import and export,
-            schedule controls, and detailed task configuration.
-          </p>
+        <div className="settings-action-list">
+          <button
+            className="settings-action-row"
+            disabled={starterRestoreLocked}
+            onClick={onResetTemplate}
+            title={
+              starterRestoreLocked
+                ? "Finish or discard the current clean before restoring the starter plan."
+                : undefined
+            }
+            type="button"
+          >
+            <span>
+              <strong>Restore starter</strong>
+              <small>
+                {starterRestoreLocked
+                  ? "Unavailable while a clean from this plan is active."
+                  : "Replace the current cleaning plan with the Clean30 starter. Progress is kept."}
+              </small>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
         </div>
 
         <details className="settings-subdetail danger-subdetail">

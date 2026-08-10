@@ -9,6 +9,11 @@ import {
   historyEntryDateKey
 } from "../utils/activity.js";
 import { getHistoryInsights, getSessionDurationMinutes } from "../utils/historyInsights.js";
+import { getHomeRoomNames } from "../utils/homeLibrary.js";
+import {
+  getHomeCareSummary,
+  getRoutineCoveredRooms
+} from "../utils/homeMotivation.js";
 import EmptyState from "./EmptyState.jsx";
 import ProgressCalendar from "./ProgressCalendar.jsx";
 
@@ -53,6 +58,29 @@ function countLabel(count, singular, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+function roomImpactLabel(rooms) {
+  if (!rooms?.length) return "";
+  if (rooms.length <= 2) return rooms.join(" · ");
+  return `${rooms.slice(0, 2).join(" · ")} +${rooms.length - 2}`;
+}
+
+function FreshnessMeter({ room, freshness }) {
+  const label = freshness.percent === null
+    ? `${room} is not tracked yet`
+    : `${room} freshness ${freshness.percent}%`;
+
+  return (
+    <div className={`home-freshness-meter tone-${freshness.tone}`} aria-label={label} role="img">
+      {Array.from({ length: 5 }, (_, index) => (
+        <span
+          className={index < freshness.segments ? "filled" : ""}
+          key={`${room}-freshness-${index}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function History({
   history,
   todayTasksByDate = {},
@@ -67,6 +95,28 @@ export default function History({
   const [selectedDate, setSelectedDate] = useState(currentDateKey);
   const stats = getHistoryStats(history);
   const insights = getHistoryInsights(history, routines, template);
+  const homeRooms = useMemo(() => getHomeRoomNames(template?.zones || []), [template?.zones]);
+  const homeSummary = useMemo(
+    () =>
+      getHomeCareSummary({
+        rooms: homeRooms,
+        routines,
+        history,
+        currentDateKey,
+        templateId: template?.id || ""
+      }),
+    [currentDateKey, history, homeRooms, routines, template?.id]
+  );
+  const routineRoomsById = useMemo(
+    () =>
+      new Map(
+        routines.map((routine) => [
+          routine.id,
+          getRoutineCoveredRooms(routine, homeRooms)
+        ])
+      ),
+    [homeRooms, routines]
+  );
   const activityByDate = useMemo(
     () => buildActivityByDate(history, todayTasksByDate, template),
     [history, template, todayTasksByDate]
@@ -103,8 +153,12 @@ export default function History({
     () =>
       filter === "all"
         ? displayEntries
-        : displayEntries.filter((entry) => entry.routineId === filter),
-    [displayEntries, filter]
+        : displayEntries.filter(
+            (entry) =>
+              entry.routineId === filter &&
+              (!entry.templateId || entry.templateId === template?.id)
+          ),
+    [displayEntries, filter, template?.id]
   );
   const visibleEntries = showAll ? filtered : filtered.slice(0, 6);
 
@@ -219,6 +273,43 @@ export default function History({
         )}
       </section>
 
+      {homeRooms.length ? (
+        <section className="panel progress-home-panel">
+          <div className="progress-home-heading">
+            <div>
+              <p className="eyebrow">Home snapshot</p>
+              <h2>{homeSummary.headline}</h2>
+              <p>{homeSummary.detail}</p>
+            </div>
+            <div className="progress-home-counts" aria-label="Home room tracking summary">
+              <strong>{homeSummary.trackedCount}/{homeRooms.length}</strong>
+              <span>rooms tracked</span>
+            </div>
+          </div>
+
+          <div className="progress-home-grid" role="list" aria-label="Room freshness overview">
+            {homeSummary.rooms.map((care) => (
+              <article className={`progress-home-room tone-${care.freshness.tone}`} key={care.room} role="listitem">
+                <div className="progress-home-room-topline">
+                  <strong>{care.room}</strong>
+                  <span>{care.freshness.label}</span>
+                </div>
+                <FreshnessMeter room={care.room} freshness={care.freshness} />
+                <small>
+                  {care.status === "untracked"
+                    ? "No full room routine completed yet"
+                    : care.statusLabel}
+                </small>
+              </article>
+            ))}
+          </div>
+
+          <p className="progress-home-footnote">
+            This is a lightweight maintenance view based on full routine completions, not deadlines or a score. Quick clean uses the same room priority automatically.
+          </p>
+        </section>
+      ) : null}
+
       <section className="panel progress-recent-panel">
         <div className="progress-section-heading">
           <div>
@@ -259,6 +350,10 @@ export default function History({
                 const selected = selectedId === entry.id;
                 const daily = isDailyRulesHistoryEntry(entry);
                 const dateKey = historyEntryDateKey(entry);
+                const impactRooms =
+                  daily || (entry.templateId && entry.templateId !== template?.id)
+                    ? []
+                    : routineRoomsById.get(entry.routineId) || [];
                 return (
                   <article className={selected ? "progress-activity-item selected" : "progress-activity-item"} key={entry.id}>
                     <button
@@ -274,6 +369,7 @@ export default function History({
                       </span>
                       <span className="progress-activity-meta">
                         <span>{entry.completedTasks}/{entry.totalTasks} tasks</span>
+                        {impactRooms.length ? <span>{roomImpactLabel(impactRooms)}</span> : null}
                         {duration !== null && duration !== undefined ? (
                           <span>{daily ? "Est. " : ""}{displayDuration(duration)}</span>
                         ) : null}
@@ -296,6 +392,12 @@ export default function History({
                             <span>{daily ? "Estimated time" : "Measured time"}</span>
                             <strong>{displayDuration(duration)}</strong>
                           </div>
+                          {impactRooms.length ? (
+                            <div>
+                              <span>{entry.percent >= 100 ? "Rooms refreshed" : "Rooms covered"}</span>
+                              <strong>{impactRooms.join(", ")}</strong>
+                            </div>
+                          ) : null}
                         </div>
                         {!daily && entry.notes ? (
                           <div className="progress-entry-note">

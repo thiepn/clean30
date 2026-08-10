@@ -36,7 +36,9 @@ function titleForRoutine(routines, routineId, fallback = "Routine") {
 
 export function getHistoryInsights(history, routines, template) {
   const entries = Array.isArray(history) ? history : [];
-  const sessionEntries = entries.filter((entry) => !isDailyRulesHistoryEntry(entry));
+  const sessionEntries = entries
+    .filter((entry) => !isDailyRulesHistoryEntry(entry))
+    .filter((entry) => !template?.id || !entry?.templateId || entry.templateId === template.id);
   const now = new Date();
   const routineCounts = new Map();
   const routinePercents = new Map();
@@ -61,7 +63,7 @@ export function getHistoryInsights(history, routines, template) {
     .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))[0] || null;
 
   const lastCompletedByRoutine = importantRoutineIds.map((routineId) => {
-    const matching = entries
+    const matching = sessionEntries
       .filter((entry) => entry.routineId === routineId && validDate(entry.finishedAt))
       .sort((a, b) => validDate(b.finishedAt) - validDate(a.finishedAt));
     return {
@@ -112,8 +114,8 @@ export function getHistoryInsights(history, routines, template) {
 
   if (sessionEntries.length && (weeklyAge === null || weeklyAge > weeklyThreshold)) {
     warnings.push({
-      id: "weekly-overdue",
-      message: "Weekly reset is overdue.",
+      id: "weekly-attention",
+      message: "Weekly clean may need attention.",
       detail:
         weeklyAge === null
           ? "No weekly reset has been recorded yet."
@@ -123,8 +125,8 @@ export function getHistoryInsights(history, routines, template) {
 
   if (sessionEntries.length && (monthlyAge === null || monthlyAge > monthlyThreshold)) {
     warnings.push({
-      id: "monthly-due",
-      message: "Monthly deep clean is due.",
+      id: "monthly-attention",
+      message: "Deep clean may be worth considering.",
       detail:
         monthlyAge === null
           ? "No monthly deep clean has been recorded yet."

@@ -38,6 +38,7 @@ import {
   duplicateRoutineForLibrary,
   sanitizeRoutineDraft
 } from "./utils/routineLibrary.js";
+import { mergeHomeRoomsWithZones } from "./utils/homeLibrary.js";
 
 function downloadJson(filename, payload) {
   let url = "";
@@ -376,6 +377,16 @@ export default function App() {
   }
 
   function resetCurrentTemplateToDefault() {
+    if (appState.activeSession?.templateId === activeTemplate.id) {
+      requestConfirmation({
+        title: "Cleaning plan is in use",
+        message: "Finish or discard the current clean before restoring the starter plan.",
+        confirmLabel: "Keep plan",
+        onConfirm: () => {}
+      });
+      return;
+    }
+
     requestConfirmation({
       title: "Reset current template?",
       message:
@@ -383,9 +394,8 @@ export default function App() {
       confirmLabel: "Reset template",
       onConfirm: () => {
         setAppState((current) => {
-          const defaultTemplate =
-            current.templates.find((template) => template.id === "clean30-default") ||
-            createDefaultTemplate();
+          if (current.activeSession?.templateId === current.activeTemplateId) return current;
+          const defaultTemplate = createDefaultTemplate();
           const active = current.templates.find(
             (template) => template.id === current.activeTemplateId
           );
@@ -829,6 +839,64 @@ export default function App() {
     );
   }
 
+  function saveHomeRooms(roomNames) {
+    updateActiveTemplate((template) => ({
+      ...template,
+      zones: mergeHomeRoomsWithZones(template.zones, roomNames)
+    }));
+  }
+
+  function addLibraryTasksToToday(items = []) {
+    const dateKey = getTodayKey();
+    setAppState((current) => {
+      const currentTasks = getTodayTasksFromState(current, dateKey);
+      const globalTitles = new Set();
+      const roomKeys = new Set();
+      const allTitles = new Set();
+
+      for (const task of currentTasks) {
+        const titleKey = String(task.text || "").trim().toLowerCase();
+        if (!titleKey) continue;
+        allTitles.add(titleKey);
+        const roomMatch = String(task.note || "").match(/^Room:\s*(.+)$/i);
+        if (roomMatch?.[1]?.trim()) {
+          roomKeys.add(`${roomMatch[1].trim().toLowerCase()}::${titleKey}`);
+        } else {
+          globalTitles.add(titleKey);
+        }
+      }
+
+      const additions = [];
+      for (const item of Array.isArray(items) ? items : []) {
+        const title = String(item?.title || "").trim();
+        const titleKey = title.toLowerCase();
+        if (!title) continue;
+        const room = String(item?.room || "").trim();
+        const specificRoom = room && room !== "Whole home" && room !== "Other";
+        const roomKey = specificRoom ? `${room.toLowerCase()}::${titleKey}` : "";
+        if (specificRoom) {
+          if (globalTitles.has(titleKey) || roomKeys.has(roomKey)) continue;
+          roomKeys.add(roomKey);
+        } else {
+          if (allTitles.has(titleKey)) continue;
+          globalTitles.add(titleKey);
+        }
+        allTitles.add(titleKey);
+        const task = createTodayTask(title, dateKey);
+        additions.push({
+          ...task,
+          note: specificRoom ? `Room: ${room}` : ""
+        });
+      }
+
+      if (!additions.length) return current;
+      return markMeaningfulUse(
+        applyTodayTasksToState(current, dateKey, [...currentTasks, ...additions])
+      );
+    });
+    setCurrentView("dashboard");
+  }
+
   function deleteTodayTask(taskId) {
     const dateKey = getTodayKey();
     const currentTasks = getTodayTasksFromState(appState, dateKey);
@@ -1143,7 +1211,7 @@ export default function App() {
             ? "Back to Settings"
             : editorContext.origin === "routines"
               ? "Back to Routines"
-              : "Back to Dashboard"
+              : "Back to Today"
         }
       />
     );
@@ -1151,11 +1219,14 @@ export default function App() {
     content = (
       <Routines
         routines={activeTemplate.routines}
+        zones={activeTemplate.zones}
         history={appState.history}
         activeTemplateId={activeTemplate.id}
         activeSession={appState.activeSession}
         onStartRoutine={startSession}
         onSaveRoutine={saveRoutineFromLibrary}
+        onSaveHomeRooms={saveHomeRooms}
+        onAddLibraryTasksToToday={addLibraryTasksToToday}
         onDuplicateRoutine={duplicateRoutineFromLibrary}
         onToggleArchive={toggleRoutineArchiveFromLibrary}
         onDeleteRoutine={deleteRoutineFromLibrary}
@@ -1177,6 +1248,7 @@ export default function App() {
     content = (
       <Settings
         template={activeTemplate}
+        activeSession={appState.activeSession}
         onExportFullBackup={exportFullBackup}
         onImportFullBackup={importFullBackup}
         lastFullBackupExportedAt={appState.lastFullBackupExportedAt}
@@ -1188,7 +1260,10 @@ export default function App() {
         onUpdateStartTodayEmpty={updateStartTodayEmpty}
         onRestartOnboarding={restartOnboarding}
         onOpenHelp={() => setHelpOpen(true)}
-        onManageCustomize={() => openInternalEditor("profile", "settings")}
+        onManageCustomize={(section = "profile", intent = null) =>
+          openInternalEditor(section, "settings", intent)
+        }
+        onResetTemplate={resetCurrentTemplateToDefault}
         onResetAll={resetEverything}
         onResetHistory={resetOnlyHistory}
       />

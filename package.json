@@ -9,13 +9,16 @@
     "preview": "vite preview",
     "test": "node --test",
     "export:personal-template": "node scripts/export-personal-template.mjs",
-    "verify:release": "node scripts/verify-release.mjs"
+    "verify:release": "node scripts/verify-release.mjs",
+    "verify:runtime": "node scripts/verify-runtime.mjs",
+    "audit:release": "npm audit --audit-level=low",
+    "verify:release-candidate": "npm run audit:release && npm test && npm run build && npm run verify:release && npm run verify:runtime && node --check public/sw.js"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^5.0.0",
-    "vite": "^7.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@vitejs/plugin-react": "^5.2.0",
+    "vite": "^7.3.6",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {}
 }

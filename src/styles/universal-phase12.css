@@ -1,0 +1,86 @@
+/* Phase 12 — room care guidance */
+
+.home-room-card.care-attention,
+.home-room-card.care-soon {
+  border-color: var(--accent-border-strong);
+}
+
+.home-room-card.care-attention {
+  background: color-mix(in srgb, var(--accent-soft) 24%, var(--surface));
+}
+
+.home-room-card.care-soon {
+  background: color-mix(in srgb, var(--accent-soft) 13%, var(--surface));
+}
+
+.home-room-care-line {
+  display: block;
+}
+
+.home-room-care-detail {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.home-room-card.care-attention .home-room-care-line,
+.home-room-card.care-soon .home-room-care-line {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.quick-clean-room-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  text-align: left;
+}
+
+.quick-clean-room-copy strong {
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.quick-clean-room-copy small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.quick-clean-room.care-attention,
+.quick-clean-room.care-soon {
+  border-color: var(--accent-border-strong);
+}
+
+.quick-clean-room.care-attention .quick-clean-room-copy small,
+.quick-clean-room.care-soon .quick-clean-room-copy small {
+  color: var(--accent-strong);
+}
+
+.quick-clean-room.selected .quick-clean-room-copy small {
+  color: var(--text-soft);
+}
+
+@media (max-width: 680px) {
+  .quick-clean-room {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 390px) {
+  .home-room-care-detail {
+    font-size: 0.76rem;
+  }
+
+  .quick-clean-room-copy strong {
+    font-size: 0.86rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-room-card,
+  .quick-clean-room {
+    transition: none !important;
+  }
+}

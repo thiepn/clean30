@@ -9,12 +9,12 @@ const editorSections = [
   {
     id: "routines",
     label: "Routines",
-    description: "Edit Today defaults and reusable cleaning routines."
+    description: "Edit regular Today tasks and reusable cleaning routines."
   },
   {
     id: "profile",
-    label: "App details",
-    description: "Edit names, home labels, and the main cleaning goal."
+    label: "Home details",
+    description: "Edit optional names, home labels, and the main cleaning goal."
   },
   {
     id: "schedule",
@@ -87,6 +87,16 @@ export default function Customize({
     );
   });
   const [message, setMessage] = useState("");
+  const focusedTodayEditor = activeSection === "routines" && entryIntent === "today";
+  const activePlanSession = Boolean(
+    activeSession?.templateId === activeTemplate.id
+  );
+  const todayDefaultsLocked = Boolean(
+    activePlanSession && activeSession?.routineId === "daily-rules"
+  );
+  const routinesCanEdit = focusedTodayEditor
+    ? !todayDefaultsLocked
+    : !activePlanSession;
 
   const selectedRoutine = useMemo(() => {
     const visibleRoutines = activeTemplate.routines.filter((routine) => routine.id !== "daily-rules");
@@ -202,6 +212,7 @@ export default function Customize({
           onResetTemplate={onResetTemplate}
           onResetHistory={onResetHistory}
           onResetAll={onResetAll}
+          resetTemplateLocked={activePlanSession}
         />
       );
     }
@@ -214,7 +225,7 @@ export default function Customize({
         todayWeekdayDefaults={activeTemplate.todayWeekdayDefaults}
         selectedRoutine={selectedRoutine}
         selectedRoutineId={selectedRoutineId}
-        canEdit
+        canEdit={routinesCanEdit}
         onSelectRoutine={setSelectedRoutineId}
         onEditTemplate={editTemplate}
         onConfirmEdit={confirmTemplateEdit}
@@ -222,22 +233,33 @@ export default function Customize({
         templateId={activeTemplate.id}
         autoAddRoutine={entryIntent === "add-routine"}
         initialEditorTab={entryIntent === "today" ? "today" : "routines"}
+        focusedTodayOnly={focusedTodayEditor}
       />
     );
   }
 
   const activeSectionMeta = editorSections.find((section) => section.id === activeSection);
+  const editingLockMessage = focusedTodayEditor
+    ? "A legacy Today session is active. Finish or discard it before changing regular Today tasks."
+    : "A current clean is active. Finish or discard it before editing routines so its saved checklist stays consistent.";
+  const editorStatus = activeSection === "routines" && !routinesCanEdit
+    ? "Read only"
+    : "Editable";
 
   return (
     <div className="screen-stack">
       <section className="panel">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Editor</p>
-            <h2>Edit Cleaning Plan</h2>
-            <p>Edit Today defaults, routines, schedule, and app details.</p>
+            <p className="eyebrow">{focusedTodayEditor ? "Today" : "Editor"}</p>
+            <h2>{focusedTodayEditor ? "Edit regular tasks" : "Edit Cleaning Plan"}</h2>
+            <p>
+              {focusedTodayEditor
+                ? "Change the regular tasks Clean30 uses when a new Today list is created."
+                : "Edit regular tasks, routines, schedule, and home details."}
+            </p>
           </div>
-          <span className="pill">Editable</span>
+          <span className="pill">{editorStatus}</span>
         </div>
         {onBack ? (
           <button className="button ghost" type="button" onClick={onBack}>
@@ -246,48 +268,57 @@ export default function Customize({
         ) : null}
       </section>
 
-      <section className="panel advanced-menu-panel">
-        <div className="section-heading compact-heading">
-          <div>
-            <p className="eyebrow">Choose area</p>
-            <h2>{activeSectionMeta?.label || "Routines"}</h2>
-            {activeSectionMeta?.description ? <p>{activeSectionMeta.description}</p> : null}
-          </div>
-          <select
-            aria-label="Switch editor area"
-            value={activeSection}
-            onChange={(event) => setActiveSection(event.target.value)}
-          >
-            {editorSections.map((section) => (
-              <option key={section.id} value={section.id}>
-                {section.label}
-              </option>
-            ))}
-          </select>
+      {activeSection === "routines" && !routinesCanEdit ? (
+        <div className="callout small" role="status">
+          <strong>Editing paused while a clean is active.</strong>
+          <span>{editingLockMessage}</span>
         </div>
-        <div className="advanced-category-list compact-category-list" aria-label="Editor areas">
-          {editorSections.map((section) => (
-            <button
-              className={
-                activeSection === section.id
-                  ? "advanced-category-card active"
-                  : "advanced-category-card"
-              }
-              key={section.id}
-              type="button"
-              onClick={() => setActiveSection(section.id)}
+      ) : null}
+
+      {!focusedTodayEditor ? (
+        <section className="panel advanced-menu-panel">
+          <div className="section-heading compact-heading">
+            <div>
+              <p className="eyebrow">Choose area</p>
+              <h2>{activeSectionMeta?.label || "Routines"}</h2>
+              {activeSectionMeta?.description ? <p>{activeSectionMeta.description}</p> : null}
+            </div>
+            <select
+              aria-label="Switch editor area"
+              value={activeSection}
+              onChange={(event) => setActiveSection(event.target.value)}
             >
-              <span>
-                <strong>{section.label}</strong>
-                <small>{section.description}</small>
-              </span>
-              <span className="advanced-category-meta">
-                {getSectionCount(section.id, activeTemplate)}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
+              {editorSections.map((section) => (
+                <option key={section.id} value={section.id}>
+                  {section.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="advanced-category-list compact-category-list" aria-label="Editor areas">
+            {editorSections.map((section) => (
+              <button
+                className={
+                  activeSection === section.id
+                    ? "advanced-category-card active"
+                    : "advanced-category-card"
+                }
+                key={section.id}
+                type="button"
+                onClick={() => setActiveSection(section.id)}
+              >
+                <span>
+                  <strong>{section.label}</strong>
+                  <small>{section.description}</small>
+                </span>
+                <span className="advanced-category-meta">
+                  {getSectionCount(section.id, activeTemplate)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {renderSection()}
 
@@ -321,7 +352,8 @@ function ImportExportSection({
   onImportFullBackupClick,
   onResetTemplate,
   onResetHistory,
-  onResetAll
+  onResetAll,
+  resetTemplateLocked = false
 }) {
   return (
     <section className="panel">
@@ -378,7 +410,17 @@ function ImportExportSection({
           <span className="button danger-ghost small">Open</span>
         </summary>
         <div className="settings-actions">
-          <button className="button danger-ghost" type="button" onClick={onResetTemplate}>
+          <button
+            className="button danger-ghost"
+            type="button"
+            disabled={resetTemplateLocked}
+            onClick={onResetTemplate}
+            title={
+              resetTemplateLocked
+                ? "Finish or discard the current clean before resetting this cleaning plan."
+                : undefined
+            }
+          >
             Reset current template
           </button>
           <button className="button danger-ghost" type="button" onClick={onResetHistory}>
@@ -388,6 +430,11 @@ function ImportExportSection({
             Reset all data
           </button>
         </div>
+        {resetTemplateLocked ? (
+          <p className="muted compact-empty" role="status">
+            Reset current template is unavailable while a clean from this plan is active.
+          </p>
+        ) : null}
       </details>
 
       {message ? <p className="form-message">{message}</p> : null}

@@ -14,13 +14,20 @@ test("Phase 6 styles load after Phase 5 styles", () => {
   assert.ok(phaseSix > phaseFive);
 });
 
-test("Advanced Settings calls the callback App actually provides", () => {
+test("Advanced Settings calls the routed editor callback App actually provides", () => {
   const settings = textFile("../src/components/Settings.jsx");
   const app = textFile("../src/App.jsx");
   assert.match(settings, /onManageCustomize,/);
-  assert.match(settings, /onClick=\{onManageCustomize\}/);
+  assert.match(settings, /onManageCustomize\("routines", "today"\)/);
+  assert.match(settings, /onManageCustomize\("routines"\)/);
+  assert.match(settings, /onManageCustomize\("profile"\)/);
+  assert.match(settings, /onManageCustomize\("schedule"\)/);
+  assert.match(settings, /onManageCustomize\("import-export"\)/);
   assert.doesNotMatch(settings, /onOpenAdvancedEditor/);
-  assert.match(app, /onManageCustomize=\{\(\) => openInternalEditor\("profile", "settings"\)\}/);
+  assert.match(
+    app,
+    /onManageCustomize=\{\(section = "profile", intent = null\) =>\s*openInternalEditor\(section, "settings", intent\)\s*\}/s
+  );
 });
 
 test("Today keeps destructive task removal inside task details", () => {

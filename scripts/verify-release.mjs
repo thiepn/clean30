@@ -24,6 +24,25 @@ function requireFile(relativePath) {
   return path;
 }
 
+function versionParts(version) {
+  return String(version || "")
+    .split(".")
+    .slice(0, 3)
+    .map((part) => Number.parseInt(part, 10));
+}
+
+function versionAtLeast(version, minimum) {
+  const actual = versionParts(version);
+  const floor = versionParts(minimum);
+  for (let index = 0; index < 3; index += 1) {
+    const actualPart = Number.isFinite(actual[index]) ? actual[index] : 0;
+    const floorPart = Number.isFinite(floor[index]) ? floor[index] : 0;
+    if (actualPart > floorPart) return true;
+    if (actualPart < floorPart) return false;
+  }
+  return true;
+}
+
 requireFile("dist/index.html");
 requireFile("dist/manifest.webmanifest");
 requireFile("dist/sw.js");
@@ -84,8 +103,13 @@ assert.match(
 );
 assert.match(
   serviceWorker,
-  /app-shell-v7/,
-  "Phase 7 must use a fresh app-shell cache name."
+  /app-shell-v19/,
+  "The final release candidate must use the Phase 19 app-shell cache boundary."
+);
+assert.match(
+  serviceWorker,
+  /key\.startsWith\(CACHE_PREFIX\) && key !== CACHE_NAME/,
+  "Service worker activation must remove older Clean30 release caches."
 );
 assert.match(
   serviceWorker,
@@ -97,6 +121,46 @@ assert.match(
   /new Response\(OFFLINE_FALLBACK_HTML/,
   "Navigation fallback must always resolve to a Response when no cached shell exists."
 );
+
+const packageJson = JSON.parse(read("package.json"));
+const packageLock = JSON.parse(read("package-lock.json"));
+const lockedPackages = packageLock.packages || {};
+const lockedVite = lockedPackages["node_modules/vite"]?.version;
+const lockedPluginReact = lockedPackages["node_modules/@vitejs/plugin-react"]?.version;
+const lockedReact = lockedPackages["node_modules/react"]?.version;
+const lockedReactDom = lockedPackages["node_modules/react-dom"]?.version;
+const lockedPostcss = lockedPackages["node_modules/postcss"]?.version;
+const lockedEsbuild = lockedPackages["node_modules/esbuild"]?.version;
+
+assert.equal(
+  packageJson.scripts?.["audit:release"],
+  "npm audit --audit-level=low",
+  "Release dependency auditing must remain available."
+);
+assert.equal(packageJson.dependencies?.vite, "^7.3.6", "Vite 7 release floor changed unexpectedly.");
+assert.equal(
+  packageJson.dependencies?.["@vitejs/plugin-react"],
+  "^5.2.0",
+  "React plugin release floor changed unexpectedly."
+);
+assert.equal(packageJson.dependencies?.react, "^19.2.8", "React release floor changed unexpectedly.");
+assert.equal(
+  packageJson.dependencies?.["react-dom"],
+  "^19.2.8",
+  "React DOM release floor changed unexpectedly."
+);
+assert.ok(versionAtLeast(lockedVite, "7.3.6") && versionParts(lockedVite)[0] === 7, "Locked Vite must stay on verified Vite 7.3.6+.");
+assert.ok(
+  versionAtLeast(lockedPluginReact, "5.2.0") && versionParts(lockedPluginReact)[0] === 5,
+  "Locked @vitejs/plugin-react must stay on verified 5.2.0+."
+);
+assert.ok(versionAtLeast(lockedReact, "19.2.8") && versionParts(lockedReact)[0] === 19, "Locked React must stay on verified React 19.2.8+.");
+assert.ok(
+  versionAtLeast(lockedReactDom, "19.2.8") && versionParts(lockedReactDom)[0] === 19,
+  "Locked React DOM must stay on verified React DOM 19.2.8+."
+);
+assert.ok(versionAtLeast(lockedPostcss, "8.5.18"), "Locked PostCSS must include the path-traversal security fix from 8.5.18+.");
+assert.ok(versionAtLeast(lockedEsbuild, "0.28.1"), "Locked esbuild must include the Windows dev-server traversal fix from 0.28.1+.");
 
 assert.equal(CURRENT_BACKUP_VERSION, 3, "Full-backup schema changed unexpectedly.");
 assert.equal(
@@ -131,5 +195,8 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
+console.log("- Phase 19 service-worker cache boundary verified");
+console.log(`- dependency floor verified: Vite ${lockedVite}, React ${lockedReact}`);
+console.log(`- security floor verified: PostCSS ${lockedPostcss}, esbuild ${lockedEsbuild}`);
 console.log("- service worker offline fallback verified");
 console.log("- node_modules ignore rule verified");
