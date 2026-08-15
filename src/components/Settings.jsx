@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import HomeRoomsDialog from "./HomeRoomsDialog.jsx";
+import { getHomeRoomNames } from "../utils/homeLibrary.js";
 import packageInfo from "../../package.json";
 import { formatRelativeDays } from "../utils/dates.js";
 import {
@@ -111,6 +113,7 @@ function SettingsPageHeader({ title, description, onBack }) {
 export default function Settings({
   template,
   activeSession,
+  onSaveHomeRooms,
   onExportFullBackup,
   onImportFullBackup,
   lastFullBackupExportedAt,
@@ -130,6 +133,8 @@ export default function Settings({
   const fileInputRef = useRef(null);
   const [message, setMessage] = useState("");
   const [activePage, setActivePage] = useState(null);
+  const [roomsOpen, setRoomsOpen] = useState(false);
+  const homeRooms = getHomeRoomNames(template.zones || []);
   const health = backupStatus(lastFullBackupExportedAt, backupDue);
   const activePresetId = getAppearancePresetId(appAppearance);
   const activePreset = appearancePresets.find((preset) => preset.id === activePresetId);
@@ -196,6 +201,12 @@ export default function Settings({
               description="Theme, text size, and layout spacing."
               meta={activePreset?.label || "Custom"}
               onClick={() => setActivePage("appearance")}
+            />
+            <SettingsDestination
+              title="Rooms"
+              description="Choose the rooms Clean30 uses for room-based suggestions."
+              meta={`${homeRooms.length} ${homeRooms.length === 1 ? "room" : "rooms"}`}
+              onClick={() => setActivePage("rooms")}
             />
             <SettingsDestination
               title="Data and backup"
@@ -341,6 +352,45 @@ export default function Settings({
     );
   }
 
+  if (activePage === "rooms") {
+    return (
+      <div className="screen-stack settings-screen">
+        <section className="panel settings-focus-panel">
+          <SettingsPageHeader
+            title="Rooms"
+            description="Rooms help Clean30 suggest relevant work. They are not another cleaning mode or schedule."
+            onBack={() => setActivePage(null)}
+          />
+
+          {homeRooms.length ? (
+            <div className="settings-room-summary" aria-label="Rooms in Clean30">
+              {homeRooms.map((room) => (
+                <span className="settings-room-chip" key={room}>{room}</span>
+              ))}
+            </div>
+          ) : (
+            <div className="settings-info-box">
+              <strong>No rooms set up yet</strong>
+              <p>Add only the rooms that exist in your home.</p>
+            </div>
+          )}
+
+          <div className="settings-primary-actions">
+            <button className="button primary" onClick={() => setRoomsOpen(true)} type="button">
+              Edit rooms
+            </button>
+          </div>
+        </section>
+        <HomeRoomsDialog
+          onClose={() => setRoomsOpen(false)}
+          onSave={(roomNames) => onSaveHomeRooms?.(roomNames)}
+          open={roomsOpen}
+          rooms={homeRooms}
+        />
+      </div>
+    );
+  }
+
   if (activePage === "backup") {
     return (
       <div className="screen-stack settings-screen">
@@ -420,7 +470,7 @@ export default function Settings({
             <button className="settings-action-row" onClick={onOpenHelp} type="button">
               <span>
                 <strong>Quick guide</strong>
-                <small>Today, Routines, Progress, and local data in a few short notes.</small>
+                <small>Clean, Routines, Progress, and local data in a few short notes.</small>
               </span>
               <span aria-hidden="true">›</span>
             </button>
@@ -522,8 +572,8 @@ export default function Settings({
             type="button"
           >
             <span>
-              <strong>Home details</strong>
-              <small>Edit optional home labels and cleaning-plan details.</small>
+              <strong>Cleaning plan details</strong>
+              <small>Edit optional labels and advanced cleaning-plan details.</small>
             </span>
             <span aria-hidden="true">›</span>
           </button>

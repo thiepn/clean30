@@ -1249,6 +1249,7 @@ export default function App() {
       <Settings
         template={activeTemplate}
         activeSession={appState.activeSession}
+        onSaveHomeRooms={saveHomeRooms}
         onExportFullBackup={exportFullBackup}
         onImportFullBackup={importFullBackup}
         lastFullBackupExportedAt={appState.lastFullBackupExportedAt}
@@ -1290,6 +1291,7 @@ export default function App() {
         taskTags={appState.appSettings?.taskTags || []}
         onAddTaskTag={addTaskTag}
         onAddRoutineTasksToToday={addRoutineTasksToToday}
+        onAddLibraryTasksToToday={addLibraryTasksToToday}
         onResetTodayTasks={resetTodayTasks}
         onStartRoutine={startSession}
         onToggleTask={toggleTask}
