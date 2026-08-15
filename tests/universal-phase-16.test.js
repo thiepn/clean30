@@ -90,7 +90,7 @@ test("advanced Home profile fields keep universal wording and legacy data compat
 test("Phase 16 remains schema-free and preserves deployment and persistence invariants", () => {
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
-  assert.equal(CURRENT_BACKUP_VERSION, 3);
+  assert.equal(CURRENT_BACKUP_VERSION, 4);
   assert.equal(createTemplateExport(createDefaultTemplate()).version, 2);
   assert.match(vite, /base:\s*["']\/clean30\/["']/);
   assert.match(app, /useEffect\(\(\) => \{\s*saveAppState\(appState\);\s*\}, \[appState\]\);/s);

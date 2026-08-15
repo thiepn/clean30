@@ -143,7 +143,7 @@ test("Phase 12 stays schema-free and preserves backup, template, deployment, and
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
   const templateExport = createTemplateExport(createDefaultTemplate());
-  assert.equal(CURRENT_BACKUP_VERSION, 3);
+  assert.equal(CURRENT_BACKUP_VERSION, 4);
   assert.equal(templateExport.version, 2);
   assert.match(vite, /base:\s*["']\/clean30\/["']/);
   assert.match(app, /useEffect\(\(\) => \{\s*saveAppState\(appState\);\s*\}, \[appState\]\);/s);

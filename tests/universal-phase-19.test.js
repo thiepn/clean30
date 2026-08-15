@@ -100,25 +100,25 @@ test("Phase 19 production runtime smoke verification is part of local and CI rel
   assert.match(runtimeVerifier, /\/clean30\//);
   assert.match(runtimeVerifier, /scoped HTML assets verified/);
   assert.match(runtimeVerifier, /manifest icons verified over HTTP/);
-  assert.match(runtimeVerifier, /app-shell-v19/);
+  assert.match(runtimeVerifier, /app-shell-v20/);
 });
 
 test("Phase 19 advances the final PWA cache while preserving old-cache cleanup", () => {
   const sw = textFile("../public/sw.js");
   const verifier = textFile("../scripts/verify-release.mjs");
 
-  assert.match(sw, /app-shell-v19/);
+  assert.match(sw, /app-shell-v20/);
   assert.doesNotMatch(sw, /app-shell-v18/);
   assert.match(sw, /key\.startsWith\(CACHE_PREFIX\) && key !== CACHE_NAME/);
-  assert.match(verifier, /app-shell-v19/);
-  assert.match(verifier, /Phase 19 service-worker cache boundary verified/);
+  assert.match(verifier, /app-shell-v20/);
+  assert.match(verifier, /autopilot v20 service-worker cache boundary verified/);
 });
 
 test("Phase 19 remains schema-free and preserves deployment and persistence invariants", () => {
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
 
-  assert.equal(CURRENT_BACKUP_VERSION, 3);
+  assert.equal(CURRENT_BACKUP_VERSION, 4);
   assert.equal(createTemplateExport(createDefaultTemplate()).version, 2);
   assert.match(vite, /base:\s*["']\/clean30\/["']/);
   assert.match(
