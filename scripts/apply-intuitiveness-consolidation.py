@@ -22,11 +22,16 @@ replace_once(
     "        activeSession={appState.activeSession}\n        onSaveHomeRooms={saveHomeRooms}\n        onExportFullBackup={exportFullBackup}",
 )
 
-# Dashboard: make the new Clean chooser the first normal decision surface and keep Today as a list inside it.
+# Dashboard: make Clean the decision hub, keep Today as a list, and focus generated cleans on the tasks just chosen.
 replace_once(
     "src/components/Dashboard.jsx",
     'import CleanMode from "./CleanMode.jsx";\n',
     'import CleanMode from "./CleanMode.jsx";\nimport CleanStartPanel from "./CleanStartPanel.jsx";\n',
+)
+replace_once(
+    "src/components/Dashboard.jsx",
+    '''function getRoutineTasks(routine) {\n  return (\n    routine?.phases?.flatMap((phase) =>\n      phase.tasks.map((task) => ({\n        ...task,\n        phaseTitle: phase.title\n      }))\n    ) || []\n  );\n}\n''',
+    '''function getRoutineTasks(routine) {\n  return (\n    routine?.phases?.flatMap((phase) =>\n      phase.tasks.map((task) => ({\n        ...task,\n        phaseTitle: phase.title\n      }))\n    ) || []\n  );\n}\n\nfunction getChosenTaskKey(item) {\n  const title = String(item?.title || "").trim().toLowerCase();\n  const rawRoom = String(item?.room || "").trim();\n  const room = rawRoom && rawRoom !== "Whole home" && rawRoom !== "Other"\n    ? rawRoom.toLowerCase()\n    : "";\n  return `${room}::${title}`;\n}\n''',
 )
 replace_once(
     "src/components/Dashboard.jsx",
@@ -35,8 +40,18 @@ replace_once(
 )
 replace_once(
     "src/components/Dashboard.jsx",
+    '  const [todayCleaningOpen, setTodayCleaningOpen] = useState(false);\n',
+    '  const [todayCleaningOpen, setTodayCleaningOpen] = useState(false);\n  const [preferredTodayTaskKeys, setPreferredTodayTaskKeys] = useState([]);\n',
+)
+replace_once(
+    "src/components/Dashboard.jsx",
+    '''  function submitTask(event) {\n    event.preventDefault();\n    const trimmed = taskText.trim();\n    if (!trimmed) return;\n    onAddTodayTask(trimmed);\n    setTaskText("");\n  }''',
+    '''  function submitTask(event) {\n    event.preventDefault();\n    const trimmed = taskText.trim();\n    if (!trimmed) return;\n    onAddTodayTask(trimmed);\n    setTaskText("");\n  }\n\n  function startChosenTasks(items = []) {\n    const keys = [...new Set((Array.isArray(items) ? items : []).map(getChosenTaskKey).filter((key) => !key.endsWith("::")))];\n    if (!keys.length || activeSession) return;\n    setPreferredTodayTaskKeys(keys);\n    onAddLibraryTasksToToday?.(items);\n    setTodayCleaningOpen(true);\n  }\n\n  function startTodayList() {\n    if (!incompleteTasks.length || activeSession) return;\n    setPreferredTodayTaskKeys([]);\n    setTodayCleaningOpen(true);\n  }\n\n  function closeTodayCleaning() {\n    setTodayCleaningOpen(false);\n    setPreferredTodayTaskKeys([]);\n  }''',
+)
+replace_once(
+    "src/components/Dashboard.jsx",
     '      <section className="panel today-panel today-primary-panel">',
-    '''      <CleanStartPanel\n        history={history}\n        onStartTasks={(items) => {\n          onAddLibraryTasksToToday?.(items);\n          setTodayCleaningOpen(true);\n        }}\n        template={template}\n      />\n\n      <section className="panel today-panel today-primary-panel">''',
+    '''      {!activeSession ? (\n        <CleanStartPanel\n          history={history}\n          onStartTasks={startChosenTasks}\n          template={template}\n        />\n      ) : null}\n\n      <section className="panel today-panel today-primary-panel">''',
 )
 replace_once(
     "src/components/Dashboard.jsx",
@@ -45,8 +60,23 @@ replace_once(
 )
 replace_once(
     "src/components/Dashboard.jsx",
+    '''            disabled={!incompleteTasks.length}\n            onClick={() => setTodayCleaningOpen(true)}''',
+    '''            disabled={!incompleteTasks.length || Boolean(activeSession)}\n            onClick={startTodayList}''',
+)
+replace_once(
+    "src/components/Dashboard.jsx",
+    '''            {incompleteTasks.length ? "Start cleaning" : "All done for today"}''',
+    '''            {activeSession\n              ? "Finish current clean first"\n              : incompleteTasks.length\n                ? "Start cleaning"\n                : "All done for today"}''',
+)
+replace_once(
+    "src/components/Dashboard.jsx",
     '            <p>Add one task above or use More to add tasks from a routine.</p>',
     '            <p>Use Just start, choose a time, pick a room, or add one task above.</p>',
+)
+replace_once(
+    "src/components/Dashboard.jsx",
+    '''      <TodayCleaningMode\n        onExit={() => setTodayCleaningOpen(false)}\n        onToggleTask={onToggleTodayTask}\n        open={todayCleaningOpen}\n        tasks={todayTasks}\n      />''',
+    '''      <TodayCleaningMode\n        onExit={closeTodayCleaning}\n        onToggleTask={onToggleTodayTask}\n        open={todayCleaningOpen}\n        preferredTaskKeys={preferredTodayTaskKeys}\n        tasks={todayTasks}\n      />''',
 )
 
 # Settings: rooms become ordinary setup infrastructure instead of a feature inside Routines.
