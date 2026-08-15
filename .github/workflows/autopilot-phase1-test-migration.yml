@@ -1,0 +1,43 @@
+name: Clean30 Autopilot Phase 1 Test Migration
+
+on:
+  push:
+    branches:
+      - redesign/autopilot-core
+    paths:
+      - .github/workflows/autopilot-phase1-test-migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: redesign/autopilot-core
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Update intentional schema-version contracts
+        run: python scripts/update-autopilot-phase1-tests.py
+
+      - run: npm ci
+      - run: npm run audit:release
+      - run: npm test
+      - run: npm run build
+      - run: npm run verify:release
+      - run: npm run verify:runtime
+      - run: node --check public/sw.js
+
+      - name: Commit verified test migration
+        run: |
+          git config user.name "Clean30 Upgrade Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add tests
+          git commit -m "Update tests for maintenance schema v4"
+          git push origin HEAD:redesign/autopilot-core
