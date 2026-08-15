@@ -8,10 +8,7 @@ import {
   getRoutineCoveredRooms
 } from "../src/utils/homeMotivation.js";
 import { CURRENT_BACKUP_VERSION } from "../src/utils/storage.js";
-import {
-  createDefaultTemplate,
-  createTemplateExport
-} from "../src/utils/templateUtils.js";
+import { createDefaultTemplate, createTemplateExport } from "../src/utils/templateUtils.js";
 
 function textFile(path) {
   return readFileSync(new URL(path, import.meta.url), "utf8");
@@ -22,67 +19,34 @@ function roomRoutine(id, room, title = `Clean ${room}`) {
     id,
     title: `${room} clean`,
     archived: false,
-    phases: [
-      {
-        id: `${id}-phase`,
-        title: room,
-        tasks: [{ id: `${id}-task`, title, duration: "3 min" }]
-      }
-    ]
+    phases: [{ id: `${id}-phase`, title: room, tasks: [{ id: `${id}-task`, title, duration: "3 min" }] }]
   };
 }
 
 function historyEntry(routineId, finishedAt) {
-  return {
-    id: `history-${routineId}-${finishedAt}`,
-    routineId,
-    finishedAt,
-    percent: 100
-  };
+  return { id: `history-${routineId}-${finishedAt}`, routineId, finishedAt, percent: 100 };
 }
 
 test("room freshness presentation stays descriptive rather than gamified", () => {
-  assert.deepEqual(
-    getRoomFreshnessPresentation({ status: "untracked", daysSince: null }),
-    { percent: null, segments: 0, label: "Not tracked yet", tone: "untracked" }
-  );
-
-  const fresh = getRoomFreshnessPresentation({
-    status: "recent",
-    daysSince: 0,
-    suggestedIntervalDays: 7
+  assert.deepEqual(getRoomFreshnessPresentation({ status: "untracked", daysSince: null }), {
+    percent: null,
+    segments: 0,
+    label: "Not tracked yet",
+    tone: "untracked"
   });
+  const fresh = getRoomFreshnessPresentation({ status: "recent", daysSince: 0, suggestedIntervalDays: 7 });
   assert.equal(fresh.percent, 100);
   assert.equal(fresh.segments, 5);
   assert.equal(fresh.label, "Fresh");
-
-  const attention = getRoomFreshnessPresentation({
-    status: "attention",
-    daysSince: 10,
-    suggestedIntervalDays: 7
-  });
+  const attention = getRoomFreshnessPresentation({ status: "attention", daysSince: 10, suggestedIntervalDays: 7 });
   assert.ok(attention.percent <= 40);
   assert.equal(attention.label, "Needs attention");
 });
 
 test("Home summary points to the least-recently covered room without creating a deadline", () => {
-  const routines = [
-    roomRoutine("kitchen", "Kitchen"),
-    roomRoutine("bathroom", "Bathroom"),
-    roomRoutine("bedroom", "Bedroom")
-  ];
-  const history = [
-    historyEntry("kitchen", "2026-08-08T08:00:00.000Z"),
-    historyEntry("bathroom", "2026-07-28T08:00:00.000Z")
-  ];
-
-  const summary = getHomeCareSummary({
-    rooms: ["Kitchen", "Bathroom", "Bedroom"],
-    routines,
-    history,
-    currentDateKey: "2026-08-08"
-  });
-
+  const routines = [roomRoutine("kitchen", "Kitchen"), roomRoutine("bathroom", "Bathroom"), roomRoutine("bedroom", "Bedroom")];
+  const history = [historyEntry("kitchen", "2026-08-08T08:00:00.000Z"), historyEntry("bathroom", "2026-07-28T08:00:00.000Z")];
+  const summary = getHomeCareSummary({ rooms: ["Kitchen", "Bathroom", "Bedroom"], routines, history, currentDateKey: "2026-08-08" });
   assert.equal(summary.nextRoom?.room, "Bathroom");
   assert.match(summary.headline, /could use attention/i);
   assert.match(summary.detail, /Bathroom/);
@@ -99,11 +63,7 @@ test("routine impact maps only to configured rooms the routine actually covers",
       { id: "b", title: "Bathroom", tasks: [{ id: "mirror", title: "Clean the bathroom mirror" }] }
     ]
   };
-
-  assert.deepEqual(
-    getRoutineCoveredRooms(routine, ["Kitchen", "Bathroom", "Bedroom"]),
-    ["Kitchen", "Bathroom"]
-  );
+  assert.deepEqual(getRoutineCoveredRooms(routine, ["Kitchen", "Bathroom", "Bedroom"]), ["Kitchen", "Bathroom"]);
 });
 
 test("Progress adds Home snapshot and room impact without moving Calendar or Insights out", () => {
@@ -120,18 +80,19 @@ test("Phase 14 explicitly keeps room status as maintenance context rather than a
   const history = textFile("../src/components/History.jsx");
   const help = textFile("../src/components/HelpGuide.jsx");
   assert.match(history, /not deadlines or a score/i);
-  assert.match(help, /not a score or deadline/i);
+  assert.match(help, /not a score, deadline, or requirement/i);
   assert.doesNotMatch(history, /\bXP\b|\bleaderboard\b|\bachievement\b|\blevel up\b/i);
 });
 
-test("Phase 14 styling loads last and supports responsive and reduced-motion layouts", () => {
+test("Phase 14 styling loads before the final consolidation and supports responsive and reduced-motion layouts", () => {
   const main = textFile("../src/main.jsx");
   const css = textFile("../src/styles/universal-phase14.css");
   const phaseThirteen = main.indexOf('"./styles/universal-phase13.css"');
   const phaseFourteen = main.indexOf('"./styles/universal-phase14.css"');
-
+  const consolidation = main.indexOf('"./styles/universal-intuitiveness.css"');
   assert.ok(phaseThirteen >= 0);
   assert.ok(phaseFourteen > phaseThirteen);
+  assert.ok(consolidation > phaseFourteen);
   assert.match(css, /progress-home-grid/);
   assert.match(css, /home-freshness-meter/);
   assert.match(css, /@media \(max-width: 390px\)/);
@@ -141,7 +102,6 @@ test("Phase 14 styling loads last and supports responsive and reduced-motion lay
 test("Phase 14 remains schema-free and preserves deployment and persistence invariants", () => {
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
-
   assert.equal(CURRENT_BACKUP_VERSION, 3);
   assert.equal(createTemplateExport(createDefaultTemplate()).version, 2);
   assert.match(vite, /base:\s*["']\/clean30\/["']/);
@@ -149,8 +109,8 @@ test("Phase 14 remains schema-free and preserves deployment and persistence inva
   assert.doesNotMatch(app, /freshnessScore|homeScore|roomFreshnessState|homeMotivationState/);
 });
 
-test("Help explains that completed routines power the lightweight Home snapshot", () => {
+test("Help keeps the Home snapshot understandable without making it a separate workflow", () => {
   const help = textFile("../src/components/HelpGuide.jsx");
-  assert.match(help, /Home snapshot turns full room-routine completions into simple/);
-  assert.match(help, /Fresh, Looking good, Could use attention, or Needs attention/);
+  assert.match(help, /Progress shows what you completed and a lightweight room snapshot/);
+  assert.match(help, /Room status is guidance from completed cleans/);
 });
