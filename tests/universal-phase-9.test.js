@@ -37,10 +37,7 @@ Bathroom:
 test("bulk append builds sections and skips duplicate task names", () => {
   const draft = createSimpleRoutineDraft();
   draft.phases[0].tasks[0].title = "Clear visible trash";
-  const next = appendParsedTaskText(
-    draft,
-    `Whole home:\nClear visible trash\nPut away loose items\n\nBathroom:\nClean the toilet`
-  );
+  const next = appendParsedTaskText(draft, `Whole home:\nClear visible trash\nPut away loose items\n\nBathroom:\nClean the toilet`);
   const titles = next.phases.flatMap((phase) => phase.tasks.map((task) => task.title));
   assert.equal(titles.filter((title) => title === "Clear visible trash").length, 1);
   assert.ok(titles.includes("Put away loose items"));
@@ -81,10 +78,7 @@ test("optimizer moves collection and decluttering before floors", () => {
     { id: "vacuum", title: "Vacuum main floors" }
   ];
   const optimized = optimizeRoutineTaskOrder(draft);
-  assert.deepEqual(
-    optimized.phases[0].tasks.map((task) => task.id),
-    ["trash", "clutter", "vacuum", "mop"]
-  );
+  assert.deepEqual(optimized.phases[0].tasks.map((task) => task.id), ["trash", "clutter", "vacuum", "mop"]);
 });
 
 test("routine editor exposes bulk paste, rapid Enter entry, suggestions, auto time, and drag reorder", () => {
@@ -93,7 +87,7 @@ test("routine editor exposes bulk paste, rapid Enter entry, suggestions, auto ti
   assert.match(editor, /Markdown checkboxes/);
   assert.match(editor, /event\.key === "Enter"/);
   assert.match(editor, /onPaste=\{/);
-  assert.match(editor, /Pick common cleaning tasks/);
+  assert.match(editor, /Choose common cleaning tasks/);
   assert.match(editor, /Automatic/);
   assert.match(editor, /Optimize order/);
   assert.match(editor, /draggable="true"/);
