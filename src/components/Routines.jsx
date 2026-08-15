@@ -4,21 +4,10 @@ import {
   getLastRoutineDoneLabel,
   getRoutineTotalTasks
 } from "../utils/calculations.js";
-import {
-  getHomeRoomNames,
-  getSuggestedTaskCountForRoom
-} from "../utils/homeLibrary.js";
-import { buildQuickCleanPlan } from "../utils/quickClean.js";
-import {
-  getRoomsNeedingAttention,
-  getRoomCareStatus
-} from "../utils/roomCare.js";
+import { getHomeRoomNames } from "../utils/homeLibrary.js";
 import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
-import HomeRoomsDialog from "./HomeRoomsDialog.jsx";
-import QuickCleanDialog from "./QuickCleanDialog.jsx";
 import RoutineEditorDialog from "./RoutineEditorDialog.jsx";
-import TaskLibraryDialog from "./TaskLibraryDialog.jsx";
 
 const LEGACY_STARTER_IDS = new Set([
   "initial-reset",
@@ -28,8 +17,6 @@ const LEGACY_STARTER_IDS = new Set([
   "monthly-deep-clean"
 ]);
 
-const instantQuickCleanBudgets = [5, 15, 30];
-
 export default function Routines({
   routines,
   zones = [],
@@ -38,8 +25,6 @@ export default function Routines({
   activeSession,
   onStartRoutine,
   onSaveRoutine,
-  onSaveHomeRooms,
-  onAddLibraryTasksToToday,
   onDuplicateRoutine,
   onToggleArchive,
   onDeleteRoutine,
@@ -49,30 +34,10 @@ export default function Routines({
   const [selectedRoutineId, setSelectedRoutineId] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorRoutineId, setEditorRoutineId] = useState("");
-  const [editorSeed, setEditorSeed] = useState(null);
   const [openMenuId, setOpenMenuId] = useState("");
   const [legacyNoticeDismissed, setLegacyNoticeDismissed] = useState(false);
-  const [homeRoomsOpen, setHomeRoomsOpen] = useState(false);
-  const [taskLibraryOpen, setTaskLibraryOpen] = useState(false);
-  const [taskLibraryRoom, setTaskLibraryRoom] = useState("All");
-  const [taskLibraryPreselect, setTaskLibraryPreselect] = useState(false);
-  const [quickCleanOpen, setQuickCleanOpen] = useState(false);
 
   const homeRooms = useMemo(() => getHomeRoomNames(zones), [zones]);
-  const roomCareByName = useMemo(
-    () =>
-      new Map(
-        homeRooms.map((room) => [
-          room,
-          getRoomCareStatus({ room, routines, history, templateId: activeTemplateId })
-        ])
-      ),
-    [activeTemplateId, history, homeRooms, routines]
-  );
-  const roomsNeedingAttention = useMemo(
-    () => getRoomsNeedingAttention({ rooms: homeRooms, routines, history, templateId: activeTemplateId }),
-    [activeTemplateId, history, homeRooms, routines]
-  );
   const referenceRoutines = useMemo(
     () =>
       routines.filter(
@@ -81,16 +46,13 @@ export default function Routines({
       ),
     [routines, showArchived]
   );
-  const selectableRoutines = referenceRoutines.filter(
-    (routine) => !routine.archived
-  );
+  const selectableRoutines = referenceRoutines.filter((routine) => !routine.archived);
   const selectedRoutine =
     referenceRoutines.find((routine) => routine.id === selectedRoutineId) ||
     selectableRoutines[0] ||
     referenceRoutines[0] ||
     null;
-  const editorRoutine =
-    routines.find((routine) => routine.id === editorRoutineId) || null;
+  const editorRoutine = routines.find((routine) => routine.id === editorRoutineId) || null;
   const legacyStarterRoutines = useMemo(
     () =>
       routines.filter(
@@ -130,21 +92,6 @@ export default function Routines({
     };
   }, []);
 
-  useEffect(() => {
-    function consumeQuickCleanRequest() {
-      if (typeof window === "undefined") return;
-      if (!window.clean30OpenQuickCleanRequested) return;
-      window.clean30OpenQuickCleanRequested = false;
-      setQuickCleanOpen(true);
-    }
-
-    consumeQuickCleanRequest();
-    window.addEventListener("clean30:openQuickClean", consumeQuickCleanRequest);
-    return () => {
-      window.removeEventListener("clean30:openQuickClean", consumeQuickCleanRequest);
-    };
-  }, []);
-
   function isCurrentRoutine(routineId) {
     return (
       activeSession?.templateId === activeTemplateId &&
@@ -152,16 +99,14 @@ export default function Routines({
     );
   }
 
-  function openCreate(seed = null) {
+  function openCreate() {
     setEditorRoutineId("");
-    setEditorSeed(seed);
     setEditorOpen(true);
     setOpenMenuId("");
   }
 
   function openEdit(routineId) {
     if (isCurrentRoutine(routineId)) return;
-    setEditorSeed(null);
     setEditorRoutineId(routineId);
     setEditorOpen(true);
     setOpenMenuId("");
@@ -173,39 +118,15 @@ export default function Routines({
     onAdvancedEdit(routineId);
   }
 
-  function openTaskLibrary(room = "All", preselectRecommended = false) {
-    setTaskLibraryRoom(room);
-    setTaskLibraryPreselect(preselectRecommended);
-    setTaskLibraryOpen(true);
-  }
-
   function saveRoutine(routine) {
     const savedId = onSaveRoutine(routine);
     setSelectedRoutineId(savedId || routine.id);
-    setEditorSeed(null);
   }
 
   function startRoutine(routine) {
-    if (!routine || routine.archived || getRoutineTotalTasks(routine) === 0) {
-      return;
-    }
+    if (!routine || routine.archived || getRoutineTotalTasks(routine) === 0) return;
     setOpenMenuId("");
     onStartRoutine(routine.id);
-  }
-
-  function addInstantQuickClean(minutes) {
-    const plan = buildQuickCleanPlan({
-      minutes,
-      rooms: homeRooms,
-      routines,
-      history,
-      templateId: activeTemplateId
-    });
-    if (!plan.items.length) {
-      setQuickCleanOpen(true);
-      return;
-    }
-    onAddLibraryTasksToToday?.(plan.items);
   }
 
   function archiveLegacyStarterExamples() {
@@ -228,129 +149,27 @@ export default function Routines({
     setShowArchived(false);
   }
 
-  const quickCleanCopy = roomsNeedingAttention.length
-    ? `${roomsNeedingAttention
-        .slice(0, 2)
-        .map((item) => item.room)
-        .join(" and ")}${roomsNeedingAttention.length > 2 ? " and more" : ""} may need attention based on completed routines. Pick a time and send a ready-made plan straight to Today.`
-    : "Pick 5, 15, or 30 minutes and send a ready-made plan straight to Today. Clean30 uses your rooms and completed routines to choose what deserves attention first.";
-
   return (
-    <div className="screen-stack routines-screen">
-      <section className="panel home-routines-panel">
-        <div className="home-routines-heading">
-          <div>
-            <p className="eyebrow">Your home</p>
-            <h2>Start with the room, not the setup</h2>
-            <p>Tap a room to get relevant cleaning tasks. You can send them straight to Today or turn them into a reusable routine.</p>
-          </div>
-          <div className="home-routines-heading-actions">
-            <button className="button ghost" onClick={() => setHomeRoomsOpen(true)} type="button">
-              Edit rooms
-            </button>
-            <button className="button ghost" onClick={() => openTaskLibrary("All", false)} type="button">
-              Task library
-            </button>
-          </div>
-        </div>
-
-        <div className="quick-clean-launch quick-clean-launch-instant">
-          <div className="quick-clean-launch-copy">
-            <span aria-hidden="true" className="quick-clean-launch-mark">15</span>
-            <div>
-              <strong>Have a few minutes? Skip the planning.</strong>
-              <span>{quickCleanCopy}</span>
-            </div>
-          </div>
-          <div className="quick-clean-launch-actions">
-            <div className="quick-clean-instant-options" aria-label="Add a quick clean plan to Today" role="group">
-              {instantQuickCleanBudgets.map((minutes) => (
-                <button
-                  aria-label={`Add a ${minutes}-minute smart clean to Today`}
-                  className={minutes === 15 ? "button primary quick-clean-instant-button" : "button ghost quick-clean-instant-button"}
-                  key={minutes}
-                  onClick={() => addInstantQuickClean(minutes)}
-                  type="button"
-                >
-                  {minutes} min
-                </button>
-              ))}
-            </div>
-            <button className="button text-button quick-clean-customize" onClick={() => setQuickCleanOpen(true)} type="button">
-              Plan a quick clean
-            </button>
-          </div>
-        </div>
-
-        {homeRooms.length ? (
-          <div className="home-room-grid" role="group" aria-label="Rooms in your home">
-            {homeRooms.map((room) => {
-              const suggestionCount = getSuggestedTaskCountForRoom(room);
-              const care = roomCareByName.get(room);
-              return (
-                <button
-                  className={`home-room-card care-${care?.status || "untracked"}`}
-                  key={room}
-                  onClick={() => openTaskLibrary(room, true)}
-                  type="button"
-                >
-                  <span className="home-room-card-icon" aria-hidden="true" />
-                  <span>
-                    <strong>{room}</strong>
-                    <small className="home-room-care-line">
-                      {care?.statusLabel ||
-                        (suggestionCount
-                          ? `${suggestionCount} suggested tasks`
-                          : "Use your own routine tasks")}
-                    </small>
-                    {care?.status === "attention" || care?.status === "soon" ? (
-                      <small className="home-room-care-detail">{care.detail}</small>
-                    ) : null}
-                  </span>
-                  <span className="home-room-card-action">Choose tasks</span>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="home-routines-empty">
-            <div>
-              <strong>No rooms set up yet</strong>
-              <p>Add the rooms that actually exist in your home. This only takes a few taps.</p>
-            </div>
-            <button className="button primary" onClick={() => setHomeRoomsOpen(true)} type="button">
-              Set up my home
-            </button>
-          </div>
-        )}
-
-        <div className="home-whole-home-action">
-          <button className="button ghost small" onClick={() => openTaskLibrary("Whole home", true)} type="button">
-            Choose a quick whole-home reset
-          </button>
-          <span>Room care is guidance from full routine completions, not a required schedule. Nothing is added to Today automatically unless you choose a quick plan.</span>
-        </div>
-      </section>
-
+    <div className="screen-stack routines-screen routines-simple-screen">
       <section className="panel routines-library-panel">
         <div className="routines-page-heading">
           <div>
-            <p className="eyebrow">Reusable checklists</p>
+            <p className="eyebrow">Saved cleans</p>
             <h2>Routines</h2>
-            <p>Save the cleans you repeat. Start them directly whenever you need them.</p>
+            <p>Routines are cleaning checklists you want to use again. Start one here, or create a new one.</p>
           </div>
-          <button className="button primary" onClick={() => openCreate()} type="button">
-            Build routine
+          <button className="button primary" onClick={openCreate} type="button">
+            + New routine
           </button>
         </div>
 
-        <div className="routine-builder-callout routine-builder-callout-compact">
+        <div className="routine-builder-callout routine-builder-callout-compact routine-create-explainer">
           <div>
-            <strong>Already have a checklist?</strong>
-            <span>Paste 10, 20, or 50 tasks at once instead of creating rows one by one.</span>
+            <strong>One place to make a routine</strong>
+            <span>Choose common tasks, paste a checklist, use a starter, or type from scratch in the same editor.</span>
           </div>
-          <button className="button ghost small" onClick={() => openCreate()} type="button">
-            Paste a list
+          <button className="button ghost small" onClick={openCreate} type="button">
+            Create routine
           </button>
         </div>
 
@@ -358,9 +177,7 @@ export default function Routines({
           <div className="legacy-routine-notice">
             <div>
               <strong>Older Clean30 starter examples found</strong>
-              <p>
-                These are the original example routines from older Clean30 versions. You can archive the old examples and keep your own routines. Archived routines and Progress are not deleted.
-              </p>
+              <p>Archive the old examples if you no longer use them. Your Progress is not deleted.</p>
             </div>
             <div className="legacy-routine-actions">
               <button className="button ghost small" onClick={archiveLegacyStarterExamples} type="button">
@@ -375,13 +192,10 @@ export default function Routines({
 
         <div className="routines-toolbar">
           <span>
-            {selectableRoutines.length} active{" "}
-            {selectableRoutines.length === 1 ? "routine" : "routines"}
+            {selectableRoutines.length} active {selectableRoutines.length === 1 ? "routine" : "routines"}
           </span>
           <button
-            className={
-              showArchived ? "button edit-action small" : "button ghost small"
-            }
+            className={showArchived ? "button edit-action small" : "button ghost small"}
             onClick={() => setShowArchived((current) => !current)}
             type="button"
           >
@@ -393,8 +207,7 @@ export default function Routines({
           <div className="routine-card-grid" role="list">
             {referenceRoutines.map((routine) => {
               const taskCount = getRoutineTotalTasks(routine);
-              const isCurrent =
-                isCurrentRoutine(routine.id) && !routine.archived;
+              const isCurrent = isCurrentRoutine(routine.id) && !routine.archived;
               const menuOpen = openMenuId === routine.id;
               const menuId = `routine-menu-${routine.id}`;
 
@@ -405,9 +218,7 @@ export default function Routines({
                     selectedRoutine?.id === routine.id ? "selected" : "",
                     routine.archived ? "archived" : "",
                     isCurrent ? "current" : ""
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                  ].filter(Boolean).join(" ")}
                   key={routine.id}
                   role="listitem"
                 >
@@ -419,15 +230,12 @@ export default function Routines({
                   >
                     <span
                       aria-hidden="true"
-                      className={`routine-color-dot color-${
-                        routine.colorLabel || "none"
-                      }`}
+                      className={`routine-color-dot color-${routine.colorLabel || "none"}`}
                     />
                     <span className="routine-card-copy">
                       <strong>{routine.title}</strong>
                       <span>
-                        {taskCount} {taskCount === 1 ? "task" : "tasks"} ·{" "}
-                        {formatRoutineDuration(routine)}
+                        {taskCount} {taskCount === 1 ? "task" : "tasks"} · {formatRoutineDuration(routine)}
                       </span>
                       <small>
                         {isCurrent
@@ -435,9 +243,7 @@ export default function Routines({
                           : getLastRoutineDoneLabel(history, routine.id, activeTemplateId)}
                       </small>
                     </span>
-                    {routine.archived ? (
-                      <span className="status-pill compact">Archived</span>
-                    ) : null}
+                    {routine.archived ? <span className="status-pill compact">Archived</span> : null}
                   </button>
 
                   <div className="routine-card-actions">
@@ -462,11 +268,7 @@ export default function Routines({
                   </div>
 
                   {menuOpen ? (
-                    <div
-                      aria-label={`${routine.title} actions`}
-                      className="routine-card-menu"
-                      id={menuId}
-                    >
+                    <div aria-label={`${routine.title} actions`} className="routine-card-menu" id={menuId}>
                       <button
                         disabled={isCurrent}
                         onClick={() => openEdit(routine.id)}
@@ -521,7 +323,7 @@ export default function Routines({
         ) : (
           <EmptyState
             title={showArchived ? "No routines" : "No active routines"}
-            message="Build one from the Task Library or paste a checklist in one go."
+            message="Create a routine from common tasks, a pasted checklist, a starter, or a blank list."
           />
         )}
       </section>
@@ -533,29 +335,22 @@ export default function Routines({
               <p className="eyebrow">Routine</p>
               <h2>{selectedRoutine.title}</h2>
               <p>
-                {getRoutineTotalTasks(selectedRoutine)} tasks ·{" "}
-                {formatRoutineDuration(selectedRoutine)} ·{" "}
-                {getLastRoutineDoneLabel(history, selectedRoutine.id, activeTemplateId)}
+                {getRoutineTotalTasks(selectedRoutine)} tasks · {formatRoutineDuration(selectedRoutine)} · {getLastRoutineDoneLabel(history, selectedRoutine.id, activeTemplateId)}
               </p>
               {isCurrentRoutine(selectedRoutine.id) ? (
                 <p className="muted compact-empty">
-                  Finish or discard the current clean before editing this routine. Its saved checklist stays stable while the clean is in progress.
+                  Finish or discard the current clean before editing this routine. Its saved checklist stays stable while cleaning is in progress.
                 </p>
               ) : null}
             </div>
             <div className="routine-detail-actions">
               <button
                 className="button primary"
-                disabled={
-                  selectedRoutine.archived ||
-                  getRoutineTotalTasks(selectedRoutine) === 0
-                }
+                disabled={selectedRoutine.archived || getRoutineTotalTasks(selectedRoutine) === 0}
                 onClick={() => startRoutine(selectedRoutine)}
                 type="button"
               >
-                {isCurrentRoutine(selectedRoutine.id)
-                  ? "Continue cleaning"
-                  : "Start routine"}
+                {isCurrentRoutine(selectedRoutine.id) ? "Continue cleaning" : "Start cleaning"}
               </button>
               <button
                 className="button ghost"
@@ -581,10 +376,7 @@ export default function Routines({
               />
             </div>
           ) : (
-            <EmptyState
-              title="This routine has no tasks"
-              message="Add at least one task before starting it."
-            />
+            <EmptyState title="This routine has no tasks" message="Add at least one task before starting it." />
           )}
         </section>
       ) : null}
@@ -592,41 +384,11 @@ export default function Routines({
       <RoutineEditorDialog
         homeRooms={homeRooms}
         onAdvancedEdit={openAdvancedEdit}
-        onClose={() => {
-          setEditorOpen(false);
-          setEditorSeed(null);
-        }}
+        onClose={() => setEditorOpen(false)}
         onSave={saveRoutine}
         open={editorOpen}
         routine={editorRoutine}
         routines={routines.filter((routine) => routine.id !== "daily-rules")}
-        seedDraft={editorSeed}
-      />
-      <HomeRoomsDialog
-        onClose={() => setHomeRoomsOpen(false)}
-        onSave={(roomNames) => onSaveHomeRooms?.(roomNames)}
-        open={homeRoomsOpen}
-        rooms={homeRooms}
-      />
-      <TaskLibraryDialog
-        homeRooms={homeRooms}
-        initialRoom={taskLibraryRoom}
-        onAddToToday={(items) => onAddLibraryTasksToToday?.(items)}
-        onBuildRoutine={(draft) => openCreate(draft)}
-        onClose={() => setTaskLibraryOpen(false)}
-        open={taskLibraryOpen}
-        preselectRecommended={taskLibraryPreselect}
-        routines={routines}
-      />
-      <QuickCleanDialog
-        activeTemplateId={activeTemplateId}
-        history={history}
-        homeRooms={homeRooms}
-        onAddToToday={(items) => onAddLibraryTasksToToday?.(items)}
-        onBuildRoutine={(draft) => openCreate(draft)}
-        onClose={() => setQuickCleanOpen(false)}
-        open={quickCleanOpen}
-        routines={routines}
       />
     </div>
   );
