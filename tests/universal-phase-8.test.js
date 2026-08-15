@@ -14,9 +14,9 @@ test("Phase 8 visual layer loads after the accessibility polish layer", () => {
   assert.ok(phaseEight > phaseSix);
 });
 
-test("primary navigation keeps visible labels and adds decorative icons", () => {
+test("primary navigation keeps visible labels and decorative icons", () => {
   const navigation = textFile("../src/components/Navigation.jsx");
-  assert.match(navigation, /label: "Today", icon: "today"/);
+  assert.match(navigation, /label: "Clean", icon: "today"/);
   assert.match(navigation, /label: "Routines", icon: "routines"/);
   assert.match(navigation, /label: "Progress", icon: "progress"/);
   assert.match(navigation, /label: "Settings", icon: "settings"/);
