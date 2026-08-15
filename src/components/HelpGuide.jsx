@@ -3,20 +3,20 @@ import useDialogFocus from "../hooks/useDialogFocus.js";
 
 const guideSections = [
   {
-    title: "Today",
-    body: "Add tasks, check them off, or use Start cleaning for a focused task-by-task view. Quick clean is also available from the header when you want Clean30 to decide what fits your available time."
+    title: "Clean",
+    body: "This is where cleaning starts. Use Just start when you do not want to decide, choose how much time you have, pick a room, or work through today’s list. Every path leads into the same focused cleaning view."
   },
   {
     title: "Routines",
-    body: "Routines are reusable cleaning checklists. Start, create, or edit them directly from Routines. Use Quick clean when you only know how much time you have. The 5, 15, and 30 minute buttons can send a ready-made plan straight to Today, while Plan a quick clean lets you choose the exact time and rooms."
+    body: "Routines are saved reusable cleans. Start one directly, or create a new routine from common cleaning tasks, a pasted checklist, a starter, or a blank list."
   },
   {
     title: "Progress",
-    body: "Progress starts with recent activity and this week, then shows Home snapshot, Calendar, and optional deeper Insights. Home snapshot turns full room-routine completions into simple Fresh, Looking good, Could use attention, or Needs attention guidance. It is maintenance context, not a score or deadline."
+    body: "Progress shows what you completed and a lightweight room snapshot. Room status is guidance from completed cleans, not a score, deadline, or requirement."
   },
   {
-    title: "Data",
-    body: "Clean30 stores data on this device. Export backups from Settings to protect it."
+    title: "Settings",
+    body: "Manage rooms, appearance, backups, and advanced cleaning-plan options. Clean30 stores data on this device."
   }
 ];
 
