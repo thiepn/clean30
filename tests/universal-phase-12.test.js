@@ -10,10 +10,7 @@ import {
   routineCoversRoom
 } from "../src/utils/roomCare.js";
 import { CURRENT_BACKUP_VERSION } from "../src/utils/storage.js";
-import {
-  createDefaultTemplate,
-  createTemplateExport
-} from "../src/utils/templateUtils.js";
+import { createDefaultTemplate, createTemplateExport } from "../src/utils/templateUtils.js";
 
 function textFile(path) {
   return readFileSync(new URL(path, import.meta.url), "utf8");
@@ -24,29 +21,16 @@ function roomRoutine(id, room, taskTitle = "Custom task") {
     id,
     title: `${room} clean`,
     archived: false,
-    phases: [
-      {
-        id: `${id}-phase`,
-        title: room,
-        tasks: [
-          {
-            id: `${id}-task`,
-            title: taskTitle,
-            duration: "3 min"
-          }
-        ]
-      }
-    ]
+    phases: [{
+      id: `${id}-phase`,
+      title: room,
+      tasks: [{ id: `${id}-task`, title: taskTitle, duration: "3 min" }]
+    }]
   };
 }
 
 function completedEntry(routineId, finishedAt, percent = 100) {
-  return {
-    id: `history-${routineId}-${finishedAt}`,
-    routineId,
-    finishedAt,
-    percent
-  };
+  return { id: `history-${routineId}-${finishedAt}`, routineId, finishedAt, percent };
 }
 
 test("room coverage supports explicit custom-room sections and catalog task inference", () => {
@@ -55,15 +39,8 @@ test("room coverage supports explicit custom-room sections and catalog task infe
     id: "bathroom-generic",
     title: "Bathroom bits",
     archived: false,
-    phases: [
-      {
-        id: "tasks",
-        title: "Tasks",
-        tasks: [{ id: "toilet", title: "Clean the toilet", duration: "6 min" }]
-      }
-    ]
+    phases: [{ id: "tasks", title: "Tasks", tasks: [{ id: "toilet", title: "Clean the toilet", duration: "6 min" }] }]
   };
-
   assert.equal(routineCoversRoom(guestRoom, "Guest room"), true);
   assert.equal(routineCoversRoom(genericBathroom, "Bathroom"), true);
   assert.equal(routineCoversRoom(genericBathroom, "Kitchen"), false);
@@ -80,44 +57,19 @@ test("only fully completed routine sessions count as a full room clean", () => {
     completedEntry("kitchen", "2026-08-07T10:00:00.000Z", 50),
     completedEntry("kitchen", "2026-08-01T10:00:00.000Z", 100)
   ];
-
-  assert.equal(
-    getLastFullRoomRoutineCompletion("Kitchen", [routine], history),
-    "2026-08-01T10:00:00.000Z"
-  );
+  assert.equal(getLastFullRoomRoutineCompletion("Kitchen", [routine], history), "2026-08-01T10:00:00.000Z");
 });
 
 test("room-care statuses use soft suggested check-ins rather than hard due dates", () => {
-  const routines = [
-    roomRoutine("kitchen", "Kitchen"),
-    roomRoutine("bathroom", "Bathroom"),
-    roomRoutine("bedroom", "Bedroom")
-  ];
+  const routines = [roomRoutine("kitchen", "Kitchen"), roomRoutine("bathroom", "Bathroom"), roomRoutine("bedroom", "Bedroom")];
   const history = [
     completedEntry("kitchen", "2026-07-31T10:00:00.000Z"),
     completedEntry("bathroom", "2026-08-02T10:00:00.000Z"),
     completedEntry("bedroom", "2026-08-06T10:00:00.000Z")
   ];
-
-  const kitchen = getRoomCareStatus({
-    room: "Kitchen",
-    routines,
-    history,
-    currentDateKey: "2026-08-08"
-  });
-  const bathroom = getRoomCareStatus({
-    room: "Bathroom",
-    routines,
-    history,
-    currentDateKey: "2026-08-08"
-  });
-  const bedroom = getRoomCareStatus({
-    room: "Bedroom",
-    routines,
-    history,
-    currentDateKey: "2026-08-08"
-  });
-
+  const kitchen = getRoomCareStatus({ room: "Kitchen", routines, history, currentDateKey: "2026-08-08" });
+  const bathroom = getRoomCareStatus({ room: "Bathroom", routines, history, currentDateKey: "2026-08-08" });
+  const bedroom = getRoomCareStatus({ room: "Bedroom", routines, history, currentDateKey: "2026-08-08" });
   assert.equal(kitchen.status, "attention");
   assert.equal(kitchen.statusLabel, "May need attention");
   assert.equal(bathroom.status, "soon");
@@ -127,32 +79,15 @@ test("room-care statuses use soft suggested check-ins rather than hard due dates
 });
 
 test("room-care ranking puts attention and upcoming rooms before untracked and recent rooms", () => {
-  const routines = [
-    roomRoutine("kitchen", "Kitchen"),
-    roomRoutine("bathroom", "Bathroom"),
-    roomRoutine("living", "Living room")
-  ];
+  const routines = [roomRoutine("kitchen", "Kitchen"), roomRoutine("bathroom", "Bathroom"), roomRoutine("living", "Living room")];
   const history = [
     completedEntry("kitchen", "2026-07-31T10:00:00.000Z"),
     completedEntry("bathroom", "2026-08-02T10:00:00.000Z"),
     completedEntry("living", "2026-08-07T10:00:00.000Z")
   ];
-
-  const ranked = rankRoomsForCare({
-    rooms: ["Living room", "Bedroom", "Bathroom", "Kitchen"],
-    routines,
-    history,
-    currentDateKey: "2026-08-08"
-  });
-
-  assert.deepEqual(
-    ranked.map((item) => item.status),
-    ["attention", "soon", "untracked", "recent"]
-  );
-  assert.deepEqual(
-    ranked.map((item) => item.room),
-    ["Kitchen", "Bathroom", "Bedroom", "Living room"]
-  );
+  const ranked = rankRoomsForCare({ rooms: ["Living room", "Bedroom", "Bathroom", "Kitchen"], routines, history, currentDateKey: "2026-08-08" });
+  assert.deepEqual(ranked.map((item) => item.status), ["attention", "soon", "untracked", "recent"]);
+  assert.deepEqual(ranked.map((item) => item.room), ["Kitchen", "Bathroom", "Bedroom", "Living room"]);
 });
 
 test("Quick Clean uses room-care history to prioritize selected rooms when time is tight", () => {
@@ -165,15 +100,7 @@ test("Quick Clean uses room-care history to prioritize selected rooms when time 
     completedEntry("kitchen-care", "2026-08-08T08:00:00.000Z"),
     completedEntry("bathroom-care", "2026-07-28T08:00:00.000Z")
   ];
-
-  const plan = buildQuickCleanPlan({
-    minutes: 10,
-    rooms: ["Kitchen", "Bathroom", "Bedroom"],
-    routines,
-    history,
-    currentDateKey: "2026-08-08"
-  });
-
+  const plan = buildQuickCleanPlan({ minutes: 10, rooms: ["Kitchen", "Bathroom", "Bedroom"], routines, history, currentDateKey: "2026-08-08" });
   assert.equal(plan.prioritizedRooms[0], "Bathroom");
   assert.equal(plan.prioritizedRooms[1], "Bedroom");
   assert.equal(plan.prioritizedRooms[2], "Kitchen");
@@ -182,40 +109,29 @@ test("Quick Clean uses room-care history to prioritize selected rooms when time 
 });
 
 test("history-aware Quick Clean preserves cleaning-stage execution order", () => {
-  const routines = [
-    roomRoutine("kitchen", "Kitchen"),
-    roomRoutine("bathroom", "Bathroom")
-  ];
+  const routines = [roomRoutine("kitchen", "Kitchen"), roomRoutine("bathroom", "Bathroom")];
   const history = [completedEntry("kitchen", "2026-07-20T10:00:00.000Z")];
-  const plan = buildQuickCleanPlan({
-    minutes: 45,
-    rooms: ["Kitchen", "Bathroom"],
-    routines,
-    history,
-    currentDateKey: "2026-08-08"
-  });
+  const plan = buildQuickCleanPlan({ minutes: 45, rooms: ["Kitchen", "Bathroom"], routines, history, currentDateKey: "2026-08-08" });
   const stages = plan.items.map((item) => Number(item.stage) || 55);
   assert.deepEqual(stages, [...stages].sort((a, b) => a - b));
 });
 
-test("Home and Quick Clean expose room-care guidance without automatic scheduling", () => {
-  const routines = textFile("../src/components/Routines.jsx");
+test("room-care intelligence is exposed through Clean and Progress without creating another mode", () => {
+  const clean = textFile("../src/components/CleanStartPanel.jsx");
   const dialog = textFile("../src/components/QuickCleanDialog.jsx");
   const care = textFile("../src/utils/roomCare.js");
-
-  assert.match(routines, /Room care is guidance from full routine completions, not a required schedule/);
-  assert.match(routines, /history=\{history\}/);
-  assert.match(dialog, /Completed routines help Clean30 put less-recently covered rooms first/);
+  assert.match(clean, /rankRoomsForCare/);
+  assert.match(clean, /care-\$\{care\.status\}/);
+  assert.match(dialog, /completed cleans to prefer rooms that may need more attention/i);
   assert.match(care, /May need attention/);
   assert.doesNotMatch(dialog, /Notification|setInterval|recurrence/i);
 });
 
-test("Phase 12 styles load after Phase 11 and preserve narrow-phone and reduced-motion safeguards", () => {
+test("Phase 12 styles preserve narrow-phone and reduced-motion safeguards", () => {
   const main = textFile("../src/main.jsx");
   const css = textFile("../src/styles/universal-phase12.css");
   const phaseEleven = main.indexOf('"./styles/universal-phase11.css"');
   const phaseTwelve = main.indexOf('"./styles/universal-phase12.css"');
-
   assert.ok(phaseEleven >= 0);
   assert.ok(phaseTwelve > phaseEleven);
   assert.match(css, /@media \(max-width: 390px\)/);
@@ -227,7 +143,6 @@ test("Phase 12 stays schema-free and preserves backup, template, deployment, and
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
   const templateExport = createTemplateExport(createDefaultTemplate());
-
   assert.equal(CURRENT_BACKUP_VERSION, 3);
   assert.equal(templateExport.version, 2);
   assert.match(vite, /base:\s*["']\/clean30\/["']/);

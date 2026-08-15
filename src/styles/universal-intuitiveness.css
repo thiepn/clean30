@@ -1,0 +1,300 @@
+/* Intuitiveness consolidation — one obvious path from choosing work to cleaning. */
+
+.clean-start-panel {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 18px;
+}
+
+.clean-start-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 24%, transparent));
+}
+
+.clean-start-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.clean-start-heading > div {
+  display: grid;
+  gap: 4px;
+  max-width: 720px;
+}
+
+.clean-just-start-card {
+  width: 100%;
+  min-height: 92px;
+  padding: 17px 18px;
+  border: 1px solid var(--accent-border-strong);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--accent-soft) 46%, var(--surface));
+  color: inherit;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.clean-just-start-card:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 62%, var(--surface));
+}
+
+.clean-just-start-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--accent-contrast, white);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.clean-just-start-card > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.clean-just-start-card strong {
+  font-size: 1.04rem;
+}
+
+.clean-just-start-card small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.clean-start-action {
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.clean-choice-section {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 12px;
+}
+
+.clean-choice-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.clean-choice-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.clean-choice-heading h3,
+.clean-choice-heading p {
+  margin: 0;
+}
+
+.clean-choice-heading p {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.clean-time-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.clean-time-button {
+  min-height: 58px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: inherit;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.clean-time-button strong {
+  font-size: 1.15rem;
+}
+
+.clean-time-button span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.clean-time-button:hover,
+.clean-time-button.recommended {
+  border-color: var(--accent-border-strong);
+  background: var(--accent-soft);
+}
+
+.clean-time-button.recommended strong {
+  color: var(--accent-strong);
+}
+
+.clean-room-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.clean-room-button {
+  min-width: 0;
+  min-height: 64px;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.clean-room-button > span:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.clean-room-button strong {
+  overflow-wrap: anywhere;
+}
+
+.clean-room-button small {
+  color: var(--muted);
+}
+
+.clean-room-button > span:last-child {
+  color: var(--accent-strong);
+  font-size: 1.25rem;
+}
+
+.clean-room-button.care-attention,
+.clean-room-button.care-soon {
+  border-color: var(--accent-border);
+}
+
+.clean-room-button:hover {
+  border-color: var(--accent-border-strong);
+  background: color-mix(in srgb, var(--accent-soft) 24%, var(--surface));
+}
+
+.clean-room-empty {
+  padding: 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  display: grid;
+  gap: 4px;
+}
+
+.clean-room-empty p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.routines-simple-screen .routines-library-panel {
+  margin-top: 0;
+}
+
+.routine-create-explainer {
+  margin-top: 2px;
+}
+
+.today-primary-panel .today-title-row h2::after {
+  content: "";
+}
+
+.settings-room-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.settings-room-chip {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 680px) {
+  .clean-time-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clean-room-grid,
+  .settings-room-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .clean-choice-heading {
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .clean-just-start-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .clean-start-action {
+    grid-column: 2;
+  }
+
+  .clean-choice-heading {
+    display: grid;
+  }
+
+  .clean-choice-heading .button {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 390px) {
+  .clean-start-panel {
+    gap: 15px;
+  }
+
+  .clean-just-start-card {
+    padding: 14px;
+  }
+
+  .clean-time-button {
+    min-height: 54px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clean-just-start-card,
+  .clean-time-button,
+  .clean-room-button {
+    transition: none !important;
+    animation: none !important;
+  }
+}

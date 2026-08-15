@@ -3,10 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { CURRENT_BACKUP_VERSION } from "../src/utils/storage.js";
-import {
-  createDefaultTemplate,
-  createTemplateExport
-} from "../src/utils/templateUtils.js";
+import { createDefaultTemplate, createTemplateExport } from "../src/utils/templateUtils.js";
 
 function textFile(path) {
   return readFileSync(new URL(path, import.meta.url), "utf8");
@@ -15,9 +12,8 @@ function textFile(path) {
 test("onboarding can start the first starter clean directly without weakening returning-user protection", () => {
   const onboarding = textFile("../src/components/Onboarding.jsx");
   const dashboard = textFile("../src/components/Dashboard.jsx");
-
   assert.match(onboarding, /Start cleaning/);
-  assert.match(onboarding, /Go to Today/);
+  assert.match(onboarding, /Go to Clean/);
   assert.match(onboarding, /Use starter tasks instead/);
   assert.match(onboarding, /clean30StartTodayCleaningRequested/);
   assert.match(onboarding, /clean30:startTodayCleaning/);
@@ -27,9 +23,8 @@ test("onboarding can start the first starter clean directly without weakening re
   assert.match(dashboard, /setTodayCleaningOpen\(true\)/);
 });
 
-test("Today More matches the final task-management scope and links to Progress", () => {
+test("Today list More keeps its focused task-management scope and links to Progress", () => {
   const dashboard = textFile("../src/components/Dashboard.jsx");
-
   assert.match(dashboard, /Add tasks from routine/);
   assert.match(dashboard, /Reorder tasks/);
   assert.match(dashboard, /Edit regular tasks/);
@@ -43,7 +38,6 @@ test("regular task editing opens a focused Today editor instead of the full plan
   const customize = textFile("../src/components/Customize.jsx");
   const routines = textFile("../src/components/customize/RoutinesSection.jsx");
   const app = textFile("../src/App.jsx");
-
   assert.match(customize, /focusedTodayEditor/);
   assert.match(customize, /focusedTodayOnly={focusedTodayEditor}/);
   assert.match(customize, /Edit regular tasks/);
@@ -53,14 +47,14 @@ test("regular task editing opens a focused Today editor instead of the full plan
   assert.match(app, /Back to Today/);
 });
 
-test("Advanced Settings exposes direct cleaning-plan destinations and starter restore", () => {
+test("Settings exposes direct rooms and advanced cleaning-plan destinations", () => {
   const settings = textFile("../src/components/Settings.jsx");
   const app = textFile("../src/App.jsx");
-
   for (const label of [
+    "Rooms",
     "Manage regular tasks",
     "Manage routines",
-    "Home details",
+    "Cleaning plan details",
     "Schedule",
     "Import and export",
     "Restore starter",
@@ -68,7 +62,8 @@ test("Advanced Settings exposes direct cleaning-plan destinations and starter re
   ]) {
     assert.match(settings, new RegExp(label));
   }
-
+  assert.match(settings, /HomeRoomsDialog/);
+  assert.match(settings, /onSaveHomeRooms/);
   assert.match(settings, /onManageCustomize\("routines", "today"\)/);
   assert.match(settings, /onManageCustomize\("routines"\)/);
   assert.match(settings, /onManageCustomize\("profile"\)/);
@@ -78,9 +73,8 @@ test("Advanced Settings exposes direct cleaning-plan destinations and starter re
   assert.match(app, /openInternalEditor\(section, "settings", intent\)/);
 });
 
-test("Home details use universal wording while retaining legacy field compatibility", () => {
+test("advanced Home profile fields keep universal wording and legacy data compatibility", () => {
   const profile = textFile("../src/components/customize/ProfileSection.jsx");
-
   assert.match(profile, /Home details/);
   assert.match(profile, /Home name/);
   assert.match(profile, /Home size text/);
@@ -96,12 +90,8 @@ test("Home details use universal wording while retaining legacy field compatibil
 test("Phase 16 remains schema-free and preserves deployment and persistence invariants", () => {
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
-
   assert.equal(CURRENT_BACKUP_VERSION, 3);
   assert.equal(createTemplateExport(createDefaultTemplate()).version, 2);
   assert.match(vite, /base:\s*["']\/clean30\/["']/);
-  assert.match(
-    app,
-    /useEffect\(\(\) => \{\s*saveAppState\(appState\);\s*\}, \[appState\]\);/s
-  );
+  assert.match(app, /useEffect\(\(\) => \{\s*saveAppState\(appState\);\s*\}, \[appState\]\);/s);
 });

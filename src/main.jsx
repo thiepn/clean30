@@ -17,6 +17,7 @@ import "./styles/universal-phase11.css";
 import "./styles/universal-phase12.css";
 import "./styles/universal-phase13.css";
 import "./styles/universal-phase14.css";
+import "./styles/universal-intuitiveness.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

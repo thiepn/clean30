@@ -66,7 +66,7 @@ export default function RoutineEditorDialog({
     setDraft(createRoutineEditorDraft(routine || seedDraft));
     setAttemptedSave(false);
     setBulkText("");
-    setBulkMessage(seedDraft && !routine ? "Task Library selection loaded. Change anything before saving." : "");
+    setBulkMessage(seedDraft && !routine ? "Selected cleaning tasks loaded. Change anything before saving." : "");
     setSuggestionQuery("");
     setSuggestionRoom("All");
     setAutoDuration(!routine);
@@ -289,7 +289,7 @@ export default function RoutineEditorDialog({
               {routine ? "Edit routine" : "Build a routine"}
             </h2>
             <p>
-              Paste a whole checklist, use suggestions from your home, or type quickly. You do not need to add tasks one by one.
+              Choose common cleaning tasks, paste a checklist, use a starter, or type from scratch. They all create the same reusable routine.
             </p>
           </div>
           <button
@@ -307,8 +307,8 @@ export default function RoutineEditorDialog({
             <section className="routine-fast-start" aria-labelledby="routine-fast-start-title">
               <div className="section-heading compact-heading">
                 <div>
-                  <h3 id="routine-fast-start-title">Start faster</h3>
-                  <p>Use an example as a starting point, then change anything.</p>
+                  <h3 id="routine-fast-start-title">Choose how to start</h3>
+                  <p>Use a starter here, or continue below to paste a list, choose common tasks, or type your own.</p>
                 </div>
               </div>
               <div className="routine-template-grid">
@@ -436,7 +436,7 @@ export default function RoutineEditorDialog({
           <details className="routine-suggestion-builder">
             <summary>
               <span>
-                <strong>Pick common cleaning tasks</strong>
+                <strong>Choose common cleaning tasks</strong>
                 <small>{homeRooms.length ? "Suggestions are filtered to rooms in your home." : "Search the built-in suggestions instead of typing."}</small>
               </span>
               <span aria-hidden="true">+</span>

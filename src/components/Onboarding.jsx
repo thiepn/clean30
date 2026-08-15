@@ -45,7 +45,7 @@ export default function Onboarding({ onComplete }) {
     isReturningUser && step.id === "setup"
       ? "Reviewing the introduction does not replace your tasks, routines, progress, or settings."
       : isReturningUser && step.id === "first-clean"
-        ? "Return to Today and continue using your existing cleaning plan."
+        ? "Return to Clean and continue using your existing cleaning plan."
         : step.body;
 
   function finish(mode = setupMode) {
@@ -183,8 +183,8 @@ export default function Onboarding({ onComplete }) {
           {step.id === "welcome" ? (
             <>
               <div className="onboarding-simple-points" aria-label="Clean30 basics">
-                <p>See today&apos;s tasks.</p>
-                <p>Start a reusable routine.</p>
+                <p>Choose what to clean now.</p>
+                <p>Reuse saved routines when you want them.</p>
                 <p>Review what you finished.</p>
               </div>
               {!isReturningUser ? (
@@ -240,7 +240,7 @@ export default function Onboarding({ onComplete }) {
             isReturningUser ? (
               <div className="onboarding-empty-preview">
                 <h3>Your cleaning plan is ready</h3>
-                <p>Close the introduction to return to Today.</p>
+                <p>Close the introduction to return to Clean.</p>
               </div>
             ) : setupMode === "starter" ? (
               <div className="onboarding-task-preview" aria-label="Starter Today tasks">
@@ -275,7 +275,7 @@ export default function Onboarding({ onComplete }) {
             <span />
           ) : setupMode === "starter" ? (
             <button className="button ghost" type="button" onClick={() => finish("starter")}>
-              Go to Today
+              Go to Clean
             </button>
           ) : (
             <button className="button ghost" type="button" onClick={() => setSetupMode("starter")}>
@@ -301,7 +301,7 @@ export default function Onboarding({ onComplete }) {
                   : () => finish()
               }
             >
-              {!isReturningUser && setupMode === "starter" ? "Start cleaning" : "Go to Today"}
+              {!isReturningUser && setupMode === "starter" ? "Start cleaning" : "Go to Clean"}
             </button>
           ) : (
             <button

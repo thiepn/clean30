@@ -38,10 +38,7 @@ test("editing Home preserves existing room IDs and adds new rooms without touchi
 });
 
 test("Task Library limits built-in room suggestions to the configured home", () => {
-  const items = getTaskLibraryItems({
-    routines: [],
-    homeRooms: ["Kitchen", "Bedroom"]
-  });
+  const items = getTaskLibraryItems({ routines: [], homeRooms: ["Kitchen", "Bedroom"] });
   assert.ok(items.some((item) => item.room === "Kitchen"));
   assert.ok(items.some((item) => item.room === "Bedroom"));
   assert.ok(items.some((item) => item.room === "Whole home"));
@@ -97,19 +94,24 @@ test("Task Library selections become a structured editable routine draft", () =>
   assert.ok(draft.phases.every((phase) => phase.tasks.every((task) => task.id && task.title)));
 });
 
-test("Routines exposes room-first cleaning and the reusable Task Library", () => {
+test("room setup and task discovery survive behind simpler user-facing concepts", () => {
   const routines = textFile("../src/components/Routines.jsx");
-  const library = textFile("../src/components/TaskLibraryDialog.jsx");
+  const chooser = textFile("../src/components/TaskLibraryDialog.jsx");
+  const clean = textFile("../src/components/CleanStartPanel.jsx");
+  const settings = textFile("../src/components/Settings.jsx");
   const home = textFile("../src/components/HomeRoomsDialog.jsx");
-  assert.match(routines, /Start with the room, not the setup/);
-  assert.match(routines, /Task library/);
-  assert.match(routines, /Edit rooms/);
-  assert.match(routines, /Choose a quick whole-home reset/);
-  assert.match(library, /Select recommended/);
-  assert.match(library, /Add to Today/);
-  assert.match(library, /Build routine/);
-  assert.match(library, /Missing something\?/);
-  assert.match(home, /Removing a room here only changes Home and Task Library suggestions/);
+
+  assert.match(routines, /Saved cleans/);
+  assert.match(routines, /\+ New routine/);
+  assert.doesNotMatch(routines, /Task library|Start with the room, not the setup|Plan a quick clean/i);
+  assert.match(clean, /Clean a room/);
+  assert.match(clean, /Choose any tasks/);
+  assert.match(chooser, /Choose tasks/);
+  assert.match(chooser, /Select recommended/);
+  assert.match(chooser, /Start cleaning/);
+  assert.match(chooser, /Save as routine/);
+  assert.match(settings, /title="Rooms"/);
+  assert.match(settings, /HomeRoomsDialog/);
   assert.match(home, /does not delete routines or Progress/);
 });
 
@@ -134,7 +136,7 @@ test("fresh Home starts with actual rooms rather than utility categories", () =>
   assert.doesNotMatch(zoneBlock, /Other/);
 });
 
-test("Phase 10 styling loads last and keeps mobile dialogs full-screen", () => {
+test("Phase 10 styling keeps mobile chooser dialogs full-screen", () => {
   const main = textFile("../src/main.jsx");
   const phaseNine = main.indexOf('"./styles/universal-phase9.css"');
   const phaseTen = main.indexOf('"./styles/universal-phase10.css"');
@@ -142,7 +144,6 @@ test("Phase 10 styling loads last and keeps mobile dialogs full-screen", () => {
   assert.ok(phaseNine >= 0);
   assert.ok(phaseTen > phaseNine);
   assert.match(css, /task-library-dialog/);
-  assert.match(css, /home-room-grid/);
   assert.match(css, /height: 100dvh/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });

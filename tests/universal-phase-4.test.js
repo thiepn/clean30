@@ -81,9 +81,9 @@ test("Phase 4 styles load after Phase 3 styles", () => {
   assert.ok(phaseFour > phaseThree);
 });
 
-test("Help describes the new Progress information hierarchy", () => {
+test("Help describes Progress without making users learn the analytics structure", () => {
   const help = textFile("../src/components/HelpGuide.jsx");
-  assert.match(help, /Progress starts with recent activity and this week/);
-  assert.match(help, /Calendar/);
-  assert.match(help, /Insights/);
+  assert.match(help, /Progress shows what you completed/);
+  assert.match(help, /lightweight room snapshot/);
+  assert.match(help, /not a score, deadline, or requirement/);
 });

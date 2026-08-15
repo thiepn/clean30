@@ -15,6 +15,7 @@ import {
   toggleRoutinePickerTask
 } from "../utils/routinePickerState.js";
 import CleanMode from "./CleanMode.jsx";
+import CleanStartPanel from "./CleanStartPanel.jsx";
 import StartSession from "./StartSession.jsx";
 import TodayCleaningMode from "./TodayCleaningMode.jsx";
 
@@ -31,6 +32,15 @@ function getRoutineTasks(routine) {
       }))
     ) || []
   );
+}
+
+function getChosenTaskKey(item) {
+  const title = String(item?.title || "").trim().toLowerCase();
+  const rawRoom = String(item?.room || "").trim();
+  const room = rawRoom && rawRoom !== "Whole home" && rawRoom !== "Other"
+    ? rawRoom.toLowerCase()
+    : "";
+  return `${room}::${title}`;
 }
 
 export default function Dashboard({
@@ -52,6 +62,7 @@ export default function Dashboard({
   taskTags = [],
   onAddTaskTag,
   onAddRoutineTasksToToday,
+  onAddLibraryTasksToToday,
   onResetTodayTasks,
   onStartRoutine,
   onToggleTask,
@@ -84,6 +95,7 @@ export default function Dashboard({
   const [sessionMoreOpen, setSessionMoreOpen] = useState(false);
   const [showSessionDetails, setShowSessionDetails] = useState(false);
   const [todayCleaningOpen, setTodayCleaningOpen] = useState(false);
+  const [preferredTodayTaskKeys, setPreferredTodayTaskKeys] = useState([]);
   const todayKey = currentDateKey || getTodayKey();
 
   const routinePickerDialogRef = useDialogFocus({
@@ -222,6 +234,25 @@ export default function Dashboard({
     if (!trimmed) return;
     onAddTodayTask(trimmed);
     setTaskText("");
+  }
+
+  function startChosenTasks(items = []) {
+    const keys = [...new Set((Array.isArray(items) ? items : []).map(getChosenTaskKey).filter((key) => !key.endsWith("::")))];
+    if (!keys.length || activeSession) return;
+    setPreferredTodayTaskKeys(keys);
+    onAddLibraryTasksToToday?.(items);
+    setTodayCleaningOpen(true);
+  }
+
+  function startTodayList() {
+    if (!incompleteTasks.length || activeSession) return;
+    setPreferredTodayTaskKeys([]);
+    setTodayCleaningOpen(true);
+  }
+
+  function closeTodayCleaning() {
+    setTodayCleaningOpen(false);
+    setPreferredTodayTaskKeys([]);
   }
 
   function toggleRoutineTask(taskId) {
@@ -549,11 +580,19 @@ export default function Dashboard({
         </section>
       ) : null}
 
+      {!activeSession ? (
+        <CleanStartPanel
+          history={history}
+          onStartTasks={startChosenTasks}
+          template={template}
+        />
+      ) : null}
+
       <section className="panel today-panel today-primary-panel">
         <div className="today-title-row">
           <div>
             <p className="eyebrow">{formatDate(dateFromKey(todayKey))}</p>
-            <h2>Today</h2>
+            <h2>Today&apos;s list</h2>
           </div>
           <span className="today-count-summary">
             {incompleteTasks.length} left · {completedTasks.length} done
@@ -594,11 +633,15 @@ export default function Dashboard({
           </div>
           <button
             className="button primary today-start-cleaning"
-            disabled={!incompleteTasks.length}
-            onClick={() => setTodayCleaningOpen(true)}
+            disabled={!incompleteTasks.length || Boolean(activeSession)}
+            onClick={startTodayList}
             type="button"
           >
-            {incompleteTasks.length ? "Start cleaning" : "All done for today"}
+            {activeSession
+              ? "Finish current clean first"
+              : incompleteTasks.length
+                ? "Start cleaning"
+                : "All done for today"}
           </button>
         </div>
 
@@ -689,7 +732,7 @@ export default function Dashboard({
         ) : (
           <div className="today-empty-state">
             <h3>No tasks yet</h3>
-            <p>Add one task above or use More to add tasks from a routine.</p>
+            <p>Use Just start, choose a time, pick a room, or add one task above.</p>
           </div>
         )}
 
@@ -942,9 +985,10 @@ export default function Dashboard({
       ) : null}
 
       <TodayCleaningMode
-        onExit={() => setTodayCleaningOpen(false)}
+        onExit={closeTodayCleaning}
         onToggleTask={onToggleTodayTask}
         open={todayCleaningOpen}
+        preferredTaskKeys={preferredTodayTaskKeys}
         tasks={todayTasks}
       />
 

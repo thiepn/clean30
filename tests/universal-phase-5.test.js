@@ -13,32 +13,25 @@ function textFile(path) {
 }
 
 test("curated appearance presets use existing Clean30 appearance values", () => {
-  assert.deepEqual(
-    appearancePresets.map((preset) => preset.id),
-    ["light", "warm", "calm", "slate"]
-  );
+  assert.deepEqual(appearancePresets.map((preset) => preset.id), ["light", "warm", "calm", "slate"]);
   assert.equal(getAppearancePreset("calm")?.accentColor, "green");
   assert.equal(getAppearancePreset("calm")?.backgroundColor, "mint");
-  assert.equal(
-    getAppearancePresetId({ accentColor: "brown", backgroundColor: "cream" }),
-    "warm"
-  );
-  assert.equal(
-    getAppearancePresetId({ accentColor: "purple", backgroundColor: "cream" }),
-    "custom"
-  );
+  assert.equal(getAppearancePresetId({ accentColor: "brown", backgroundColor: "cream" }), "warm");
+  assert.equal(getAppearancePresetId({ accentColor: "purple", backgroundColor: "cream" }), "custom");
 });
 
-test("Settings opens as five simple destinations instead of a long control wall", () => {
+test("Settings opens as a small set of understandable destinations instead of a control wall", () => {
   const settings = textFile("../src/components/Settings.jsx");
   const appearance = settings.indexOf('title="Appearance"');
+  const rooms = settings.indexOf('title="Rooms"');
   const backup = settings.indexOf('title="Data and backup"');
   const help = settings.indexOf('title="Help"');
   const about = settings.indexOf('title="About"');
   const advanced = settings.indexOf('title="Advanced"');
 
   assert.ok(appearance >= 0);
-  assert.ok(backup > appearance);
+  assert.ok(rooms > appearance);
+  assert.ok(backup > rooms);
   assert.ok(help > backup);
   assert.ok(about > help);
   assert.ok(advanced > about);
@@ -72,7 +65,7 @@ test("advanced controls are isolated from everyday Settings", () => {
   const settings = textFile("../src/components/Settings.jsx");
   assert.match(settings, /Manage regular tasks/);
   assert.match(settings, /Manage routines/);
-  assert.match(settings, /Home details/);
+  assert.match(settings, /Cleaning plan details/);
   assert.match(settings, /Schedule/);
   assert.match(settings, /Import and export/);
   assert.match(settings, /Restore starter/);
@@ -92,9 +85,9 @@ test("Phase 5 styles load after Phase 4 styles", () => {
 
 test("Help remains intentionally short and action-oriented", () => {
   const help = textFile("../src/components/HelpGuide.jsx");
-  assert.match(help, /title: "Today"/);
+  assert.match(help, /title: "Clean"/);
   assert.match(help, /title: "Routines"/);
   assert.match(help, /title: "Progress"/);
-  assert.match(help, /title: "Data"/);
+  assert.match(help, /title: "Settings"/);
   assert.doesNotMatch(help, /If It Feels Overwhelming/);
 });

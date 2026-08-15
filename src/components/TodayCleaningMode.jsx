@@ -8,21 +8,45 @@ import {
   orderTodayCleaningTasks
 } from "../utils/todayCleaning.js";
 
-export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onExit }) {
+function getTodayTaskSelectionKey(task) {
+  const title = String(task?.text || "").trim().toLowerCase();
+  const roomMatch = String(task?.note || "").match(/^Room:\s*(.+)$/i);
+  const room = roomMatch?.[1]?.trim().toLowerCase() || "";
+  return `${room}::${title}`;
+}
+
+export default function TodayCleaningMode({
+  open,
+  tasks = [],
+  preferredTaskKeys = [],
+  onToggleTask,
+  onExit
+}) {
   const primaryActionRef = useRef(null);
   const dialogRef = useDialogFocus({
     open,
     onClose: onExit,
     initialFocusRef: primaryActionRef
   });
-  const orderedTasks = useMemo(() => orderTodayCleaningTasks(tasks), [tasks]);
-  const progress = useMemo(() => getTodayCleaningProgress(tasks), [tasks]);
+  const preferredKeySet = useMemo(
+    () => new Set((preferredTaskKeys || []).map((key) => String(key || "").trim()).filter(Boolean)),
+    [preferredTaskKeys]
+  );
+  const scopedTasks = useMemo(
+    () =>
+      preferredKeySet.size
+        ? tasks.filter((task) => preferredKeySet.has(getTodayTaskSelectionKey(task)))
+        : tasks,
+    [preferredKeySet, tasks]
+  );
+  const orderedTasks = useMemo(() => orderTodayCleaningTasks(scopedTasks), [scopedTasks]);
+  const progress = useMemo(() => getTodayCleaningProgress(scopedTasks), [scopedTasks]);
   const [currentTaskId, setCurrentTaskId] = useState("");
 
   useEffect(() => {
     if (!open) return;
-    setCurrentTaskId(getInitialTodayCleaningTaskId(tasks));
-  }, [open]);
+    setCurrentTaskId(getInitialTodayCleaningTaskId(scopedTasks));
+  }, [open, preferredTaskKeys]);
 
   useEffect(() => {
     if (!open) return;
@@ -73,10 +97,10 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
         <header className="today-cleaning-header">
           <div>
             <p className="eyebrow">Cleaning mode</p>
-            <h2 id="today-cleaning-title">Today</h2>
+            <h2 id="today-cleaning-title">Focused clean</h2>
           </div>
           <button
-            aria-label="Exit Today cleaning mode"
+            aria-label="Exit focused cleaning mode"
             className="button ghost small"
             onClick={onExit}
             type="button"
@@ -93,7 +117,7 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
             <span>tasks complete</span>
           </div>
           <div
-            aria-label={`${progress.percent}% of Today complete`}
+            aria-label={`${progress.percent}% of this clean complete`}
             aria-valuemax="100"
             aria-valuemin="0"
             aria-valuenow={progress.percent}
@@ -106,15 +130,15 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
 
         {!currentTask ? (
           <div className="today-cleaning-empty">
-            <h3>No tasks for today</h3>
-            <p>Add a task to Today before starting cleaning mode.</p>
+            <h3>No tasks in this clean</h3>
+            <p>Choose some cleaning tasks before starting focused cleaning.</p>
             <button
               className="button primary"
               onClick={onExit}
               ref={primaryActionRef}
               type="button"
             >
-              Back to Today
+              Back to Clean
             </button>
           </div>
         ) : allComplete ? (
@@ -122,7 +146,7 @@ export default function TodayCleaningMode({ open, tasks = [], onToggleTask, onEx
             <span aria-hidden="true" className="today-cleaning-complete-mark">
               ✓
             </span>
-            <h3>Today is complete</h3>
+            <h3>Clean complete</h3>
             <p>{progress.completed} tasks finished.</p>
             <button
               className="button primary"

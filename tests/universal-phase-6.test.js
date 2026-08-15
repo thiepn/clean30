@@ -24,10 +24,7 @@ test("Advanced Settings calls the routed editor callback App actually provides",
   assert.match(settings, /onManageCustomize\("schedule"\)/);
   assert.match(settings, /onManageCustomize\("import-export"\)/);
   assert.doesNotMatch(settings, /onOpenAdvancedEditor/);
-  assert.match(
-    app,
-    /onManageCustomize=\{\(section = "profile", intent = null\) =>\s*openInternalEditor\(section, "settings", intent\)\s*\}/s
-  );
+  assert.match(app, /onManageCustomize=\{\(section = "profile", intent = null\) =>\s*openInternalEditor\(section, "settings", intent\)\s*\}/s);
 });
 
 test("Today keeps destructive task removal inside task details", () => {
@@ -41,7 +38,7 @@ test("Today keeps destructive task removal inside task details", () => {
   assert.ok(removeTask > detailsButton);
 });
 
-test("Today exposes accessible progress for both daily tasks and the current clean", () => {
+test("Clean exposes accessible progress for both the Today list and current routine clean", () => {
   const dashboard = textFile("../src/components/Dashboard.jsx");
   assert.match(dashboard, /className="today-overall-progress"/);
   assert.match(dashboard, /className="session-resume-progress"/);
@@ -69,13 +66,14 @@ test("routine Cleaning mode uses clear stop-save terminology and accessible prog
   assert.doesNotMatch(cleanMode, /Finish partial/);
 });
 
-test("Today Cleaning mode focuses the primary task action and announces task changes", () => {
+test("focused task cleaning announces changes and focuses the primary action", () => {
   const mode = textFile("../src/components/TodayCleaningMode.jsx");
   assert.match(mode, /primaryActionRef/);
   assert.match(mode, /aria-live="polite"/);
   assert.match(mode, /aria-atomic="true"/);
-  assert.match(mode, /Today is complete/);
+  assert.match(mode, /Clean complete/);
   assert.match(mode, /Mark not done/);
+  assert.match(mode, /preferredTaskKeys/);
 });
 
 test("simple routine editor reports and focuses validation errors accessibly", () => {

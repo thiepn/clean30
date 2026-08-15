@@ -18,28 +18,16 @@ test("Quick Clean exposes useful fixed time budgets without persisting a new set
 });
 
 test("Quick Clean generation is deterministic, bounded, and duplicate-free", () => {
-  const options = {
-    minutes: 30,
-    rooms: ["Kitchen", "Bathroom", "Bedroom"]
-  };
+  const options = { minutes: 30, rooms: ["Kitchen", "Bathroom", "Bedroom"] };
   const first = buildQuickCleanPlan(options);
   const second = buildQuickCleanPlan(options);
-  assert.deepEqual(
-    first.items.map((item) => item.title),
-    second.items.map((item) => item.title)
-  );
+  assert.deepEqual(first.items.map((item) => item.title), second.items.map((item) => item.title));
   assert.ok(first.estimatedMinutes <= 30);
-  assert.equal(
-    new Set(first.items.map((item) => item.title.toLowerCase())).size,
-    first.items.length
-  );
+  assert.equal(new Set(first.items.map((item) => item.title.toLowerCase())).size, first.items.length);
 });
 
 test("a larger Quick Clean distributes attention across selected rooms", () => {
-  const plan = buildQuickCleanPlan({
-    minutes: 30,
-    rooms: ["Kitchen", "Bathroom", "Bedroom"]
-  });
+  const plan = buildQuickCleanPlan({ minutes: 30, rooms: ["Kitchen", "Bathroom", "Bedroom"] });
   const rooms = new Set(plan.items.map((item) => item.room));
   assert.ok(rooms.has("Kitchen"));
   assert.ok(rooms.has("Bathroom"));
@@ -48,10 +36,7 @@ test("a larger Quick Clean distributes attention across selected rooms", () => {
 });
 
 test("Quick Clean execution order keeps early collection work ahead of floors", () => {
-  const plan = buildQuickCleanPlan({
-    minutes: 60,
-    rooms: ["Kitchen", "Bathroom", "Living room"]
-  });
+  const plan = buildQuickCleanPlan({ minutes: 60, rooms: ["Kitchen", "Bathroom", "Living room"] });
   const stages = plan.items.map((item) => Number(item.stage) || 55);
   assert.deepEqual(stages, [...stages].sort((a, b) => a - b));
   const firstFloor = plan.items.findIndex((item) => (Number(item.stage) || 55) >= 70);
@@ -65,54 +50,44 @@ test("Quick Clean can use existing routine tasks for custom home rooms", () => {
     {
       id: "guest-room-clean",
       title: "Guest room clean",
-      phases: [
-        {
-          id: "guest-room",
-          title: "Guest room",
-          tasks: [
-            {
-              id: "polish-dresser",
-              title: "Polish guest-room dresser",
-              duration: "4 min"
-            }
-          ]
-        }
-      ]
+      phases: [{
+        id: "guest-room",
+        title: "Guest room",
+        tasks: [{ id: "polish-dresser", title: "Polish guest-room dresser", duration: "4 min" }]
+      }]
     }
   ];
-  const plan = buildQuickCleanPlan({
-    minutes: 10,
-    rooms: ["Guest room"],
-    routines
-  });
+  const plan = buildQuickCleanPlan({ minutes: 10, rooms: ["Guest room"], routines });
   assert.ok(plan.items.some((item) => item.title === "Polish guest-room dresser"));
 });
 
-test("Routines surfaces Quick Clean without replacing Task Library or reusable routines", () => {
+test("time planning is part of Clean rather than a separate Routines feature", () => {
   const routines = textFile("../src/components/Routines.jsx");
+  const clean = textFile("../src/components/CleanStartPanel.jsx");
   const dialog = textFile("../src/components/QuickCleanDialog.jsx");
-  assert.match(routines, /Plan a quick clean/);
-  assert.match(routines, /QuickCleanDialog/);
-  assert.match(routines, /Task library/);
-  assert.match(routines, /Build routine/);
+
+  assert.doesNotMatch(routines, /QuickCleanDialog|Plan a quick clean|Task library/i);
+  assert.match(clean, /I have some time/);
+  assert.match(clean, /directBudgets = \[5, 10, 15, 30\]/);
+  assert.match(clean, /QuickCleanDialog/);
+  assert.match(dialog, /Choose time/);
   assert.match(dialog, /How much time do you have\?/);
-  assert.match(dialog, /Add to Today/);
-  assert.match(dialog, /Build routine/);
+  assert.match(dialog, /Start cleaning/);
   assert.match(dialog, /Whole-home basics are always considered/);
 });
 
-test("Quick Clean remains schema-free and reuses the existing Today and routine-draft paths", () => {
+test("time-based cleaning remains schema-free and reuses Today plus routine-draft paths", () => {
   const app = textFile("../src/App.jsx");
-  const routines = textFile("../src/components/Routines.jsx");
+  const clean = textFile("../src/components/CleanStartPanel.jsx");
   const dialog = textFile("../src/components/QuickCleanDialog.jsx");
-  assert.match(routines, /onAddLibraryTasksToToday/);
+  assert.match(clean, /buildQuickCleanPlan/);
   assert.match(dialog, /createRoutineDraftFromLibraryItems/);
   assert.doesNotMatch(app, /quickCleanBudget/);
   assert.doesNotMatch(app, /quickCleanRooms/);
   assert.match(app, /saveAppState\(appState\);/);
 });
 
-test("Phase 11 styling loads last and keeps the planner full-screen on phones", () => {
+test("Phase 11 styling keeps the time planner full-screen on phones", () => {
   const main = textFile("../src/main.jsx");
   const css = textFile("../src/styles/universal-phase11.css");
   const phaseTen = main.indexOf('"./styles/universal-phase10.css"');
@@ -125,8 +100,9 @@ test("Phase 11 styling loads last and keeps the planner full-screen on phones", 
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-test("Help keeps the direct-routine regression wording while explaining Quick Clean", () => {
+test("Help explains the unified Clean entry and reusable routines", () => {
   const help = textFile("../src/components/HelpGuide.jsx");
-  assert.match(help, /Start, create, or edit them directly from Routines/);
-  assert.match(help, /Use Quick clean when you only know how much time you have/);
+  assert.match(help, /Use Just start when you do not want to decide/);
+  assert.match(help, /choose how much time you have/);
+  assert.match(help, /Routines are saved reusable cleans/);
 });
