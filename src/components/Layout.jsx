@@ -30,18 +30,6 @@ export default function Layout({
     };
   }, [fontSize]);
 
-  function openQuickClean() {
-    if (typeof window !== "undefined") {
-      window.clean30OpenQuickCleanRequested = true;
-    }
-    onNavigate?.("routines");
-    if (typeof window !== "undefined") {
-      window.requestAnimationFrame(() => {
-        window.dispatchEvent(new CustomEvent("clean30:openQuickClean"));
-      });
-    }
-  }
-
   return (
     <div
       className={shellClass}
@@ -59,15 +47,6 @@ export default function Layout({
           </div>
         </div>
         <div className="header-actions">
-          <button
-            aria-label="Open Quick clean"
-            className="quick-clean-header-button"
-            onClick={openQuickClean}
-            type="button"
-          >
-            <AppIcon name="quick" size={18} />
-            <span>Quick clean</span>
-          </button>
           <button
             aria-label="Open Clean30 help"
             className="help-button"
