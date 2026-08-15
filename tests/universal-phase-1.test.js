@@ -32,34 +32,25 @@ test("fresh Clean30 state uses neutral universal starter content", () => {
   assert.equal(template.profile.appDisplayName, "Clean30");
   assert.equal(template.profile.homeName, "My home");
   assert.equal(template.profile.goalText, "A cleaner home, one task at a time");
-
   const serialized = JSON.stringify(template).toLowerCase();
-  forbiddenStarterTerms.forEach((term) => {
-    assert.equal(serialized.includes(term), false, term);
-  });
+  forbiddenStarterTerms.forEach((term) => assert.equal(serialized.includes(term), false, term));
 });
 
 test("starter Today tasks are concise and generally applicable", () => {
   const template = createDefaultTemplate();
-  assert.deepEqual(
-    template.todayDefaults.map((task) => task.title),
-    [
-      "Clear visible trash",
-      "Return dishes to the kitchen",
-      "Put away loose clothes or items",
-      "Wipe one visibly dirty surface"
-    ]
-  );
+  assert.deepEqual(template.todayDefaults.map((task) => task.title), [
+    "Clear visible trash",
+    "Return dishes to the kitchen",
+    "Put away loose clothes or items",
+    "Wipe one visibly dirty surface"
+  ]);
   assert.deepEqual(template.dailyRules, template.todayDefaults);
 });
 
 test("starter routines cover short, weekly, and deeper cleaning", () => {
   const template = createDefaultTemplate();
   const routines = template.routines.filter((routine) => routine.id !== "daily-rules");
-  assert.deepEqual(
-    routines.map((routine) => routine.title),
-    ["5-Minute Reset", "15-Minute Tidy", "Weekly Clean", "Deep Clean"]
-  );
+  assert.deepEqual(routines.map((routine) => routine.title), ["5-Minute Reset", "15-Minute Tidy", "Weekly Clean", "Deep Clean"]);
   assert.ok(routines.find((routine) => routine.id === "weekly-reset"));
   assert.ok(routines.every((routine) => routine.phases.length > 0));
   assert.ok(routines.every((routine) => routine.phases.some((phase) => phase.tasks.length > 0)));
@@ -87,24 +78,17 @@ test("existing custom templates keep their own content when normalized", () => {
     ...starter,
     id: "custom-existing-plan",
     name: "Existing plan",
-    profile: {
-      ...starter.profile,
-      homeName: "Existing home",
-      goalText: "Existing goal"
-    },
-    todayDefaults: [
-      {
-        id: "custom-task",
-        title: "Keep my existing task",
-        duration: "",
-        detail: "",
-        note: "",
-        tags: [],
-        priority: "normal"
-      }
-    ]
+    profile: { ...starter.profile, homeName: "Existing home", goalText: "Existing goal" },
+    todayDefaults: [{
+      id: "custom-task",
+      title: "Keep my existing task",
+      duration: "",
+      detail: "",
+      note: "",
+      tags: [],
+      priority: "normal"
+    }]
   });
-
   assert.equal(custom.id, "custom-existing-plan");
   assert.equal(custom.profile.homeName, "Existing home");
   assert.equal(custom.profile.goalText, "Existing goal");
@@ -113,14 +97,8 @@ test("existing custom templates keep their own content when normalized", () => {
 
 test("onboarding has three clear steps and two distinct setup choices", () => {
   assert.equal(onboardingSteps.length, 3);
-  assert.deepEqual(
-    onboardingSteps.map((step) => step.id),
-    ["welcome", "setup", "first-clean"]
-  );
-  assert.deepEqual(
-    onboardingSetupOptions.map((option) => option.id),
-    ["starter", "empty-today"]
-  );
+  assert.deepEqual(onboardingSteps.map((step) => step.id), ["welcome", "setup", "first-clean"]);
+  assert.deepEqual(onboardingSetupOptions.map((option) => option.id), ["starter", "empty-today"]);
   assert.equal(starterPreviewTasks.length, 4);
 });
 
@@ -134,9 +112,9 @@ test("onboarding can import a plan and protects returning users from setup repla
   assert.match(onboarding, /saveAppState/);
 });
 
-test("public labels use Today and Progress without changing route IDs", () => {
+test("public labels use Clean and Progress without changing route IDs", () => {
   const navigation = textFile("../src/components/Navigation.jsx");
-  assert.match(navigation, /id: "dashboard", label: "Today"/);
+  assert.match(navigation, /id: "dashboard", label: "Clean"/);
   assert.match(navigation, /id: "history", label: "Progress"/);
   assert.doesNotMatch(navigation, /label: "Dashboard"/);
   assert.doesNotMatch(navigation, /label: "History"/);
