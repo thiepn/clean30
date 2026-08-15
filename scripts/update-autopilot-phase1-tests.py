@@ -11,6 +11,10 @@ for path in sorted(Path("tests").glob("*.test.js")):
     )
     if path.name == "universal-phase-19.test.js":
         text = text.replace("/app-shell-v19/", "/app-shell-v20/")
+        text = text.replace(
+            "/Phase 19 service-worker cache boundary verified/",
+            "/autopilot v20 service-worker cache boundary verified/",
+        )
     if text != original:
         path.write_text(text)
         changed.append(str(path))
@@ -33,6 +37,18 @@ if text != original:
     if str(path) not in changed:
         changed.append(str(path))
 
-print("Updated Phase 1 test contracts:")
+runtime = Path("scripts/verify-runtime.mjs")
+text = runtime.read_text()
+original = text
+text = text.replace(
+    '/app-shell-v19/, "Served service worker must use the Phase 19 cache boundary."',
+    '/app-shell-v20/, "Served service worker must use the autopilot v20 cache boundary."',
+)
+if text == original:
+    raise SystemExit("runtime verifier v19 anchor missing")
+runtime.write_text(text)
+changed.append(str(runtime))
+
+print("Updated Phase 1 test/runtime contracts:")
 for item in changed:
     print(f"- {item}")
