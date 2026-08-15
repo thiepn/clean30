@@ -125,7 +125,7 @@ replace_once(
 replace_once(
     "src/components/RoutineEditorDialog.jsx",
     "              Paste a whole checklist, use suggestions from your home, or type quickly. You do not need to add tasks one by one.",
-    "              Choose common tasks, paste a checklist, use a starter, or type from scratch. They all create the same reusable routine.",
+    "              Choose common cleaning tasks, paste a checklist, use a starter, or type from scratch. They all create the same reusable routine.",
 )
 replace_once(
     "src/components/RoutineEditorDialog.jsx",
