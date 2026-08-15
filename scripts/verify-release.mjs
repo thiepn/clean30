@@ -103,8 +103,8 @@ assert.match(
 );
 assert.match(
   serviceWorker,
-  /app-shell-v19/,
-  "The final release candidate must use the Phase 19 app-shell cache boundary."
+  /app-shell-v20/,
+  "The autopilot upgrade must use the v20 app-shell cache boundary."
 );
 assert.match(
   serviceWorker,
@@ -162,7 +162,7 @@ assert.ok(
 assert.ok(versionAtLeast(lockedPostcss, "8.5.18"), "Locked PostCSS must include the path-traversal security fix from 8.5.18+.");
 assert.ok(versionAtLeast(lockedEsbuild, "0.28.1"), "Locked esbuild must include the Windows dev-server traversal fix from 0.28.1+.");
 
-assert.equal(CURRENT_BACKUP_VERSION, 3, "Full-backup schema changed unexpectedly.");
+assert.equal(CURRENT_BACKUP_VERSION, 4, "Full-backup schema changed unexpectedly.");
 assert.equal(
   createTemplateExport(createDefaultTemplate()).version,
   2,
@@ -195,7 +195,7 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
-console.log("- Phase 19 service-worker cache boundary verified");
+console.log("- autopilot v20 service-worker cache boundary verified");
 console.log(`- dependency floor verified: Vite ${lockedVite}, React ${lockedReact}`);
 console.log(`- security floor verified: PostCSS ${lockedPostcss}, esbuild ${lockedEsbuild}`);
 console.log("- service worker offline fallback verified");

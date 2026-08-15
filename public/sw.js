@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "clean30-";
-const CACHE_NAME = `${CACHE_PREFIX}app-shell-v19`;
+const CACHE_NAME = `${CACHE_PREFIX}app-shell-v20`;
 const BASE_PATH = "/clean30/";
 const OFFLINE_FALLBACK_HTML = `<!doctype html>
 <html lang="en">

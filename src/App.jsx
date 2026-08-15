@@ -39,6 +39,11 @@ import {
   sanitizeRoutineDraft
 } from "./utils/routineLibrary.js";
 import { mergeHomeRoomsWithZones } from "./utils/homeLibrary.js";
+import {
+  findMaintenanceTaskIdForRoutineTask,
+  findMaintenanceTaskIdForTodayTask,
+  recordMaintenanceCompletion
+} from "./utils/maintenanceTasks.js";
 
 function downloadJson(filename, payload) {
   let url = "";
@@ -755,7 +760,41 @@ export default function App() {
       finishRequestTimesRef.current.get(sessionId) || new Date().toISOString();
     finishRequestTimesRef.current.set(sessionId, finishedAt);
     const expectsSummary = appState.activeSession?.routineId !== "daily-rules";
-    setAppState((current) => finishSessionState(current, sessionId, finishedAt).state);
+    setAppState((current) => {
+      const session = current.activeSession;
+      const finished = finishSessionState(current, sessionId, finishedAt).state;
+      if (!session || session.id !== sessionId) return finished;
+      const template = getTemplateFromState(current);
+      const maintenanceTemplate = {
+        ...template,
+        maintenanceTasks:
+          current.maintenanceTasksByTemplate?.[template.id] || []
+      };
+      const completedIds = new Set(session.completedTaskIds || []);
+      let maintenanceCompletions = current.maintenanceCompletions || [];
+      for (const phase of session.routineSnapshot?.phases || []) {
+        for (const task of phase.tasks || []) {
+          if (!completedIds.has(task.id)) continue;
+          const maintenanceTaskId = findMaintenanceTaskIdForRoutineTask(
+            maintenanceTemplate,
+            task,
+            phase.title
+          );
+          if (!maintenanceTaskId) continue;
+          maintenanceCompletions = recordMaintenanceCompletion(
+            maintenanceCompletions,
+            {
+              templateId: template.id,
+              taskId: maintenanceTaskId,
+              completedAt: finishedAt,
+              source: "routine",
+              sourceId: `session:${session.id}:${task.id}`
+            }
+          );
+        }
+      }
+      return { ...finished, maintenanceCompletions };
+    });
     setCompletionSummary(null);
     setPendingCompletionSessionId(expectsSummary ? sessionId : null);
   }
@@ -811,16 +850,47 @@ export default function App() {
   function toggleTodayTask(taskId) {
     const dateKey = getTodayKey();
     setAppState((current) => {
-      const tasks = getTodayTasksFromState(current, dateKey).map((task) => {
-        if (task.id !== taskId) return task;
-        const completed = !task.completed;
-        return {
-          ...task,
-          completed,
-          completedAt: completed ? new Date().toISOString() : null
-        };
-      });
-      const next = applyTodayTasksToState(current, dateKey, tasks);
+      const currentTasks = getTodayTasksFromState(current, dateKey);
+      const target = currentTasks.find((task) => task.id === taskId);
+      if (!target) return current;
+      const completed = !target.completed;
+      const completedAt = completed ? new Date().toISOString() : null;
+      const tasks = currentTasks.map((task) =>
+        task.id === taskId ? { ...task, completed, completedAt } : task
+      );
+      const template = getTemplateFromState(current);
+      const maintenanceTemplate = {
+        ...template,
+        maintenanceTasks:
+          current.maintenanceTasksByTemplate?.[template.id] || []
+      };
+      const sourceId = `today:${dateKey}:${taskId}`;
+      let maintenanceCompletions = (current.maintenanceCompletions || []).filter(
+        (entry) => entry.sourceId !== sourceId
+      );
+      if (completed) {
+        const maintenanceTaskId = findMaintenanceTaskIdForTodayTask(
+          maintenanceTemplate,
+          target
+        );
+        if (maintenanceTaskId) {
+          maintenanceCompletions = recordMaintenanceCompletion(
+            maintenanceCompletions,
+            {
+              templateId: template.id,
+              taskId: maintenanceTaskId,
+              completedAt,
+              source: "today",
+              sourceId
+            }
+          );
+        }
+      }
+      const next = applyTodayTasksToState(
+        { ...current, maintenanceCompletions },
+        dateKey,
+        tasks
+      );
       return markMeaningfulUse(next);
     });
   }
@@ -1160,10 +1230,14 @@ export default function App() {
   function resetOnlyHistory() {
     requestConfirmation({
       title: "Reset history?",
-      message: "This clears completed sessions but keeps templates and Today tasks.",
+      message: "This clears completed sessions and cleaning-task history, but keeps your setup and Today tasks.",
       confirmLabel: "Reset history",
       onConfirm: () => {
-        setAppState((current) => ({ ...current, history: [] }));
+        setAppState((current) => ({
+          ...current,
+          history: [],
+          maintenanceCompletions: []
+        }));
         setCompletionSummary(null);
       }
     });
@@ -1175,12 +1249,23 @@ export default function App() {
       message: "This removes the selected completed session from history.",
       confirmLabel: "Delete",
       onConfirm: () => {
-        setAppState((current) => ({
-          ...current,
-          history: current.history.filter(
-            (entry) => entry.id !== entryId || isDailyRulesHistoryEntry(entry)
-          )
-        }));
+        setAppState((current) => {
+          const sessionId = entryId.startsWith("session-history-")
+            ? entryId.slice("session-history-".length)
+            : "";
+          return {
+            ...current,
+            history: current.history.filter(
+              (entry) => entry.id !== entryId || isDailyRulesHistoryEntry(entry)
+            ),
+            maintenanceCompletions: (current.maintenanceCompletions || []).filter(
+              (entry) =>
+                !entry.sourceId?.startsWith(`history:${entryId}:`) &&
+                !(sessionId &&
+                  entry.sourceId?.startsWith(`session:${sessionId}:`))
+            )
+          };
+        });
       }
     });
   }
