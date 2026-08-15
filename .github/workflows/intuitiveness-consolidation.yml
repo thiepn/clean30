@@ -1,0 +1,47 @@
+name: Clean30 Intuitiveness Consolidation
+
+on:
+  push:
+    branches:
+      - redesign/intuitiveness-consolidation
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: redesign/intuitiveness-consolidation
+          fetch-depth: 0
+
+      - name: Apply update
+        run: python scripts/apply-intuitiveness-consolidation.py
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify update
+        run: npm run verify:release-candidate
+
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Unify Clean30 around one cleaning flow"
+          git push origin HEAD:redesign/intuitiveness-consolidation
