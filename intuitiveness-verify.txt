@@ -1,0 +1,3673 @@
+
+> clean30@1.0.0 verify:release-candidate
+> npm run audit:release && npm test && npm run build && npm run verify:release && npm run verify:runtime && node --check public/sw.js
+
+
+> clean30@1.0.0 audit:release
+> npm audit --audit-level=low
+
+found 0 vulnerabilities
+
+> clean30@1.0.0 test
+> node --test
+
+TAP version 13
+# Subtest: duration parser handles hour units, compound durations, and ranges
+ok 1 - duration parser handles hour units, compound durations, and ranges
+  ---
+  duration_ms: 2.044116
+  type: 'test'
+  ...
+# Subtest: routine parser preserves the same action in different rooms but dedupes within a room
+ok 2 - routine parser preserves the same action in different rooms but dedupes within a room
+  ---
+  duration_ms: 2.050218
+  type: 'test'
+  ...
+# Subtest: library routine drafts preserve same-named tasks that belong to different rooms
+ok 3 - library routine drafts preserve same-named tasks that belong to different rooms
+  ---
+  duration_ms: 0.686029
+  type: 'test'
+  ...
+# Subtest: explicit routine room wins over catalog-title inference
+ok 4 - explicit routine room wins over catalog-title inference
+  ---
+  duration_ms: 11.829531
+  type: 'test'
+  ...
+# Subtest: Home canonicalizes preset casing and hides reserved virtual or utility room names
+ok 5 - Home canonicalizes preset casing and hides reserved virtual or utility room names
+  ---
+  duration_ms: 0.54359
+  type: 'test'
+  ...
+# Subtest: Quick Clean keeps same-named custom tasks in two selected rooms
+ok 6 - Quick Clean keeps same-named custom tasks in two selected rooms
+  ---
+  duration_ms: 2.306815
+  type: 'test'
+  ...
+# Subtest: dragging down onto the next task moves it after the target
+ok 7 - dragging down onto the next task moves it after the target
+  ---
+  duration_ms: 0.500132
+  type: 'test'
+  ...
+# Subtest: explicit template identity prevents shared routine IDs from changing another plan's recency
+ok 8 - explicit template identity prevents shared routine IDs from changing another plan's recency
+  ---
+  duration_ms: 0.38385
+  type: 'test'
+  ...
+# Subtest: session IDs remain unique even when sessions begin in the same millisecond
+ok 9 - session IDs remain unique even when sessions begin in the same millisecond
+  ---
+  duration_ms: 2.956924
+  type: 'test'
+  ...
+# Subtest: local normalization drops impossible or future History and caps impossible completion counts
+ok 10 - local normalization drops impossible or future History and caps impossible completion counts
+  ---
+  duration_ms: 4.505765
+  type: 'test'
+  ...
+# Subtest: starter restore is guarded by live active-session state at UI and mutation boundaries
+ok 11 - starter restore is guarded by live active-session state at UI and mutation boundaries
+  ---
+  duration_ms: 0.695858
+  type: 'test'
+  ...
+# Subtest: final release deployment and runtime verification are hardened
+ok 12 - final release deployment and runtime verification are hardened
+  ---
+  duration_ms: 0.229734
+  type: 'test'
+  ...
+# Subtest: final audit remains schema-free and preserves deployment and persistence invariants
+ok 13 - final audit remains schema-free and preserves deployment and persistence invariants
+  ---
+  duration_ms: 0.994487
+  type: 'test'
+  ...
+# Subtest: canonical exporter output passes strict current-version validation
+ok 14 - canonical exporter output passes strict current-version validation
+  ---
+  duration_ms: 20.492125
+  type: 'test'
+  ...
+# Subtest: current History requires every canonical field and valid counts
+ok 15 - current History requires every canonical field and valid counts
+  ---
+  duration_ms: 9.443753
+  type: 'test'
+  ...
+# Subtest: current app settings reject missing keys, invalid enums, and malformed tags
+ok 16 - current app settings reject missing keys, invalid enums, and malformed tags
+  ---
+  duration_ms: 8.840869
+  type: 'test'
+  ...
+# Subtest: current templates require complete retained systems and canonical sections
+ok 17 - current templates require complete retained systems and canonical sections
+  ---
+  duration_ms: 4.83912
+  type: 'test'
+  ...
+# Subtest: malformed current data is not downgraded to legacy and validation is non-mutating
+ok 18 - malformed current data is not downgraded to legacy and validation is non-mutating
+  ---
+  duration_ms: 3.768199
+  type: 'test'
+  ...
+# Subtest: current active session with a correct template and routine is preserved
+ok 19 - current active session with a correct template and routine is preserved
+  ---
+  duration_ms: 6.046384
+  type: 'test'
+  ...
+# Subtest: current active session with a false template binding is dropped with a warning
+ok 20 - current active session with a false template binding is dropped with a warning
+  ---
+  duration_ms: 2.307325
+  type: 'test'
+  ...
+# Subtest: current active session with a mismatched routine snapshot is dropped
+ok 21 - current active session with a mismatched routine snapshot is dropped
+  ---
+  duration_ms: 1.117548
+  type: 'test'
+  ...
+# Subtest: current active session with malformed canonical progress fields is dropped
+ok 22 - current active session with malformed canonical progress fields is dropped
+  ---
+  duration_ms: 4.666391
+  type: 'test'
+  ...
+# Subtest: legacy active session repairs to the only matching template with a warning
+ok 23 - legacy active session repairs to the only matching template with a warning
+  ---
+  duration_ms: 1.620429
+  type: 'test'
+  ...
+# Subtest: ambiguous legacy routine identity is never silently assigned
+ok 24 - ambiguous legacy routine identity is never silently assigned
+  ---
+  duration_ms: 2.089927
+  type: 'test'
+  ...
+# Subtest: snapshot-only sessions use an explicit unknown template and never create false History identity
+ok 25 - snapshot-only sessions use an explicit unknown template and never create false History identity
+  ---
+  duration_ms: 2.982265
+  type: 'test'
+  ...
+# Subtest: active session with no routine match and no usable snapshot is dropped
+ok 26 - active session with no routine match and no usable snapshot is dropped
+  ---
+  duration_ms: 1.605751
+  type: 'test'
+  ...
+# Subtest: same routine ID in another template still requires replacement
+ok 27 - same routine ID in another template still requires replacement
+  ---
+  duration_ms: 0.176648
+  type: 'test'
+  ...
+# Subtest: valid running and paused active-session timestamps are accepted
+ok 28 - valid running and paused active-session timestamps are accepted
+  ---
+  duration_ms: 2.693733
+  type: 'test'
+  ...
+# Subtest: invalid and implausibly future pause timestamps drop only the active session
+ok 29 - invalid and implausibly future pause timestamps drop only the active session
+  ---
+  duration_ms: 4.587469
+  type: 'test'
+  ...
+# Subtest: small clock skew is allowed while impossible paused totals and future starts are dropped
+ok 30 - small clock skew is allowed while impossible paused totals and future starts are dropped
+  ---
+  duration_ms: 4.318513
+  type: 'test'
+  ...
+# Subtest: complete current backup is accepted and incomplete current backups are rejected
+ok 31 - complete current backup is accepted and incomplete current backups are rejected
+  ---
+  duration_ms: 8.971604
+  type: 'test'
+  ...
+# Subtest: invalid objects are rejected while a legacy raw state uses the legacy upgrader
+ok 32 - invalid objects are rejected while a legacy raw state uses the legacy upgrader
+  ---
+  duration_ms: 3.065426
+  type: 'test'
+  ...
+# Subtest: old active sessions infer template identity only when unambiguous
+ok 33 - old active sessions infer template identity only when unambiguous
+  ---
+  duration_ms: 3.142899
+  type: 'test'
+  ...
+# Subtest: malformed imported active sessions are dropped with warnings
+ok 34 - malformed imported active sessions are dropped with warnings
+  ---
+  duration_ms: 1.606997
+  type: 'test'
+  ...
+# Subtest: paused and completed-task active-session repairs are explicit
+ok 35 - paused and completed-task active-session repairs are explicit
+  ---
+  duration_ms: 5.707094
+  type: 'test'
+  ...
+# Subtest: storage write failures report persistent health and a later success clears it
+ok 36 - storage write failures report persistent health and a later success clears it
+  ---
+  duration_ms: 1.805878
+  type: 'test'
+  ...
+# Subtest: finish is guarded by session ID and creates one history entry
+ok 37 - finish is guarded by session ID and creates one history entry
+  ---
+  duration_ms: 0.822044
+  type: 'test'
+  ...
+# Subtest: session identity requires both template and routine IDs
+ok 38 - session identity requires both template and routine IDs
+  ---
+  duration_ms: 0.161884
+  type: 'test'
+  ...
+# Subtest: finishing a paused session settles pause time correctly
+ok 39 - finishing a paused session settles pause time correctly
+  ---
+  duration_ms: 1.005877
+  type: 'test'
+  ...
+# Subtest: elapsed-only History entries use measured elapsed time
+ok 40 - elapsed-only History entries use measured elapsed time
+  ---
+  duration_ms: 0.40758
+  type: 'test'
+  ...
+# Subtest: recent 7-day and 30-day windows include today and exclude future dates
+ok 41 - recent 7-day and 30-day windows include today and exclude future dates
+  ---
+  duration_ms: 1.098045
+  type: 'test'
+  ...
+# Subtest: meaningful Today usage excludes untouched defaults
+ok 42 - meaningful Today usage excludes untouched defaults
+  ---
+  duration_ms: 0.142974
+  type: 'test'
+  ...
+# Subtest: imported backup health is reset without mutating imported content
+ok 43 - imported backup health is reset without mutating imported content
+  ---
+  duration_ms: 0.561324
+  type: 'test'
+  ...
+# Subtest: new session History IDs are stable per session
+ok 44 - new session History IDs are stable per session
+  ---
+  duration_ms: 0.280465
+  type: 'test'
+  ...
+# Subtest: dated Today tasks are the Today activity source and are non-deletable
+ok 45 - dated Today tasks are the Today activity source and are non-deletable
+  ---
+  duration_ms: 6.116132
+  type: 'test'
+  ...
+# Subtest: routine-imported Today tasks remain Today activity rather than routine sessions
+ok 46 - routine-imported Today tasks remain Today activity rather than routine sessions
+  ---
+  duration_ms: 0.987577
+  type: 'test'
+  ...
+# Subtest: routine sessions remain persisted and deletable
+ok 47 - routine sessions remain persisted and deletable
+  ---
+  duration_ms: 1.73621
+  type: 'test'
+  ...
+# Subtest: estimated-only or invalid routine duration is not presented as measured time
+ok 48 - estimated-only or invalid routine duration is not presented as measured time
+  ---
+  duration_ms: 0.578213
+  type: 'test'
+  ...
+# Subtest: Today activity and a routine session share one active day with separate time values
+ok 49 - Today activity and a routine session share one active day with separate time values
+  ---
+  duration_ms: 0.841705
+  type: 'test'
+  ...
+# Subtest: legacy Today history is a fallback and dated Today data prevents duplication
+ok 50 - legacy Today history is a fallback and dated Today data prevents duplication
+  ---
+  duration_ms: 0.468151
+  type: 'test'
+  ...
+# Subtest: resetting or unchecking Today tasks predictably removes derived activity
+ok 51 - resetting or unchecking Today tasks predictably removes derived activity
+  ---
+  duration_ms: 0.443582
+  type: 'test'
+  ...
+# Subtest: Calendar activity and streak calculations agree on same-day activity
+ok 52 - Calendar activity and streak calculations agree on same-day activity
+  ---
+  duration_ms: 1.739716
+  type: 'test'
+  ...
+# Subtest: finishing a legacy Today session updates dated completion without persisting History
+ok 53 - finishing a legacy Today session updates dated completion without persisting History
+  ---
+  duration_ms: 1.005325
+  type: 'test'
+  ...
+# Subtest: weekday defaults distinguish General, custom, and explicit empty
+ok 54 - weekday defaults distinguish General, custom, and explicit empty
+  ---
+  duration_ms: 1.645241
+  type: 'test'
+  ...
+# Subtest: explicit empty weekday survives normalization, reset, and backup round-trip
+ok 55 - explicit empty weekday survives normalization, reset, and backup round-trip
+  ---
+  duration_ms: 3.764331
+  type: 'test'
+  ...
+# Subtest: legacy weekday arrays migrate empty values to General fallback
+ok 56 - legacy weekday arrays migrate empty values to General fallback
+  ---
+  duration_ms: 1.632612
+  type: 'test'
+  ...
+# Subtest: copying General creates independent weekday task IDs
+ok 57 - copying General creates independent weekday task IDs
+  ---
+  duration_ms: 0.385381
+  type: 'test'
+  ...
+# Subtest: global Start Today empty overrides General and weekday initialization
+ok 58 - global Start Today empty overrides General and weekday initialization
+  ---
+  duration_ms: 0.317445
+  type: 'test'
+  ...
+# Subtest: routine picker close, successful add, and disappearing routines reset transient state
+ok 59 - routine picker close, successful add, and disappearing routines reset transient state
+  ---
+  duration_ms: 0.254812
+  type: 'test'
+  ...
+# Subtest: dialog focus cycling contains forward and backward Tab navigation
+ok 60 - dialog focus cycling contains forward and backward Tab navigation
+  ---
+  duration_ms: 0.167678
+  type: 'test'
+  ...
+# Subtest: Calendar labels announce date, Today activity, routines, and empty days
+ok 61 - Calendar labels announce date, Today activity, routines, and empty days
+  ---
+  duration_ms: 34.84229
+  type: 'test'
+  ...
+# Subtest: normal active-session Dashboard has one interval source and StartSession has none
+ok 62 - normal active-session Dashboard has one interval source and StartSession has none
+  ---
+  duration_ms: 20.04915
+  type: 'test'
+  ...
+# Subtest: Clean is one obvious primary entry while internal route identity stays compatible
+ok 63 - Clean is one obvious primary entry while internal route identity stays compatible
+  ---
+  duration_ms: 1.424823
+  type: 'test'
+  ...
+# Subtest: Quick Clean and Task Library survive as implementation machinery rather than parallel user concepts
+ok 64 - Quick Clean and Task Library survive as implementation machinery rather than parallel user concepts
+  ---
+  duration_ms: 0.689382
+  type: 'test'
+  ...
+# Subtest: Routines is only saved reusable cleans plus one routine creation flow
+not ok 65 - Routines is only saved reusable cleans plus one routine creation flow
+  ---
+  duration_ms: 4.020123
+  type: 'test'
+  location: '/home/runner/work/clean30/clean30/tests/intuitiveness-consolidation.test.js:36:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Choose common cleaning tasks, paste a checklist, use a starter, or type from scratch/. Input:
+    
+    'import { useEffect, useMemo, useRef, useState } from "react";\n' +
+      'import { routineStarterTemplates, suggestionRooms } from "../data/taskSuggestions.js";\n' +
+      'import useDialogFocus from "../hooks/useDialogFocus.js";\n' +
+      'import {\n' +
+      '  addSuggestedTaskToDraft,\n' +
+      '  appendParsedTaskText,\n' +
+      '  createBlankRoutineTask,\n' +
+      '  createRoutineDraftFromTemplate,\n' +
+      '  createRoutineEditorDraft,\n' +
+      '  estimateRoutineMinutes,\n' +
+      '  getTaskSuggestions,\n' +
+      '  hasDuplicateRoutineTitle,\n' +
+      '  optimizeRoutineTaskOrder,\n' +
+      '  moveRoutineTaskByDrop,\n' +
+      '  parseRoutineTaskText,\n' +
+      '  sanitizeRoutineDraft\n' +
+      '} from "../utils/routineLibrary.js";\n' +
+      '\n' +
+      'function moveItem(items, index, direction) {\n' +
+      '  const target = index + direction;\n' +
+      '  if (target < 0 || target >= items.length) return items;\n' +
+      '  const next = [...items];\n' +
+      '  [next[index], next[target]] = [next[target], next[index]];\n' +
+      '  return next;\n' +
+      '}\n' +
+      '\n' +
+      'function countTasks(phases = []) {\n' +
+      '  return phases.reduce(\n' +
+      '    (total, phase) =>\n' +
+      '      total + phase.tasks.filter((task) => String(task?.title || "").trim()).length,\n' +
+      '    0\n' +
+      '  );\n' +
+      '}\n' +
+      '\n' +
+      'export default function RoutineEditorDialog({\n' +
+      '  open,\n' +
+      '  routine,\n' +
+      '  seedDraft = null,\n' +
+      '  homeRooms = [],\n' +
+      '  routines = [],\n' +
+      '  onSave,\n' +
+      '  onClose,\n' +
+      '  onAdvancedEdit\n' +
+      '}) {\n' +
+      '  const nameInputRef = useRef(null);\n' +
+      '  const durationInputRef = useRef(null);\n' +
+      '  const firstTaskInputRef = useRef(null);\n' +
+      '  const addTaskButtonRef = useRef(null);\n' +
+      '  const taskInputRefs = useRef(new Map());\n' +
+      '  const dialogRef = useDialogFocus({\n' +
+      '    open,\n' +
+      '    onClose,\n' +
+      '    initialFocusRef: nameInputRef\n' +
+      '  });\n' +
+      '  const [draft, setDraft] = useState(() => createRoutineEditorDraft(routine || seedDraft));\n' +
+      '  const [attemptedSave, setAttemptedSave] = useState(false);\n' +
+      '  const [bulkText, setBulkText] = useState("");\n' +
+      '  const [bulkMessage, setBulkMessage] = useState("");\n' +
+      '  const [suggestionQuery, setSuggestionQuery] = useState("");\n' +
+      '  const [suggestionRoom, setSuggestionRoom] = useState("All");\n' +
+      '  const [autoDuration, setAutoDuration] = useState(!routine);\n' +
+      '  const [draggedTask, setDraggedTask] = useState(null);\n' +
+      '\n' +
+      '  useEffect(() => {\n' +
+      '    if (!open) return;\n' +
+      '    setDraft(createRoutineEditorDraft(routine || seedDraft));\n' +
+      '    setAttemptedSave(false);\n' +
+      '    setBulkText("");\n' +
+      '    setBulkMessage(seedDraft && !routine ? "Selected cleaning tasks loaded. Change anything before saving." : "");\n' +
+      '    setSuggestionQuery("");\n' +
+      '    setSuggestionRoom("All");\n' +
+      '    setAutoDuration(!routine);\n' +
+      '    setDraggedTask(null);\n' +
+      '  }, [open, routine?.id, seedDraft?.id]);\n' +
+      '\n' +
+      '  useEffect(() => {\n' +
+      '    if (!open || !autoDuration) return;\n' +
+      '    const minutes = estimateRoutineMinutes(draft);\n' +
+      '    setDraft((current) => {\n' +
+      '      if (Number(current.estimatedMinutes) === minutes) return current;\n' +
+      '      return {\n' +
+      '        ...current,\n' +
+      '        estimatedMinutes: minutes,\n' +
+      '        estimatedTime: `${minutes} min`\n' +
+      '      };\n' +
+      '    });\n' +
+      '  }, [autoDuration, draft.phases, open]);\n' +
+      '\n' +
+      '  const availableSuggestionRooms = useMemo(() => {\n' +
+      '    if (!homeRooms.length) return suggestionRooms;\n' +
+      '    const wanted = new Set(\n' +
+      '      ["All", "Whole home", "Other", ...homeRooms].map((room) =>\n' +
+      '        String(room).trim().toLowerCase()\n' +
+      '      )\n' +
+      '    );\n' +
+      '    return suggestionRooms.filter((room) => wanted.has(room.toLowerCase()));\n' +
+      '  }, [homeRooms]);\n' +
+      '\n' +
+      '  useEffect(() => {\n' +
+      '    if (!availableSuggestionRooms.includes(suggestionRoom)) setSuggestionRoom("All");\n' +
+      '  }, [availableSuggestionRooms, suggestionRoom]);\n' +
+      '\n' +
+      '  const titleError = useMemo(() => {\n' +
+      '    if (!String(draft.title || "").trim()) return "Routine name is required.";\n' +
+      '    if (hasDuplicateRoutineTitle(draft.title, routines, draft.id)) {\n' +
+      '      return "A routine with this name already exists.";\n' +
+      '    }\n' +
+      '    return "";\n' +
+      '  }, [draft.id, draft.title, routines]);\n' +
+      '\n' +
+      '  const durationError = useMemo(() => {\n' +
+      '    if (autoDuration) return "";\n' +
+      '    const numeric = Number(draft.estimatedMinutes);\n' +
+      '    if (!Number.isFinite(numeric)) return "Use a number of minutes.";\n' +
+      '    if (numeric < 1 || numeric > 600) return "Use between 1 and 600 minutes.";\n' +
+      '    return "";\n' +
+      '  }, [autoDuration, draft.estimatedMinutes]);\n' +
+      '\n' +
+      '  const taskCount = countTasks(draft.phases);\n' +
+      '  const taskError = taskCount ? "" : "Add at least one task.";\n' +
+      '  const canSave = !titleError && !durationError && !taskError;\n' +
+      '  const firstRenderedTask = draft.phases\n' +
+      '    .flatMap((phase) => phase.tasks.map((task) => ({ phaseId: phase.id, taskId: task.id })))\n' +
+      '    .find(Boolean) || null;\n' +
+      '  const suggestions = useMemo(\n' +
+      '    () => getTaskSuggestions(suggestionQuery, suggestionRoom, 18),\n' +
+      '    [suggestionQuery, suggestionRoom]\n' +
+      '  );\n' +
+      '  const automaticMinutes = estimateRoutineMinutes(draft);\n' +
+      '  const bulkPreview = useMemo(() => parseRoutineTaskText(bulkText), [bulkText]);\n' +
+      '\n' +
+      '  if (!open) return null;\n' +
+      '\n' +
+      '  function updatePhase(phaseId, updater) {\n' +
+      '    setDraft((current) => ({\n' +
+      '      ...current,\n' +
+      '      phases: current.phases.map((phase) =>\n' +
+      '        phase.id === phaseId ? updater(phase) : phase\n' +
+      '      )\n' +
+      '    }));\n' +
+      '  }\n' +
+      '\n' +
+      '  function focusTask(taskId) {\n' +
+      '    window.requestAnimationFrame(() => taskInputRefs.current.get(taskId)?.focus());\n' +
+      '  }\n' +
+      '\n' +
+      '  function addTask(phaseId, afterIndex = null) {\n' +
+      '    const task = createBlankRoutineTask();\n' +
+      '    updatePhase(phaseId, (phase) => {\n' +
+      '      const tasks = [...phase.tasks];\n' +
+      '      if (afterIndex === null || afterIndex < 0 || afterIndex >= tasks.length) tasks.push(task);\n' +
+      '      else tasks.splice(afterIndex + 1, 0, task);\n' +
+      '      return { ...phase, tasks };\n' +
+      '    });\n' +
+      '    focusTask(task.id);\n' +
+      '  }\n' +
+      '\n' +
+      '  function updateTask(phaseId, taskId, title) {\n' +
+      '    updatePhase(phaseId, (phase) => ({\n' +
+      '      ...phase,\n' +
+      '      tasks: phase.tasks.map((task) =>\n' +
+      '        task.id === taskId ? { ...task, title } : task\n' +
+      '      )\n' +
+      '    }));\n' +
+      '  }\n' +
+      '\n' +
+      '  function removeTask(phaseId, taskId) {\n' +
+      '    updatePhase(phaseId, (phase) => ({\n' +
+      '      ...phase,\n' +
+      '      tasks: phase.tasks.filter((task) => task.id !== taskId)\n' +
+      '    }));\n' +
+      '  }\n' +
+      '\n' +
+      '  function moveTask(phaseId, taskIndex, direction) {\n' +
+      '    updatePhase(phaseId, (phase) => ({\n' +
+      '      ...phase,\n' +
+      '      tasks: moveItem(phase.tasks, taskIndex, direction)\n' +
+      '    }));\n' +
+      '  }\n' +
+      '\n' +
+      '  function moveDraggedTask(targetPhaseId, targetTaskId) {\n' +
+      '    if (!draggedTask) return;\n' +
+      '    setDraft((current) =>\n' +
+      '      moveRoutineTaskByDrop(current, draggedTask, targetPhaseId, targetTaskId)\n' +
+      '    );\n' +
+      '    setDraggedTask(null);\n' +
+      '  }\n' +
+      '\n' +
+      '  function addBulkTasks() {\n' +
+      '    if (!bulkPreview.taskCount) {\n' +
+      '      setBulkMessage("Paste at least one task.");\n' +
+      '      return;\n' +
+      '    }\n' +
+      '    const before = taskCount;\n' +
+      '    setDraft((current) => appendParsedTaskText(current, bulkText));\n' +
+      '    setBulkText("");\n' +
+      '    window.requestAnimationFrame(() => {\n' +
+      '      setBulkMessage(\n' +
+      '        `${bulkPreview.taskCount} task${bulkPreview.taskCount === 1 ? "" : "s"} processed. Existing duplicates were skipped.`\n' +
+      '      );\n' +
+      '    });\n' +
+      '    if (before === 0) setAttemptedSave(false);\n' +
+      '  }\n' +
+      '\n' +
+      '  function handleTaskPaste(event, phase, task) {\n' +
+      '    const text = event.clipboardData?.getData("text") || "";\n' +
+      '    if (!/\\r?\\n/.test(text)) return;\n' +
+      '    event.preventDefault();\n' +
+      '    setDraft((current) => {\n' +
+      '      let base = current;\n' +
+      '      if (!String(task.title || "").trim()) {\n' +
+      '        base = {\n' +
+      '          ...current,\n' +
+      '          phases: current.phases.map((item) =>\n' +
+      '            item.id === phase.id\n' +
+      '              ? { ...item, tasks: item.tasks.filter((entry) => entry.id !== task.id) }\n' +
+      '              : item\n' +
+      '          )\n' +
+      '        };\n' +
+      '      }\n' +
+      '      const prefixed = `${phase.title || "Tasks"}:\\n${text}`;\n' +
+      '      return appendParsedTaskText(base, prefixed);\n' +
+      '    });\n' +
+      '    setBulkMessage("Pasted lines were added as separate tasks.");\n' +
+      '  }\n' +
+      '\n' +
+      '  function applyStarterTemplate(templateId) {\n' +
+      '    setDraft(createRoutineDraftFromTemplate(templateId));\n' +
+      '    setAutoDuration(true);\n' +
+      '    setAttemptedSave(false);\n' +
+      '    setBulkMessage("Starter loaded. Edit anything before saving.");\n' +
+      '  }\n' +
+      '\n' +
+      '  function addSuggestion(suggestion) {\n' +
+      '    setDraft((current) => addSuggestedTaskToDraft(current, suggestion));\n' +
+      '  }\n' +
+      '\n' +
+      '  function addRoomPack() {\n' +
+      '    if (suggestionRoom === "All") return;\n' +
+      '    const roomSuggestions = getTaskSuggestions("", suggestionRoom, 100);\n' +
+      '    setDraft((current) =>\n' +
+      '      roomSuggestions.reduce(\n' +
+      '        (next, suggestion) => addSuggestedTaskToDraft(next, suggestion),\n' +
+      '        current\n' +
+      '      )\n' +
+      '    );\n' +
+      '    setBulkMessage(`Recommended ${suggestionRoom} tasks added. Existing duplicates were skipped.`);\n' +
+      '  }\n' +
+      '\n' +
+      '  function submit(event) {\n' +
+      '    event.preventDefault();\n' +
+      '    setAttemptedSave(true);\n' +
+      '    if (!canSave) {\n' +
+      '      window.requestAnimationFrame(() => {\n' +
+      '        if (titleError) nameInputRef.current?.focus();\n' +
+      '        else if (durationError) durationInputRef.current?.focus();\n' +
+      '        else if (taskError) {\n' +
+      '          if (firstTaskInputRef.current) firstTaskInputRef.current.focus();\n' +
+      '          else addTaskButtonRef.current?.focus();\n' +
+      '        }\n' +
+      '      });\n' +
+      '      return;\n' +
+      '    }\n' +
+      '    const finalDraft = autoDuration\n' +
+      '      ? {\n' +
+      '          ...draft,\n' +
+      '          estimatedMinutes: automaticMinutes,\n' +
+      '          estimatedTime: `${automaticMinutes} min`\n' +
+      '        }\n' +
+      '      : draft;\n' +
+      '    onSave(sanitizeRoutineDraft(finalDraft));\n' +
+      '    onClose();\n' +
+      '  }\n' +
+      '\n' +
+      '  return (\n' +
+      '    <div className="dialog-backdrop routine-editor-backdrop" role="presentation">\n' +
+      '      <section\n' +
+      '        aria-labelledby="routine-editor-title"\n' +
+      '        aria-modal="true"\n' +
+      '        className="dialog routine-editor-dialog routine-editor-workspace"\n' +
+      '        ref={dialogRef}\n' +
+      '        role="dialog"\n' +
+      '        tabIndex={-1}\n' +
+      '      >\n' +
+      '        <div className="dialog-header routine-editor-workspace-header">\n' +
+      '          <div>\n' +
+      '            <p className="eyebrow">{routine ? "Routine" : "New routine"}</p>\n' +
+      '            <h2 id="routine-editor-title">\n' +
+      '              {routine ? "Edit routine" : "Build a routine"}\n' +
+      '            </h2>\n' +
+      '            <p>\n' +
+      '              Choose common tasks, paste a checklist, use a starter, or type from scratch. They all create the same reusable routine.\n' +
+      '            </p>\n' +
+      '          </div>\n' +
+      '          <button\n' +
+      '            aria-label="Close routine editor"\n' +
+      '            className="icon-button"\n' +
+      '            onClick={onClose}\n' +
+      '            type="button"\n' +
+      '          >\n' +
+      '            ×\n' +
+      '          </button>\n' +
+      '        </div>\n' +
+      '\n' +
+      '        <form className="routine-editor-form routine-editor-workspace-body" onSubmit={submit} noValidate>\n' +
+      '          {!routine && !seedDraft ? (\n' +
+      '            <section className="routine-fast-start" a'... 14773 more characters
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    import { useEffect, useMemo, useRef, useState } from "react";
+    import { routineStarterTemplates, suggestionRooms } from "../data/taskSuggestions.js";
+    import useDialogFocus from "../hooks/useDialogFocus.js";
+    import {
+      addSuggestedTaskToDraft,
+      appendParsedTaskText,
+      createBlankRoutineTask,
+      createRoutineDraftFromTemplate,
+      createRoutineEditorDraft,
+      estimateRoutineMinutes,
+      getTaskSuggestions,
+      hasDuplicateRoutineTitle,
+      optimizeRoutineTaskOrder,
+      moveRoutineTaskByDrop,
+      parseRoutineTaskText,
+      sanitizeRoutineDraft
+    } from "../utils/routineLibrary.js";
+    
+    function moveItem(items, index, direction) {
+      const target = index + direction;
+      if (target < 0 || target >= items.length) return items;
+      const next = [...items];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    }
+    
+    function countTasks(phases = []) {
+      return phases.reduce(
+        (total, phase) =>
+          total + phase.tasks.filter((task) => String(task?.title || "").trim()).length,
+        0
+      );
+    }
+    
+    export default function RoutineEditorDialog({
+      open,
+      routine,
+      seedDraft = null,
+      homeRooms = [],
+      routines = [],
+      onSave,
+      onClose,
+      onAdvancedEdit
+    }) {
+      const nameInputRef = useRef(null);
+      const durationInputRef = useRef(null);
+      const firstTaskInputRef = useRef(null);
+      const addTaskButtonRef = useRef(null);
+      const taskInputRefs = useRef(new Map());
+      const dialogRef = useDialogFocus({
+        open,
+        onClose,
+        initialFocusRef: nameInputRef
+      });
+      const [draft, setDraft] = useState(() => createRoutineEditorDraft(routine || seedDraft));
+      const [attemptedSave, setAttemptedSave] = useState(false);
+      const [bulkText, setBulkText] = useState("");
+      const [bulkMessage, setBulkMessage] = useState("");
+      const [suggestionQuery, setSuggestionQuery] = useState("");
+      const [suggestionRoom, setSuggestionRoom] = useState("All");
+      const [autoDuration, setAutoDuration] = useState(!routine);
+      const [draggedTask, setDraggedTask] = useState(null);
+    
+      useEffect(() => {
+        if (!open) return;
+        setDraft(createRoutineEditorDraft(routine || seedDraft));
+        setAttemptedSave(false);
+        setBulkText("");
+        setBulkMessage(seedDraft && !routine ? "Selected cleaning tasks loaded. Change anything before saving." : "");
+        setSuggestionQuery("");
+        setSuggestionRoom("All");
+        setAutoDuration(!routine);
+        setDraggedTask(null);
+      }, [open, routine?.id, seedDraft?.id]);
+    
+      useEffect(() => {
+        if (!open || !autoDuration) return;
+        const minutes = estimateRoutineMinutes(draft);
+        setDraft((current) => {
+          if (Number(current.estimatedMinutes) === minutes) return current;
+          return {
+            ...current,
+            estimatedMinutes: minutes,
+            estimatedTime: `${minutes} min`
+          };
+        });
+      }, [autoDuration, draft.phases, open]);
+    
+      const availableSuggestionRooms = useMemo(() => {
+        if (!homeRooms.length) return suggestionRooms;
+        const wanted = new Set(
+          ["All", "Whole home", "Other", ...homeRooms].map((room) =>
+            String(room).trim().toLowerCase()
+          )
+        );
+        return suggestionRooms.filter((room) => wanted.has(room.toLowerCase()));
+      }, [homeRooms]);
+    
+      useEffect(() => {
+        if (!availableSuggestionRooms.includes(suggestionRoom)) setSuggestionRoom("All");
+      }, [availableSuggestionRooms, suggestionRoom]);
+    
+      const titleError = useMemo(() => {
+        if (!String(draft.title || "").trim()) return "Routine name is required.";
+        if (hasDuplicateRoutineTitle(draft.title, routines, draft.id)) {
+          return "A routine with this name already exists.";
+        }
+        return "";
+      }, [draft.id, draft.title, routines]);
+    
+      const durationError = useMemo(() => {
+        if (autoDuration) return "";
+        const numeric = Number(draft.estimatedMinutes);
+        if (!Number.isFinite(numeric)) return "Use a number of minutes.";
+        if (numeric < 1 || numeric > 600) return "Use between 1 and 600 minutes.";
+        return "";
+      }, [autoDuration, draft.estimatedMinutes]);
+    
+      const taskCount = countTasks(draft.phases);
+      const taskError = taskCount ? "" : "Add at least one task.";
+      const canSave = !titleError && !durationError && !taskError;
+      const firstRenderedTask = draft.phases
+        .flatMap((phase) => phase.tasks.map((task) => ({ phaseId: phase.id, taskId: task.id })))
+        .find(Boolean) || null;
+      const suggestions = useMemo(
+        () => getTaskSuggestions(suggestionQuery, suggestionRoom, 18),
+        [suggestionQuery, suggestionRoom]
+      );
+      const automaticMinutes = estimateRoutineMinutes(draft);
+      const bulkPreview = useMemo(() => parseRoutineTaskText(bulkText), [bulkText]);
+    
+      if (!open) return null;
+    
+      function updatePhase(phaseId, updater) {
+        setDraft((current) => ({
+          ...current,
+          phases: current.phases.map((phase) =>
+            phase.id === phaseId ? updater(phase) : phase
+          )
+        }));
+      }
+    
+      function focusTask(taskId) {
+        window.requestAnimationFrame(() => taskInputRefs.current.get(taskId)?.focus());
+      }
+    
+      function addTask(phaseId, afterIndex = null) {
+        const task = createBlankRoutineTask();
+        updatePhase(phaseId, (phase) => {
+          const tasks = [...phase.tasks];
+          if (afterIndex === null || afterIndex < 0 || afterIndex >= tasks.length) tasks.push(task);
+          else tasks.splice(afterIndex + 1, 0, task);
+          return { ...phase, tasks };
+        });
+        focusTask(task.id);
+      }
+    
+      function updateTask(phaseId, taskId, title) {
+        updatePhase(phaseId, (phase) => ({
+          ...phase,
+          tasks: phase.tasks.map((task) =>
+            task.id === taskId ? { ...task, title } : task
+          )
+        }));
+      }
+    
+      function removeTask(phaseId, taskId) {
+        updatePhase(phaseId, (phase) => ({
+          ...phase,
+          tasks: phase.tasks.filter((task) => task.id !== taskId)
+        }));
+      }
+    
+      function moveTask(phaseId, taskIndex, direction) {
+        updatePhase(phaseId, (phase) => ({
+          ...phase,
+          tasks: moveItem(phase.tasks, taskIndex, direction)
+        }));
+      }
+    
+      function moveDraggedTask(targetPhaseId, targetTaskId) {
+        if (!draggedTask) return;
+        setDraft((current) =>
+          moveRoutineTaskByDrop(current, draggedTask, targetPhaseId, targetTaskId)
+        );
+        setDraggedTask(null);
+      }
+    
+      function addBulkTasks() {
+        if (!bulkPreview.taskCount) {
+          setBulkMessage("Paste at least one task.");
+          return;
+        }
+        const before = taskCount;
+        setDraft((current) => appendParsedTaskText(current, bulkText));
+        setBulkText("");
+        window.requestAnimationFrame(() => {
+          setBulkMessage(
+            `${bulkPreview.taskCount} task${bulkPreview.taskCount === 1 ? "" : "s"} processed. Existing duplicates were skipped.`
+          );
+        });
+        if (before === 0) setAttemptedSave(false);
+      }
+    
+      function handleTaskPaste(event, phase, task) {
+        const text = event.clipboardData?.getData("text") || "";
+        if (!/\r?\n/.test(text)) return;
+        event.preventDefault();
+        setDraft((current) => {
+          let base = current;
+          if (!String(task.title || "").trim()) {
+            base = {
+              ...current,
+              phases: current.phases.map((item) =>
+                item.id === phase.id
+                  ? { ...item, tasks: item.tasks.filter((entry) => entry.id !== task.id) }
+                  : item
+              )
+            };
+          }
+          const prefixed = `${phase.title || "Tasks"}:\n${text}`;
+          return appendParsedTaskText(base, prefixed);
+        });
+        setBulkMessage("Pasted lines were added as separate tasks.");
+      }
+    
+      function applyStarterTemplate(templateId) {
+        setDraft(createRoutineDraftFromTemplate(templateId));
+        setAutoDuration(true);
+        setAttemptedSave(false);
+        setBulkMessage("Starter loaded. Edit anything before saving.");
+      }
+    
+      function addSuggestion(suggestion) {
+        setDraft((current) => addSuggestedTaskToDraft(current, suggestion));
+      }
+    
+      function addRoomPack() {
+        if (suggestionRoom === "All") return;
+        const roomSuggestions = getTaskSuggestions("", suggestionRoom, 100);
+        setDraft((current) =>
+          roomSuggestions.reduce(
+            (next, suggestion) => addSuggestedTaskToDraft(next, suggestion),
+            current
+          )
+        );
+        setBulkMessage(`Recommended ${suggestionRoom} tasks added. Existing duplicates were skipped.`);
+      }
+    
+      function submit(event) {
+        event.preventDefault();
+        setAttemptedSave(true);
+        if (!canSave) {
+          window.requestAnimationFrame(() => {
+            if (titleError) nameInputRef.current?.focus();
+            else if (durationError) durationInputRef.current?.focus();
+            else if (taskError) {
+              if (firstTaskInputRef.current) firstTaskInputRef.current.focus();
+              else addTaskButtonRef.current?.focus();
+            }
+          });
+          return;
+        }
+        const finalDraft = autoDuration
+          ? {
+              ...draft,
+              estimatedMinutes: automaticMinutes,
+              estimatedTime: `${automaticMinutes} min`
+            }
+          : draft;
+        onSave(sanitizeRoutineDraft(finalDraft));
+        onClose();
+      }
+    
+      return (
+        <div className="dialog-backdrop routine-editor-backdrop" role="presentation">
+          <section
+            aria-labelledby="routine-editor-title"
+            aria-modal="true"
+            className="dialog routine-editor-dialog routine-editor-workspace"
+            ref={dialogRef}
+            role="dialog"
+            tabIndex={-1}
+          >
+            <div className="dialog-header routine-editor-workspace-header">
+              <div>
+                <p className="eyebrow">{routine ? "Routine" : "New routine"}</p>
+                <h2 id="routine-editor-title">
+                  {routine ? "Edit routine" : "Build a routine"}
+                </h2>
+                <p>
+                  Choose common tasks, paste a checklist, use a starter, or type from scratch. They all create the same reusable routine.
+                </p>
+              </div>
+              <button
+                aria-label="Close routine editor"
+                className="icon-button"
+                onClick={onClose}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+    
+            <form className="routine-editor-form routine-editor-workspace-body" onSubmit={submit} noValidate>
+              {!routine && !seedDraft ? (
+                <section className="routine-fast-start" aria-labelledby="routine-fast-start-title">
+                  <div className="section-heading compact-heading">
+                    <div>
+                      <h3 id="routine-fast-start-title">Choose how to start</h3>
+                      <p>Use a starter here, or continue below to paste a list, choose common tasks, or type your own.</p>
+                    </div>
+                  </div>
+                  <div className="routine-template-grid">
+                    {routineStarterTemplates.map((template) => (
+                      <button
+                        className="routine-template-card"
+                        key={template.id}
+                        onClick={() => applyStarterTemplate(template.id)}
+                        type="button"
+                      >
+                        <strong>{template.title}</strong>
+                        <small>{template.description}</small>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+    
+              <div className="routine-editor-basics">
+                <label className="field-label" htmlFor="routine-editor-name">
+                  Routine name
+                  <input
+                    aria-describedby={attemptedSave && titleError ? "routine-name-error" : undefined}
+                    aria-invalid={attemptedSave && Boolean(titleError)}
+                    autoComplete="off"
+                    id="routine-editor-name"
+                    onChange={(event) =>
+                      setDraft((current) => ({ ...current, title: event.target.value }))
+                    }
+                    placeholder="Sunday clean"
+                    ref={nameInputRef}
+                    type="text"
+                    value={draft.title}
+                  />
+                </label>
+                {attemptedSave && titleError ? (
+                  <p className="field-error" id="routine-name-error" role="alert">
+                    {titleError}
+                  </p>
+                ) : null}
+    
+                <div className="routine-duration-control">
+                  <div>
+                    <span className="field-label">Estimated time</span>
+                    <strong>{autoDuration ? `About ${automaticMinutes} min` : `${draft.estimatedMinutes || "—"} min`}</strong>
+                  </div>
+                  <div className="setting-segmented" role="group" aria-label="Routine time estimate">
+                    <button
+                      aria-pressed={autoDuration}
+                      className={autoDuration ? "button edit-action small" : "button ghost small"}
+                      onClick={() => setAutoDuration(true)}
+                      type="button"
+                    >
+                      Automatic
+                    </button>
+                    <button
+                      aria-pressed={!autoDuration}
+                      className={!autoDuration ? "button edit-action small" : "button ghost small"}
+                      onClick={() => setAutoDuration(false)}
+                      type="button"
+                    >
+                      Manual
+                    </button>
+                  </div>
+                  {!autoDuration ? (
+                    <label className="duration-input-row" htmlFor="routine-editor-duration">
+                      <input
+                        aria-describedby={attemptedSave && durationError ? "routine-duration-error" : undefined}
+                        aria-invalid={attemptedSave && Boolean(durationError)}
+                        id="routine-editor-duration"
+                        inputMode="numeric"
+                        max="600"
+                        min="1"
+                        onChange={(event) =>
+                          setDraft((current) => ({
+                            ...current,
+                            estimatedMinutes: event.target.value
+                          }))
+                        }
+                        ref={durationInputRef}
+                        type="number"
+                        value={draft.estimatedMinutes}
+                      />
+                      <span>minutes</span>
+                    </label>
+                  ) : null}
+                </div>
+                {attemptedSave && durationError ? (
+                  <p className="field-error" id="routine-duration-error" role="alert">
+                    {durationError}
+                  </p>
+                ) : null}
+              </div>
+    
+              <section className="routine-bulk-builder" aria-labelledby="routine-bulk-title">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <h3 id="routine-bulk-title">Paste a list</h3>
+                    <p>One task per line. Bullets, numbered lists, Markdown checkboxes, and headings such as “Kitchen:” are understood.</p>
+                  </div>
+                  {bulkPreview.taskCount ? (
+                    <span className="task-count">{bulkPreview.taskCount} ready</span>
+                  ) : null}
+                </div>
+                <textarea
+                  aria-label="Bulk routine task list"
+                  onChange={(event) => setBulkText(event.target.value)}
+                  placeholder={"Kitchen:\nClear dishes\nWipe counters\nClean sink\n\nBathroom:\n- [ ] Clean toilet\n- [ ] Clean mirror"}
+                  rows="7"
+                  value={bulkText}
+                />
+                <div className="routine-bulk-actions">
+                  <button
+                    className="button primary"
+                    disabled={!bulkPreview.taskCount}
+                    onClick={addBulkTasks}
+                    type="button"
+                  >
+                    Add {bulkPreview.taskCount || "list"} {bulkPreview.taskCount === 1 ? "task" : "tasks"}
+                  </button>
+                  <small>Duplicate task names already in this routine are skipped.</small>
+                </div>
+              </section>
+    
+              <details className="routine-suggestion-builder">
+                <summary>
+                  <span>
+                    <strong>Choose common cleaning tasks</strong>
+                    <small>{homeRooms.length ? "Suggestions are filtered to rooms in your home." : "Search the built-in suggestions instead of typing."}</small>
+                  </span>
+                  <span aria-hidden="true">+</span>
+                </summary>
+                <div className="routine-suggestion-body">
+                  <div className="routine-suggestion-controls">
+                    <input
+                      aria-label="Search cleaning task suggestions"
+                      onChange={(event) => setSuggestionQuery(event.target.value)}
+                      placeholder="Search sink, mirror, vacuum…"
+                      type="search"
+                      value={suggestionQuery}
+                    />
+                    <select
+                      aria-label="Filter suggestions by room"
+                      onChange={(event) => setSuggestionRoom(event.target.value)}
+                      value={suggestionRoom}
+                    >
+                      {availableSuggestionRooms.map((room) => (
+                        <option key={room} value={room}>{room}</option>
+                      ))}
+                    </select>
+                    {suggestionRoom !== "All" ? (
+                      <button className="button ghost" onClick={addRoomPack} type="button">
+                        Add recommended {suggestionRoom} tasks
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="routine-suggestion-grid">
+                    {suggestions.map((suggestion) => (
+                      <button
+                        className="routine-suggestion-card"
+                        key={`${suggestion.room}-${suggestion.title}`}
+                        onClick={() => addSuggestion(suggestion)}
+                        type="button"
+                      >
+                        <span>
+                          <strong>{suggestion.title}</strong>
+                          <small>{suggestion.room} · ~{suggestion.minutes} min</small>
+                        </span>
+                        <span aria-hidden="true">+</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </details>
+    
+              <div className="routine-editor-task-area">
+                <div className="section-heading compact-heading routine-task-heading">
+                  <div>
+                    <h3>Your checklist</h3>
+                    <p>Press Enter for another row. Paste multiple lines into any task to add them all at once.</p>
+                  </div>
+                  <div className="routine-task-heading-actions">
+                    <span className="task-count">{taskCount} {taskCount === 1 ? "task" : "tasks"}</span>
+                    {taskCount > 1 ? (
+                      <button
+                        className="button ghost small"
+                        onClick={() => {
+                          setDraft((current) => optimizeRoutineTaskOrder(current));
+                          setBulkMessage("Tasks optimized into a sensible cleaning order within each section.");
+                        }}
+                        type="button"
+                      >
+                        Optimize order
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+    
+                {draft.phases.map((phase, phaseIndex) => (
+                  <section className="routine-editor-section" key={phase.id}>
+                    {draft.phases.length > 1 ? <h4>{phase.title}</h4> : null}
+                    <div className="routine-editor-task-list">
+                      {phase.tasks.map((task, taskIndex) => {
+                        const isFirstTask =
+                          firstRenderedTask?.phaseId === phase.id &&
+                          firstRenderedTask?.taskId === task.id;
+                        return (
+                          <div
+                            className="routine-editor-task-row"
+                            key={task.id}
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={() => moveDraggedTask(phase.id, task.id)}
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="routine-drag-handle"
+                              draggable="true"
+                              onDragEnd={() => setDraggedTask(null)}
+                              onDragStart={() => setDraggedTask({ phaseId: phase.id, taskId: task.id })}
+                              title="Drag to reorder"
+                            >
+                              ⋮⋮
+                            </span>
+                            <input
+                              aria-describedby={attemptedSave && taskError && isFirstTask ? "routine-task-error" : undefined}
+                              aria-invalid={attemptedSave && Boolean(taskError) && isFirstTask}
+                              aria-label={`Task ${taskIndex + 1}${draft.phases.length > 1 ? ` in ${phase.title}` : ""}`}
+                              onChange={(event) => updateTask(phase.id, task.id, event.target.value)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" && !event.shiftKey) {
+                                  event.preventDefault();
+                                  addTask(phase.id, taskIndex);
+                                }
+                              }}
+                              onPaste={(event) => handleTaskPaste(event, phase, task)}
+                              placeholder="Add a cleaning task"
+                              ref={(node) => {
+                                if (node) taskInputRefs.current.set(task.id, node);
+                                else taskInputRefs.current.delete(task.id);
+                                if (isFirstTask) firstTaskInputRef.current = node;
+                              }}
+                              type="text"
+                              value={task.title}
+                            />
+                            <div className="routine-editor-task-actions">
+                              <button
+                                aria-label={`Move ${task.title || `task ${taskIndex + 1}`} up`}
+                                className="icon-button small"
+                                disabled={taskIndex === 0}
+                                onClick={() => moveTask(phase.id, taskIndex, -1)}
+                                type="button"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                aria-label={`Move ${task.title || `task ${taskIndex + 1}`} down`}
+                                className="icon-button small"
+                                disabled={taskIndex === phase.tasks.length - 1}
+                                onClick={() => moveTask(phase.id, taskIndex, 1)}
+                                type="button"
+                              >
+                                ↓
+                              </button>
+                              <button
+                                aria-label={`Remove ${task.title || `task ${taskIndex + 1}`}`}
+                                className="icon-button small danger-icon"
+                                onClick={() => removeTask(phase.id, task.id)}
+                                type="button"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button
+                      className="button ghost small"
+                      onClick={() => addTask(phase.id)}
+                      ref={phaseIndex === 0 ? addTaskButtonRef : undefined}
+                      type="button"
+                    >
+                      + Add task{draft.phases.length > 1 ? ` to ${phase.title}` : ""}
+                    </button>
+                  </section>
+                ))}
+                {attemptedSave && taskError ? (
+                  <p className="field-error" id="routine-task-error" role="alert">
+                    {taskError}
+                  </p>
+                ) : null}
+                {bulkMessage ? <p className="form-message" role="status">{bulkMessage}</p> : null}
+              </div>
+    
+              <div className="routine-editor-footer routine-editor-sticky-footer">
+                <div>
+                  {routine && onAdvancedEdit ? (
+                    <button
+                      className="button text-button"
+                      onClick={() => {
+                        onClose();
+                        onAdvancedEdit(routine.id);
+                      }}
+                      type="button"
+                    >
+                      Advanced structure
+                    </button>
+                  ) : null}
+                </div>
+                <div className="dialog-actions">
+                  <span className="routine-save-summary">
+                    {taskCount} {taskCount === 1 ? "task" : "tasks"} · ~{autoDuration ? automaticMinutes : draft.estimatedMinutes || "—"} min
+                  </span>
+                  <button className="button ghost" onClick={onClose} type="button">
+                    Cancel
+                  </button>
+                  <button className="button primary" type="submit">
+                    {routine ? "Save changes" : "Create routine"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </section>
+        </div>
+      );
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/clean30/clean30/tests/intuitiveness-consolidation.test.js:42:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: rooms are setup infrastructure in Settings and selection context in Clean
+ok 66 - rooms are setup infrastructure in Settings and selection context in Clean
+  ---
+  duration_ms: 0.474411
+  type: 'test'
+  ...
+# Subtest: chosen generated work is scoped before opening focused cleaning
+ok 67 - chosen generated work is scoped before opening focused cleaning
+  ---
+  duration_ms: 0.426163
+  type: 'test'
+  ...
+# Subtest: an active routine clean remains the sole focused cleaning session
+ok 68 - an active routine clean remains the sole focused cleaning session
+  ---
+  duration_ms: 0.316425
+  type: 'test'
+  ...
+# Subtest: the consolidation is responsive and keeps reduced-motion support
+ok 69 - the consolidation is responsive and keeps reduced-motion support
+  ---
+  duration_ms: 0.479894
+  type: 'test'
+  ...
+# Subtest: the intuitiveness update stays schema-free and preserves release invariants
+ok 70 - the intuitiveness update stays schema-free and preserves release invariants
+  ---
+  duration_ms: 3.089501
+  type: 'test'
+  ...
+# Subtest: fresh Clean30 state uses neutral universal starter content
+ok 71 - fresh Clean30 state uses neutral universal starter content
+  ---
+  duration_ms: 2.58003
+  type: 'test'
+  ...
+# Subtest: starter Today tasks are concise and generally applicable
+ok 72 - starter Today tasks are concise and generally applicable
+  ---
+  duration_ms: 1.014058
+  type: 'test'
+  ...
+# Subtest: starter routines cover short, weekly, and deeper cleaning
+ok 73 - starter routines cover short, weekly, and deeper cleaning
+  ---
+  duration_ms: 1.40873
+  type: 'test'
+  ...
+# Subtest: legacy systems are neutral but retain strict canonical shape
+ok 74 - legacy systems are neutral but retain strict canonical shape
+  ---
+  duration_ms: 0.351576
+  type: 'test'
+  ...
+# Subtest: existing custom templates keep their own content when normalized
+ok 75 - existing custom templates keep their own content when normalized
+  ---
+  duration_ms: 0.552384
+  type: 'test'
+  ...
+# Subtest: onboarding has three clear steps and two distinct setup choices
+ok 76 - onboarding has three clear steps and two distinct setup choices
+  ---
+  duration_ms: 0.125073
+  type: 'test'
+  ...
+# Subtest: onboarding can import a plan and protects returning users from setup replacement
+ok 77 - onboarding can import a plan and protects returning users from setup replacement
+  ---
+  duration_ms: 0.477637
+  type: 'test'
+  ...
+# Subtest: public labels use Clean and Progress without changing route IDs
+ok 78 - public labels use Clean and Progress without changing route IDs
+  ---
+  duration_ms: 0.222279
+  type: 'test'
+  ...
+# Subtest: header and onboarding no longer present the personal reset system
+ok 79 - header and onboarding no longer present the personal reset system
+  ---
+  duration_ms: 0.322356
+  type: 'test'
+  ...
+# Subtest: the original personal source remains exportable outside the app bundle
+ok 80 - the original personal source remains exportable outside the app bundle
+  ---
+  duration_ms: 0.416548
+  type: 'test'
+  ...
+# Subtest: Home treats real rooms separately from old utility zones
+ok 81 - Home treats real rooms separately from old utility zones
+  ---
+  duration_ms: 1.925273
+  type: 'test'
+  ...
+# Subtest: editing Home preserves existing room IDs and adds new rooms without touching routine data
+ok 82 - editing Home preserves existing room IDs and adds new rooms without touching routine data
+  ---
+  duration_ms: 0.629812
+  type: 'test'
+  ...
+# Subtest: Task Library limits built-in room suggestions to the configured home
+ok 83 - Task Library limits built-in room suggestions to the configured home
+  ---
+  duration_ms: 9.748265
+  type: 'test'
+  ...
+# Subtest: existing routine tasks are reused by Task Library instead of becoming dead data
+ok 84 - existing routine tasks are reused by Task Library instead of becoming dead data
+  ---
+  duration_ms: 1.959436
+  type: 'test'
+  ...
+# Subtest: recommended room packs stay bounded and room-specific
+ok 85 - recommended room packs stay bounded and room-specific
+  ---
+  duration_ms: 0.811595
+  type: 'test'
+  ...
+# Subtest: Task Library selections become a structured editable routine draft
+ok 86 - Task Library selections become a structured editable routine draft
+  ---
+  duration_ms: 0.756671
+  type: 'test'
+  ...
+# Subtest: room setup and task discovery survive behind simpler user-facing concepts
+ok 87 - room setup and task discovery survive behind simpler user-facing concepts
+  ---
+  duration_ms: 0.793989
+  type: 'test'
+  ...
+# Subtest: App connects Home through existing zones and Today through existing task state
+ok 88 - App connects Home through existing zones and Today through existing task state
+  ---
+  duration_ms: 0.43784
+  type: 'test'
+  ...
+# Subtest: fresh Home starts with actual rooms rather than utility categories
+ok 89 - fresh Home starts with actual rooms rather than utility categories
+  ---
+  duration_ms: 0.486695
+  type: 'test'
+  ...
+# Subtest: Phase 10 styling keeps mobile chooser dialogs full-screen
+ok 90 - Phase 10 styling keeps mobile chooser dialogs full-screen
+  ---
+  duration_ms: 0.494254
+  type: 'test'
+  ...
+# Subtest: Quick Clean exposes useful fixed time budgets without persisting a new setting
+ok 91 - Quick Clean exposes useful fixed time budgets without persisting a new setting
+  ---
+  duration_ms: 16.617034
+  type: 'test'
+  ...
+# Subtest: Quick Clean generation is deterministic, bounded, and duplicate-free
+ok 92 - Quick Clean generation is deterministic, bounded, and duplicate-free
+  ---
+  duration_ms: 3.064091
+  type: 'test'
+  ...
+# Subtest: a larger Quick Clean distributes attention across selected rooms
+ok 93 - a larger Quick Clean distributes attention across selected rooms
+  ---
+  duration_ms: 3.480252
+  type: 'test'
+  ...
+# Subtest: Quick Clean execution order keeps early collection work ahead of floors
+ok 94 - Quick Clean execution order keeps early collection work ahead of floors
+  ---
+  duration_ms: 3.306126
+  type: 'test'
+  ...
+# Subtest: Quick Clean can use existing routine tasks for custom home rooms
+ok 95 - Quick Clean can use existing routine tasks for custom home rooms
+  ---
+  duration_ms: 1.470066
+  type: 'test'
+  ...
+# Subtest: time planning is part of Clean rather than a separate Routines feature
+ok 96 - time planning is part of Clean rather than a separate Routines feature
+  ---
+  duration_ms: 0.851092
+  type: 'test'
+  ...
+# Subtest: time-based cleaning remains schema-free and reuses Today plus routine-draft paths
+ok 97 - time-based cleaning remains schema-free and reuses Today plus routine-draft paths
+  ---
+  duration_ms: 0.435868
+  type: 'test'
+  ...
+# Subtest: Phase 11 styling keeps the time planner full-screen on phones
+ok 98 - Phase 11 styling keeps the time planner full-screen on phones
+  ---
+  duration_ms: 0.28149
+  type: 'test'
+  ...
+# Subtest: Help explains the unified Clean entry and reusable routines
+ok 99 - Help explains the unified Clean entry and reusable routines
+  ---
+  duration_ms: 0.602437
+  type: 'test'
+  ...
+# Subtest: room coverage supports explicit custom-room sections and catalog task inference
+ok 100 - room coverage supports explicit custom-room sections and catalog task inference
+  ---
+  duration_ms: 2.449058
+  type: 'test'
+  ...
+# Subtest: archived routines do not drive room-care guidance
+ok 101 - archived routines do not drive room-care guidance
+  ---
+  duration_ms: 0.260097
+  type: 'test'
+  ...
+# Subtest: only fully completed routine sessions count as a full room clean
+ok 102 - only fully completed routine sessions count as a full room clean
+  ---
+  duration_ms: 0.284563
+  type: 'test'
+  ...
+# Subtest: room-care statuses use soft suggested check-ins rather than hard due dates
+ok 103 - room-care statuses use soft suggested check-ins rather than hard due dates
+  ---
+  duration_ms: 0.988912
+  type: 'test'
+  ...
+# Subtest: room-care ranking puts attention and upcoming rooms before untracked and recent rooms
+ok 104 - room-care ranking puts attention and upcoming rooms before untracked and recent rooms
+  ---
+  duration_ms: 1.418645
+  type: 'test'
+  ...
+# Subtest: Quick Clean uses room-care history to prioritize selected rooms when time is tight
+ok 105 - Quick Clean uses room-care history to prioritize selected rooms when time is tight
+  ---
+  duration_ms: 9.588663
+  type: 'test'
+  ...
+# Subtest: history-aware Quick Clean preserves cleaning-stage execution order
+ok 106 - history-aware Quick Clean preserves cleaning-stage execution order
+  ---
+  duration_ms: 2.49906
+  type: 'test'
+  ...
+# Subtest: room-care intelligence is exposed through Clean and Progress without creating another mode
+ok 107 - room-care intelligence is exposed through Clean and Progress without creating another mode
+  ---
+  duration_ms: 3.075222
+  type: 'test'
+  ...
+# Subtest: Phase 12 styles preserve narrow-phone and reduced-motion safeguards
+ok 108 - Phase 12 styles preserve narrow-phone and reduced-motion safeguards
+  ---
+  duration_ms: 0.718201
+  type: 'test'
+  ...
+# Subtest: Phase 12 stays schema-free and preserves backup, template, deployment, and persistence invariants
+ok 109 - Phase 12 stays schema-free and preserves backup, template, deployment, and persistence invariants
+  ---
+  duration_ms: 3.563286
+  type: 'test'
+  ...
+# Subtest: Clean is the first primary destination and the header no longer exposes a separate Quick clean product
+ok 110 - Clean is the first primary destination and the header no longer exposes a separate Quick clean product
+  ---
+  duration_ms: 2.866541
+  type: 'test'
+  ...
+# Subtest: Clean offers direct 5, 10, 15, and 30 minute starts while retaining more time options
+ok 111 - Clean offers direct 5, 10, 15, and 30 minute starts while retaining more time options
+  ---
+  duration_ms: 0.849708
+  type: 'test'
+  ...
+# Subtest: instant time plans reuse adaptive planning rather than inventing a second engine
+ok 112 - instant time plans reuse adaptive planning rather than inventing a second engine
+  ---
+  duration_ms: 0.30784
+  type: 'test'
+  ...
+# Subtest: a 15-minute smart plan stays bounded and uses room-care priority
+ok 113 - a 15-minute smart plan stays bounded and uses room-care priority
+  ---
+  duration_ms: 13.890001
+  type: 'test'
+  ...
+# Subtest: the consolidation styling loads after Phase 14 and protects narrow phones
+ok 114 - the consolidation styling loads after Phase 14 and protects narrow phones
+  ---
+  duration_ms: 0.416993
+  type: 'test'
+  ...
+# Subtest: Help teaches one Clean flow instead of Quick Clean as a separate feature
+ok 115 - Help teaches one Clean flow instead of Quick Clean as a separate feature
+  ---
+  duration_ms: 0.343723
+  type: 'test'
+  ...
+# Subtest: the unified Clean surface remains schema-free and preserves deployment and persistence invariants
+ok 116 - the unified Clean surface remains schema-free and preserves deployment and persistence invariants
+  ---
+  duration_ms: 3.130663
+  type: 'test'
+  ...
+# Subtest: room freshness presentation stays descriptive rather than gamified
+ok 117 - room freshness presentation stays descriptive rather than gamified
+  ---
+  duration_ms: 2.085354
+  type: 'test'
+  ...
+# Subtest: Home summary points to the least-recently covered room without creating a deadline
+ok 118 - Home summary points to the least-recently covered room without creating a deadline
+  ---
+  duration_ms: 1.927063
+  type: 'test'
+  ...
+# Subtest: routine impact maps only to configured rooms the routine actually covers
+ok 119 - routine impact maps only to configured rooms the routine actually covers
+  ---
+  duration_ms: 0.282621
+  type: 'test'
+  ...
+# Subtest: Progress adds Home snapshot and room impact without moving Calendar or Insights out
+ok 120 - Progress adds Home snapshot and room impact without moving Calendar or Insights out
+  ---
+  duration_ms: 2.041018
+  type: 'test'
+  ...
+# Subtest: Phase 14 explicitly keeps room status as maintenance context rather than a score
+ok 121 - Phase 14 explicitly keeps room status as maintenance context rather than a score
+  ---
+  duration_ms: 0.551824
+  type: 'test'
+  ...
+# Subtest: Phase 14 styling loads before the final consolidation and supports responsive and reduced-motion layouts
+ok 122 - Phase 14 styling loads before the final consolidation and supports responsive and reduced-motion layouts
+  ---
+  duration_ms: 0.306741
+  type: 'test'
+  ...
+# Subtest: Phase 14 remains schema-free and preserves deployment and persistence invariants
+ok 123 - Phase 14 remains schema-free and preserves deployment and persistence invariants
+  ---
+  duration_ms: 3.338427
+  type: 'test'
+  ...
+# Subtest: Help keeps the Home snapshot understandable without making it a separate workflow
+ok 124 - Help keeps the Home snapshot understandable without making it a separate workflow
+  ---
+  duration_ms: 0.263722
+  type: 'test'
+  ...
+# Subtest: editing Home preserves hidden legacy utility zones without exposing them as rooms
+ok 125 - editing Home preserves hidden legacy utility zones without exposing them as rooms
+  ---
+  duration_ms: 3.903809
+  type: 'test'
+  ...
+# Subtest: a custom Task Library item remains selectable when it duplicates a built-in title
+ok 126 - a custom Task Library item remains selectable when it duplicates a built-in title
+  ---
+  duration_ms: 13.096645
+  type: 'test'
+  ...
+# Subtest: freshness labels cannot contradict the room-care state near a threshold
+ok 127 - freshness labels cannot contradict the room-care state near a threshold
+  ---
+  duration_ms: 0.383397
+  type: 'test'
+  ...
+# Subtest: archived routines stay excluded from maintenance guidance
+ok 128 - archived routines stay excluded from maintenance guidance
+  ---
+  duration_ms: 0.648922
+  type: 'test'
+  ...
+# Subtest: archived routine activity can still describe which rooms that routine covers
+ok 129 - archived routine activity can still describe which rooms that routine covers
+  ---
+  duration_ms: 0.472272
+  type: 'test'
+  ...
+# Subtest: routine drag reorder delegates to the tested drop helper
+ok 130 - routine drag reorder delegates to the tested drop helper
+  ---
+  duration_ms: 0.713486
+  type: 'test'
+  ...
+# Subtest: Restore starter always uses the current source starter instead of a stale stored default
+ok 131 - Restore starter always uses the current source starter instead of a stale stored default
+  ---
+  duration_ms: 0.474727
+  type: 'test'
+  ...
+# Subtest: Clean room cards retain native button semantics
+ok 132 - Clean room cards retain native button semantics
+  ---
+  duration_ms: 0.257055
+  type: 'test'
+  ...
+# Subtest: Phase 15 data-integrity fixes remain schema-free
+ok 133 - Phase 15 data-integrity fixes remain schema-free
+  ---
+  duration_ms: 3.525937
+  type: 'test'
+  ...
+# Subtest: onboarding can start the first starter clean directly without weakening returning-user protection
+ok 134 - onboarding can start the first starter clean directly without weakening returning-user protection
+  ---
+  duration_ms: 1.641041
+  type: 'test'
+  ...
+# Subtest: Today list More keeps its focused task-management scope and links to Progress
+ok 135 - Today list More keeps its focused task-management scope and links to Progress
+  ---
+  duration_ms: 1.265356
+  type: 'test'
+  ...
+# Subtest: regular task editing opens a focused Today editor instead of the full plan editor
+ok 136 - regular task editing opens a focused Today editor instead of the full plan editor
+  ---
+  duration_ms: 1.974592
+  type: 'test'
+  ...
+# Subtest: Settings exposes direct rooms and advanced cleaning-plan destinations
+ok 137 - Settings exposes direct rooms and advanced cleaning-plan destinations
+  ---
+  duration_ms: 0.546063
+  type: 'test'
+  ...
+# Subtest: advanced Home profile fields keep universal wording and legacy data compatibility
+ok 138 - advanced Home profile fields keep universal wording and legacy data compatibility
+  ---
+  duration_ms: 0.411046
+  type: 'test'
+  ...
+# Subtest: Phase 16 remains schema-free and preserves deployment and persistence invariants
+ok 139 - Phase 16 remains schema-free and preserves deployment and persistence invariants
+  ---
+  duration_ms: 3.288781
+  type: 'test'
+  ...
+# Subtest: Phase 17 establishes versioned PWA release caches and removes older Clean30 caches
+ok 140 - Phase 17 establishes versioned PWA release caches and removes older Clean30 caches
+  ---
+  duration_ms: 1.351782
+  type: 'test'
+  ...
+# Subtest: PWA update handoff still waits for explicit reload and then claims the new controller
+ok 141 - PWA update handoff still waits for explicit reload and then claims the new controller
+  ---
+  duration_ms: 0.365883
+  type: 'test'
+  ...
+# Subtest: the current routine cannot be edited while its clean is active
+ok 142 - the current routine cannot be edited while its clean is active
+  ---
+  duration_ms: 0.442586
+  type: 'test'
+  ...
+# Subtest: advanced routine editing becomes read-only while the active template has a current clean
+ok 143 - advanced routine editing becomes read-only while the active template has a current clean
+  ---
+  duration_ms: 0.285758
+  type: 'test'
+  ...
+# Subtest: Advanced Settings blocks starter restore while that cleaning plan has an active session
+ok 144 - Advanced Settings blocks starter restore while that cleaning plan has an active session
+  ---
+  duration_ms: 0.400941
+  type: 'test'
+  ...
+# Subtest: release CI uses current Node 24-based GitHub Action majors while testing the app on Node 22
+ok 145 - release CI uses current Node 24-based GitHub Action majors while testing the app on Node 22
+  ---
+  duration_ms: 0.270574
+  type: 'test'
+  ...
+# Subtest: Phase 17 release hardening remains schema-free and preserves deployment and persistence invariants
+ok 146 - Phase 17 release hardening remains schema-free and preserves deployment and persistence invariants
+  ---
+  duration_ms: 4.805595
+  type: 'test'
+  ...
+# Subtest: Phase 18 raises the tested direct-dependency floor without taking a risky major upgrade
+ok 147 - Phase 18 raises the tested direct-dependency floor without taking a risky major upgrade
+  ---
+  duration_ms: 0.968999
+  type: 'test'
+  ...
+# Subtest: the refreshed lockfile is above the security floors that motivated Phase 18
+ok 148 - the refreshed lockfile is above the security floors that motivated Phase 18
+  ---
+  duration_ms: 0.959268
+  type: 'test'
+  ...
+# Subtest: release CI now treats dependency advisories as a release gate
+ok 149 - release CI now treats dependency advisories as a release gate
+  ---
+  duration_ms: 0.247381
+  type: 'test'
+  ...
+# Subtest: Phase 18 established a versioned PWA cache boundary that future release phases may advance
+ok 150 - Phase 18 established a versioned PWA cache boundary that future release phases may advance
+  ---
+  duration_ms: 1.032746
+  type: 'test'
+  ...
+# Subtest: one command can run the local release-candidate acceptance suite
+ok 151 - one command can run the local release-candidate acceptance suite
+  ---
+  duration_ms: 0.293086
+  type: 'test'
+  ...
+# Subtest: the temporary lockfile-refresh workflow is not part of the release candidate
+ok 152 - the temporary lockfile-refresh workflow is not part of the release candidate
+  ---
+  duration_ms: 0.130851
+  type: 'test'
+  ...
+# Subtest: Phase 18 remains schema-free and preserves deployment and persistence invariants
+ok 153 - Phase 18 remains schema-free and preserves deployment and persistence invariants
+  ---
+  duration_ms: 2.189823
+  type: 'test'
+  ...
+# Subtest: archived routine tasks stay out of active Task Library suggestions
+ok 154 - archived routine tasks stay out of active Task Library suggestions
+  ---
+  duration_ms: 13.05088
+  type: 'test'
+  ...
+# Subtest: active custom routine tasks remain reusable in Task Library and Quick Clean
+ok 155 - active custom routine tasks remain reusable in Task Library and Quick Clean
+  ---
+  duration_ms: 2.846892
+  type: 'test'
+  ...
+# Subtest: archived custom routines cannot leak back into generated Quick Clean plans
+ok 156 - archived custom routines cannot leak back into generated Quick Clean plans
+  ---
+  duration_ms: 0.673223
+  type: 'test'
+  ...
+# Subtest: Phase 19 production runtime smoke verification is part of local and CI release acceptance
+ok 157 - Phase 19 production runtime smoke verification is part of local and CI release acceptance
+  ---
+  duration_ms: 0.778152
+  type: 'test'
+  ...
+# Subtest: Phase 19 advances the final PWA cache while preserving old-cache cleanup
+ok 158 - Phase 19 advances the final PWA cache while preserving old-cache cleanup
+  ---
+  duration_ms: 0.275521
+  type: 'test'
+  ...
+# Subtest: Phase 19 remains schema-free and preserves deployment and persistence invariants
+ok 159 - Phase 19 remains schema-free and preserves deployment and persistence invariants
+  ---
+  duration_ms: 3.044106
+  type: 'test'
+  ...
+# Subtest: Today cleaning orders unfinished tasks before completed tasks
+ok 160 - Today cleaning orders unfinished tasks before completed tasks
+  ---
+  duration_ms: 1.689004
+  type: 'test'
+  ...
+# Subtest: Today cleaning navigation wraps and advances to another unfinished task
+ok 161 - Today cleaning navigation wraps and advances to another unfinished task
+  ---
+  duration_ms: 0.41006
+  type: 'test'
+  ...
+# Subtest: Today cleaning progress is derived directly from its task scope
+ok 162 - Today cleaning progress is derived directly from its task scope
+  ---
+  duration_ms: 0.327848
+  type: 'test'
+  ...
+# Subtest: Clean keeps the normal Today list compact while adding one start surface
+ok 163 - Clean keeps the normal Today list compact while adding one start surface
+  ---
+  duration_ms: 0.823539
+  type: 'test'
+  ...
+# Subtest: focused cleaning mode is a real modal with progress, task controls, and optional task scope
+ok 164 - focused cleaning mode is a real modal with progress, task controls, and optional task scope
+  ---
+  duration_ms: 0.390563
+  type: 'test'
+  ...
+# Subtest: Help explains focused cleaning and direct routine reuse
+ok 165 - Help explains focused cleaning and direct routine reuse
+  ---
+  duration_ms: 0.295462
+  type: 'test'
+  ...
+# Subtest: Phase 2 styles are loaded after the Phase 1 foundation styles
+ok 166 - Phase 2 styles are loaded after the Phase 1 foundation styles
+  ---
+  duration_ms: 0.392165
+  type: 'test'
+  ...
+# Subtest: new routine fields stay blank until the user types
+ok 167 - new routine fields stay blank until the user types
+  ---
+  duration_ms: 1.192726
+  type: 'test'
+  ...
+# Subtest: simple routine drafts save into one ordinary Tasks section
+ok 168 - simple routine drafts save into one ordinary Tasks section
+  ---
+  duration_ms: 1.211268
+  type: 'test'
+  ...
+# Subtest: routine editing preserves multiple existing sections
+ok 169 - routine editing preserves multiple existing sections
+  ---
+  duration_ms: 1.057362
+  type: 'test'
+  ...
+# Subtest: routine duplicate receives independent routine, section, and task IDs
+ok 170 - routine duplicate receives independent routine, section, and task IDs
+  ---
+  duration_ms: 0.526578
+  type: 'test'
+  ...
+# Subtest: routine title comparison is case-insensitive and ignores the current routine
+ok 171 - routine title comparison is case-insensitive and ignores the current routine
+  ---
+  duration_ms: 0.199282
+  type: 'test'
+  ...
+# Subtest: Routines retains direct Start and advanced editing while presenting one creation flow
+ok 172 - Routines retains direct Start and advanced editing while presenting one creation flow
+  ---
+  duration_ms: 0.768699
+  type: 'test'
+  ...
+# Subtest: current-clean labels require both template and routine identity
+ok 173 - current-clean labels require both template and routine identity
+  ---
+  duration_ms: 1.741389
+  type: 'test'
+  ...
+# Subtest: starting a routine requests the shared focused cleaning experience
+ok 174 - starting a routine requests the shared focused cleaning experience
+  ---
+  duration_ms: 0.503148
+  type: 'test'
+  ...
+# Subtest: Phase 3 styles load after earlier universal styles
+ok 175 - Phase 3 styles load after earlier universal styles
+  ---
+  duration_ms: 0.462895
+  type: 'test'
+  ...
+# Subtest: weekly Progress summary keeps measured routine time separate from estimated Today time
+ok 176 - weekly Progress summary keeps measured routine time separate from estimated Today time
+  ---
+  duration_ms: 1.474275
+  type: 'test'
+  ...
+# Subtest: Progress puts the weekly overview and recent activity ahead of Calendar and hides analytics in Insights
+ok 177 - Progress puts the weekly overview and recent activity ahead of Calendar and hides analytics in Insights
+  ---
+  duration_ms: 0.631373
+  type: 'test'
+  ...
+# Subtest: Progress activity filters are secondary and routine entries remain deletable
+ok 178 - Progress activity filters are secondary and routine entries remain deletable
+  ---
+  duration_ms: 0.299597
+  type: 'test'
+  ...
+# Subtest: Progress Calendar supports month navigation and accessible day labels
+ok 179 - Progress Calendar supports month navigation and accessible day labels
+  ---
+  duration_ms: 0.300112
+  type: 'test'
+  ...
+# Subtest: Phase 4 styles load after Phase 3 styles
+ok 180 - Phase 4 styles load after Phase 3 styles
+  ---
+  duration_ms: 0.258241
+  type: 'test'
+  ...
+# Subtest: Help describes the new Progress information hierarchy
+not ok 181 - Help describes the new Progress information hierarchy
+  ---
+  duration_ms: 1.330522
+  type: 'test'
+  location: '/home/runner/work/clean30/clean30/tests/universal-phase-4.test.js:84:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Progress starts with recent activity and this week/. Input:
+    
+    'import { useRef } from "react";\n' +
+      'import useDialogFocus from "../hooks/useDialogFocus.js";\n' +
+      '\n' +
+      'const guideSections = [\n' +
+      '  {\n' +
+      '    title: "Clean",\n' +
+      '    body: "This is where cleaning starts. Use Just start when you do not want to decide, choose how much time you have, pick a room, or work through today’s list. Every path leads into the same focused cleaning view."\n' +
+      '  },\n' +
+      '  {\n' +
+      '    title: "Routines",\n' +
+      '    body: "Routines are saved reusable cleans. Start one directly, or create a new routine from common cleaning tasks, a pasted checklist, a starter, or a blank list."\n' +
+      '  },\n' +
+      '  {\n' +
+      '    title: "Progress",\n' +
+      '    body: "Progress shows what you completed and a lightweight room snapshot. Room status is guidance from completed cleans, not a score, deadline, or requirement."\n' +
+      '  },\n' +
+      '  {\n' +
+      '    title: "Settings",\n' +
+      '    body: "Manage rooms, appearance, backups, and advanced cleaning-plan options. Clean30 stores data on this device."\n' +
+      '  }\n' +
+      '];\n' +
+      '\n' +
+      'export default function HelpGuide({ open, onClose }) {\n' +
+      '  const closeButtonRef = useRef(null);\n' +
+      '  const dialogRef = useDialogFocus({\n' +
+      '    open,\n' +
+      '    onClose,\n' +
+      '    initialFocusRef: closeButtonRef\n' +
+      '  });\n' +
+      '\n' +
+      '  if (!open) return null;\n' +
+      '\n' +
+      '  return (\n' +
+      '    <div className="dialog-backdrop" role="presentation">\n' +
+      '      <section\n' +
+      '        aria-labelledby="help-guide-title"\n' +
+      '        aria-modal="true"\n' +
+      '        className="dialog guide-dialog"\n' +
+      '        role="dialog"\n' +
+      '        ref={dialogRef}\n' +
+      '        tabIndex={-1}\n' +
+      '      >\n' +
+      '        <div className="dialog-header">\n' +
+      '          <div>\n' +
+      '            <p className="eyebrow">Quick guide</p>\n' +
+      '            <h2 id="help-guide-title">Using Clean30</h2>\n' +
+      '          </div>\n' +
+      '          <button\n' +
+      '            className="icon-button"\n' +
+      '            type="button"\n' +
+      '            onClick={onClose}\n' +
+      '            aria-label="Close guide"\n' +
+      '            ref={closeButtonRef}\n' +
+      '          >\n' +
+      '            X\n' +
+      '          </button>\n' +
+      '        </div>\n' +
+      '\n' +
+      '        <div className="guide-list compact">\n' +
+      '          {guideSections.map((section) => (\n' +
+      '            <article className="guide-item" key={section.title}>\n' +
+      '              <h3>{section.title}</h3>\n' +
+      '              <p>{section.body}</p>\n' +
+      '            </article>\n' +
+      '          ))}\n' +
+      '        </div>\n' +
+      '\n' +
+      '        <div className="dialog-actions">\n' +
+      '          <button className="button primary" type="button" onClick={onClose}>\n' +
+      '            Got it\n' +
+      '          </button>\n' +
+      '        </div>\n' +
+      '      </section>\n' +
+      '    </div>\n' +
+      '  );\n' +
+      '}\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    import { useRef } from "react";
+    import useDialogFocus from "../hooks/useDialogFocus.js";
+    
+    const guideSections = [
+      {
+        title: "Clean",
+        body: "This is where cleaning starts. Use Just start when you do not want to decide, choose how much time you have, pick a room, or work through today’s list. Every path leads into the same focused cleaning view."
+      },
+      {
+        title: "Routines",
+        body: "Routines are saved reusable cleans. Start one directly, or create a new routine from common cleaning tasks, a pasted checklist, a starter, or a blank list."
+      },
+      {
+        title: "Progress",
+        body: "Progress shows what you completed and a lightweight room snapshot. Room status is guidance from completed cleans, not a score, deadline, or requirement."
+      },
+      {
+        title: "Settings",
+        body: "Manage rooms, appearance, backups, and advanced cleaning-plan options. Clean30 stores data on this device."
+      }
+    ];
+    
+    export default function HelpGuide({ open, onClose }) {
+      const closeButtonRef = useRef(null);
+      const dialogRef = useDialogFocus({
+        open,
+        onClose,
+        initialFocusRef: closeButtonRef
+      });
+    
+      if (!open) return null;
+    
+      return (
+        <div className="dialog-backdrop" role="presentation">
+          <section
+            aria-labelledby="help-guide-title"
+            aria-modal="true"
+            className="dialog guide-dialog"
+            role="dialog"
+            ref={dialogRef}
+            tabIndex={-1}
+          >
+            <div className="dialog-header">
+              <div>
+                <p className="eyebrow">Quick guide</p>
+                <h2 id="help-guide-title">Using Clean30</h2>
+              </div>
+              <button
+                className="icon-button"
+                type="button"
+                onClick={onClose}
+                aria-label="Close guide"
+                ref={closeButtonRef}
+              >
+                X
+              </button>
+            </div>
+    
+            <div className="guide-list compact">
+              {guideSections.map((section) => (
+                <article className="guide-item" key={section.title}>
+                  <h3>{section.title}</h3>
+                  <p>{section.body}</p>
+                </article>
+              ))}
+            </div>
+    
+            <div className="dialog-actions">
+              <button className="button primary" type="button" onClick={onClose}>
+                Got it
+              </button>
+            </div>
+          </section>
+        </div>
+      );
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/clean30/clean30/tests/universal-phase-4.test.js:86:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: curated appearance presets use existing Clean30 appearance values
+ok 182 - curated appearance presets use existing Clean30 appearance values
+  ---
+  duration_ms: 1.188892
+  type: 'test'
+  ...
+# Subtest: Settings opens as five simple destinations instead of a long control wall
+ok 183 - Settings opens as five simple destinations instead of a long control wall
+  ---
+  duration_ms: 1.705853
+  type: 'test'
+  ...
+# Subtest: appearance keeps simple presets while retaining the full custom color controls
+ok 184 - appearance keeps simple presets while retaining the full custom color controls
+  ---
+  duration_ms: 0.279995
+  type: 'test'
+  ...
+# Subtest: backup and privacy remain understandable without exposing data-format internals
+ok 185 - backup and privacy remain understandable without exposing data-format internals
+  ---
+  duration_ms: 0.370931
+  type: 'test'
+  ...
+# Subtest: advanced controls are isolated from everyday Settings
+not ok 186 - advanced controls are isolated from everyday Settings
+  ---
+  duration_ms: 1.860632
+  type: 'test'
+  location: '/home/runner/work/clean30/clean30/tests/universal-phase-5.test.js:71:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Home details/. Input:
+    
+    'import { useRef, useState } from "react";\n' +
+      'import HomeRoomsDialog from "./HomeRoomsDialog.jsx";\n' +
+      'import { getHomeRoomNames } from "../utils/homeLibrary.js";\n' +
+      'import packageInfo from "../../package.json";\n' +
+      'import { formatRelativeDays } from "../utils/dates.js";\n' +
+      'import {\n' +
+      '  appearancePresets,\n' +
+      '  getAppearancePresetId\n' +
+      '} from "../utils/appearancePresets.js";\n' +
+      '\n' +
+      'const accentOptions = [\n' +
+      '  "red",\n' +
+      '  "orange",\n' +
+      '  "amber",\n' +
+      '  "green",\n' +
+      '  "teal",\n' +
+      '  "cyan",\n' +
+      '  "blue",\n' +
+      '  "navy",\n' +
+      '  "purple",\n' +
+      '  "pink",\n' +
+      '  "brown",\n' +
+      '  "charcoal"\n' +
+      '].map((id) => ({ id, label: id[0].toUpperCase() + id.slice(1) }));\n' +
+      '\n' +
+      'const backgroundOptions = [\n' +
+      '  { id: "white", label: "White" },\n' +
+      '  { id: "light-gray", label: "Light gray" },\n' +
+      '  { id: "cream", label: "Cream" },\n' +
+      '  { id: "yellow", label: "Yellow" },\n' +
+      '  { id: "peach", label: "Peach" },\n' +
+      '  { id: "pink", label: "Pink" },\n' +
+      '  { id: "lavender", label: "Lavender" },\n' +
+      '  { id: "sky-blue", label: "Sky blue" },\n' +
+      '  { id: "mint", label: "Mint" },\n' +
+      '  { id: "green", label: "Green" },\n' +
+      '  { id: "sand", label: "Sand" },\n' +
+      '  { id: "slate", label: "Slate" }\n' +
+      '];\n' +
+      '\n' +
+      'function backupStatus(lastBackup, backupDue) {\n' +
+      '  if (!lastBackup) {\n' +
+      '    return {\n' +
+      '      label: "No backup yet",\n' +
+      '      detail: "Export a backup to protect the data stored on this device.",\n' +
+      '      tone: "due"\n' +
+      '    };\n' +
+      '  }\n' +
+      '  if (backupDue) {\n' +
+      '    return {\n' +
+      '      label: "Backup recommended",\n' +
+      '      detail: `Last backup ${formatRelativeDays(lastBackup).toLowerCase()}.`,\n' +
+      '      tone: "due"\n' +
+      '    };\n' +
+      '  }\n' +
+      '  return {\n' +
+      '    label: "Backup recent",\n' +
+      '    detail: `Last backup ${formatRelativeDays(lastBackup).toLowerCase()}.`,\n' +
+      '    tone: "recent"\n' +
+      '  };\n' +
+      '}\n' +
+      '\n' +
+      'function ChoiceButtons({ label, value, options, onChange }) {\n' +
+      '  return (\n' +
+      '    <div className="appearance-setting-group">\n' +
+      '      <p className="field-label">{label}</p>\n' +
+      '      <div className="setting-segmented" role="group" aria-label={label}>\n' +
+      '        {options.map((option) => (\n' +
+      '          <button\n' +
+      '            aria-pressed={value === option.id}\n' +
+      '            className={value === option.id ? "button edit-action small" : "button ghost small"}\n' +
+      '            key={option.id}\n' +
+      '            onClick={() => onChange(option.id)}\n' +
+      '            type="button"\n' +
+      '          >\n' +
+      '            {option.label}\n' +
+      '          </button>\n' +
+      '        ))}\n' +
+      '      </div>\n' +
+      '    </div>\n' +
+      '  );\n' +
+      '}\n' +
+      '\n' +
+      'function SettingsDestination({ title, description, meta, onClick }) {\n' +
+      '  return (\n' +
+      '    <button className="settings-destination" onClick={onClick} type="button">\n' +
+      '      <span>\n' +
+      '        <strong>{title}</strong>\n' +
+      '        <small>{description}</small>\n' +
+      '      </span>\n' +
+      '      <span className="settings-destination-tail">\n' +
+      '        {meta ? <small>{meta}</small> : null}\n' +
+      '        <span aria-hidden="true">›</span>\n' +
+      '      </span>\n' +
+      '    </button>\n' +
+      '  );\n' +
+      '}\n' +
+      '\n' +
+      'function SettingsPageHeader({ title, description, onBack }) {\n' +
+      '  return (\n' +
+      '    <div className="settings-page-header">\n' +
+      '      <button className="button ghost small" onClick={onBack} type="button">\n' +
+      '        ← Settings\n' +
+      '      </button>\n' +
+      '      <div>\n' +
+      '        <h2>{title}</h2>\n' +
+      '        {description ? <p>{description}</p> : null}\n' +
+      '      </div>\n' +
+      '    </div>\n' +
+      '  );\n' +
+      '}\n' +
+      '\n' +
+      'export default function Settings({\n' +
+      '  template,\n' +
+      '  activeSession,\n' +
+      '  onSaveHomeRooms,\n' +
+      '  onExportFullBackup,\n' +
+      '  onImportFullBackup,\n' +
+      '  lastFullBackupExportedAt,\n' +
+      '  backupDue,\n' +
+      '  backupReminderIntervalDays,\n' +
+      '  appAppearance,\n' +
+      '  onUpdateBackupReminderInterval,\n' +
+      '  onUpdateAppAppearance,\n' +
+      '  onUpdateStartTodayEmpty,\n' +
+      '  onRestartOnboarding,\n' +
+      '  onOpenHelp,\n' +
+      '  onManageCustomize,\n' +
+      '  onResetTemplate,\n' +
+      '  onResetAll,\n' +
+      '  onResetHistory\n' +
+      '}) {\n' +
+      '  const fileInputRef = useRef(null);\n' +
+      '  const [message, setMessage] = useState("");\n' +
+      '  const [activePage, setActivePage] = useState(null);\n' +
+      '  const [roomsOpen, setRoomsOpen] = useState(false);\n' +
+      '  const homeRooms = getHomeRoomNames(template.zones || []);\n' +
+      '  const health = backupStatus(lastFullBackupExportedAt, backupDue);\n' +
+      '  const activePresetId = getAppearancePresetId(appAppearance);\n' +
+      '  const activePreset = appearancePresets.find((preset) => preset.id === activePresetId);\n' +
+      '  const starterRestoreLocked = Boolean(\n' +
+      '    activeSession?.templateId === template.id\n' +
+      '  );\n' +
+      '\n' +
+      '  function handleImportFile(event) {\n' +
+      '    const file = event.target.files?.[0];\n' +
+      '    if (!file) return;\n' +
+      '    const reader = new FileReader();\n' +
+      '    reader.onload = () => {\n' +
+      '      try {\n' +
+      '        const payload = JSON.parse(reader.result);\n' +
+      '        const result = onImportFullBackup(payload, { fileName: file.name });\n' +
+      '        setMessage(result.ok ? result.message || "Backup validated." : result.error);\n' +
+      '      } catch {\n' +
+      '        setMessage("Backup file is not valid JSON. Current data was not changed.");\n' +
+      '      } finally {\n' +
+      '        if (fileInputRef.current) fileInputRef.current.value = "";\n' +
+      '      }\n' +
+      '    };\n' +
+      '    reader.onerror = () => {\n' +
+      '      setMessage("Backup file could not be read. Current data was not changed.");\n' +
+      '      if (fileInputRef.current) fileInputRef.current.value = "";\n' +
+      '    };\n' +
+      '    try {\n' +
+      '      reader.readAsText(file);\n' +
+      '    } catch {\n' +
+      '      setMessage("Backup file could not be read. Current data was not changed.");\n' +
+      '      if (fileInputRef.current) fileInputRef.current.value = "";\n' +
+      '    }\n' +
+      '  }\n' +
+      '\n' +
+      '  function handleExportFullBackup() {\n' +
+      '    const result = onExportFullBackup();\n' +
+      '    setMessage(\n' +
+      '      result?.ok === false\n' +
+      '        ? result.error\n' +
+      '        : result?.message || "Full backup download started."\n' +
+      '    );\n' +
+      '  }\n' +
+      '\n' +
+      '  function applyPreset(preset) {\n' +
+      '    onUpdateAppAppearance("accentColor", preset.accentColor);\n' +
+      '    onUpdateAppAppearance("backgroundColor", preset.backgroundColor);\n' +
+      '  }\n' +
+      '\n' +
+      '  if (!activePage) {\n' +
+      '    return (\n' +
+      '      <div className="screen-stack settings-screen">\n' +
+      '        <section className="panel settings-overview-panel">\n' +
+      '          <div className="settings-overview-heading">\n' +
+      '            <div>\n' +
+      '              <p className="eyebrow">Clean30</p>\n' +
+      '              <h2>Settings</h2>\n' +
+      '              <p>Change how the app looks, protect your data, or open advanced controls.</p>\n' +
+      '            </div>\n' +
+      '          </div>\n' +
+      '\n' +
+      '          <div className="settings-destination-list">\n' +
+      '            <SettingsDestination\n' +
+      '              title="Appearance"\n' +
+      '              description="Theme, text size, and layout spacing."\n' +
+      '              meta={activePreset?.label || "Custom"}\n' +
+      '              onClick={() => setActivePage("appearance")}\n' +
+      '            />\n' +
+      '            <SettingsDestination\n' +
+      '              title="Rooms"\n' +
+      '              description="Choose the rooms Clean30 uses for room-based suggestions."\n' +
+      '              meta={`${homeRooms.length} ${homeRooms.length === 1 ? "room" : "rooms"}`}\n' +
+      '              onClick={() => setActivePage("rooms")}\n' +
+      '            />\n' +
+      '            <SettingsDestination\n' +
+      '              title="Data and backup"\n' +
+      '              description="Export, restore, and protect local Clean30 data."\n' +
+      '              meta={health.label}\n' +
+      '              onClick={() => setActivePage("backup")}\n' +
+      '            />\n' +
+      '            <SettingsDestination\n' +
+      '              title="Help"\n' +
+      '              description="Quick guide, introduction, and installation help."\n' +
+      '              onClick={() => setActivePage("help")}\n' +
+      '            />\n' +
+      '            <SettingsDestination\n' +
+      '              title="About"\n' +
+      '              description="Privacy, app version, and update controls."\n' +
+      '              meta={`v${packageInfo.version}`}\n' +
+      '              onClick={() => setActivePage("about")}\n' +
+      '            />\n' +
+      '            <SettingsDestination\n' +
+      '              title="Advanced"\n' +
+      '              description="Regular tasks, cleaning-plan settings, and reset tools."\n' +
+      '              onClick={() => setActivePage("advanced")}\n' +
+      '            />\n' +
+      '          </div>\n' +
+      '        </section>\n' +
+      '      </div>\n' +
+      '    );\n' +
+      '  }\n' +
+      '\n' +
+      '  if (activePage === "appearance") {\n' +
+      '    return (\n' +
+      '      <div className="screen-stack settings-screen">\n' +
+      '        <section className="panel settings-focus-panel">\n' +
+      '          <SettingsPageHeader\n' +
+      '            title="Appearance"\n' +
+      '            description="Choose a calm preset or customize the interface yourself."\n' +
+      '            onBack={() => setActivePage(null)}\n' +
+      '          />\n' +
+      '\n' +
+      '          <div className="appearance-preset-grid" role="group" aria-label="Theme preset">\n' +
+      '            {appearancePresets.map((preset) => (\n' +
+      '              <button\n' +
+      '                aria-pressed={activePresetId === preset.id}\n' +
+      '                className={\n' +
+      '                  activePresetId === preset.id\n' +
+      '                    ? "appearance-preset active"\n' +
+      '                    : "appearance-preset"\n' +
+      '                }\n' +
+      '                key={preset.id}\n' +
+      '                onClick={() => applyPreset(preset)}\n' +
+      '                type="button"\n' +
+      '              >\n' +
+      '                <span\n' +
+      '                  aria-hidden="true"\n' +
+      '                  className="appearance-preset-preview"\n' +
+      '                  data-preset={preset.id}\n' +
+      '                />\n' +
+      '                <strong>{preset.label}</strong>\n' +
+      '                <small>{preset.description}</small>\n' +
+      '              </button>\n' +
+      '            ))}\n' +
+      '          </div>\n' +
+      '\n' +
+      '          <div className="settings-focus-section">\n' +
+      '            <ChoiceButtons\n' +
+      '              label="Text size"\n' +
+      '              value={appAppearance?.fontSize || "normal"}\n' +
+      '              options={[\n' +
+      '                { id: "small", label: "Small" },\n' +
+      '                { id: "normal", label: "Normal" },\n' +
+      '                { id: "large", label: "Large" }\n' +
+      '              ]}\n' +
+      '              onChange={(value) => onUpdateAppAppearance("fontSize", value)}\n' +
+      '            />\n' +
+      '            <ChoiceButtons\n' +
+      '              label="Layout"\n' +
+      '              value={appAppearance?.density || "comfortable"}\n' +
+      '              options={[\n' +
+      '                { id: "compact", label: "Compact" },\n' +
+      '                { id: "comfortable", label: "Comfortable" }\n' +
+      '              ]}\n' +
+      '              onChange={(value) => onUpdateAppAppearance("density", value)}\n' +
+      '            />\n' +
+      '          </div>\n' +
+      '\n' +
+      '          <details className="settings-subdetail">\n' +
+      '            <summary>\n' +
+      '              <span>\n' +
+      '                <strong>Custom colors</strong>\n' +
+      '                <small>Choose any available accent and background.</small>\n' +
+      '              </span>\n' +
+      '              <span aria-hidden="true">›</span>\n' +
+      '            </summary>\n' +
+      '            <div className="settings-detail-content">\n' +
+      '              <div className="appearance-setting-group">\n' +
+      '                <p className="field-label">Accent color</p>\n' +
+      '                <div className="appearance-choice-grid">\n' +
+      '                  {ac'... 12904 more characters
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    import { useRef, useState } from "react";
+    import HomeRoomsDialog from "./HomeRoomsDialog.jsx";
+    import { getHomeRoomNames } from "../utils/homeLibrary.js";
+    import packageInfo from "../../package.json";
+    import { formatRelativeDays } from "../utils/dates.js";
+    import {
+      appearancePresets,
+      getAppearancePresetId
+    } from "../utils/appearancePresets.js";
+    
+    const accentOptions = [
+      "red",
+      "orange",
+      "amber",
+      "green",
+      "teal",
+      "cyan",
+      "blue",
+      "navy",
+      "purple",
+      "pink",
+      "brown",
+      "charcoal"
+    ].map((id) => ({ id, label: id[0].toUpperCase() + id.slice(1) }));
+    
+    const backgroundOptions = [
+      { id: "white", label: "White" },
+      { id: "light-gray", label: "Light gray" },
+      { id: "cream", label: "Cream" },
+      { id: "yellow", label: "Yellow" },
+      { id: "peach", label: "Peach" },
+      { id: "pink", label: "Pink" },
+      { id: "lavender", label: "Lavender" },
+      { id: "sky-blue", label: "Sky blue" },
+      { id: "mint", label: "Mint" },
+      { id: "green", label: "Green" },
+      { id: "sand", label: "Sand" },
+      { id: "slate", label: "Slate" }
+    ];
+    
+    function backupStatus(lastBackup, backupDue) {
+      if (!lastBackup) {
+        return {
+          label: "No backup yet",
+          detail: "Export a backup to protect the data stored on this device.",
+          tone: "due"
+        };
+      }
+      if (backupDue) {
+        return {
+          label: "Backup recommended",
+          detail: `Last backup ${formatRelativeDays(lastBackup).toLowerCase()}.`,
+          tone: "due"
+        };
+      }
+      return {
+        label: "Backup recent",
+        detail: `Last backup ${formatRelativeDays(lastBackup).toLowerCase()}.`,
+        tone: "recent"
+      };
+    }
+    
+    function ChoiceButtons({ label, value, options, onChange }) {
+      return (
+        <div className="appearance-setting-group">
+          <p className="field-label">{label}</p>
+          <div className="setting-segmented" role="group" aria-label={label}>
+            {options.map((option) => (
+              <button
+                aria-pressed={value === option.id}
+                className={value === option.id ? "button edit-action small" : "button ghost small"}
+                key={option.id}
+                onClick={() => onChange(option.id)}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    function SettingsDestination({ title, description, meta, onClick }) {
+      return (
+        <button className="settings-destination" onClick={onClick} type="button">
+          <span>
+            <strong>{title}</strong>
+            <small>{description}</small>
+          </span>
+          <span className="settings-destination-tail">
+            {meta ? <small>{meta}</small> : null}
+            <span aria-hidden="true">›</span>
+          </span>
+        </button>
+      );
+    }
+    
+    function SettingsPageHeader({ title, description, onBack }) {
+      return (
+        <div className="settings-page-header">
+          <button className="button ghost small" onClick={onBack} type="button">
+            ← Settings
+          </button>
+          <div>
+            <h2>{title}</h2>
+            {description ? <p>{description}</p> : null}
+          </div>
+        </div>
+      );
+    }
+    
+    export default function Settings({
+      template,
+      activeSession,
+      onSaveHomeRooms,
+      onExportFullBackup,
+      onImportFullBackup,
+      lastFullBackupExportedAt,
+      backupDue,
+      backupReminderIntervalDays,
+      appAppearance,
+      onUpdateBackupReminderInterval,
+      onUpdateAppAppearance,
+      onUpdateStartTodayEmpty,
+      onRestartOnboarding,
+      onOpenHelp,
+      onManageCustomize,
+      onResetTemplate,
+      onResetAll,
+      onResetHistory
+    }) {
+      const fileInputRef = useRef(null);
+      const [message, setMessage] = useState("");
+      const [activePage, setActivePage] = useState(null);
+      const [roomsOpen, setRoomsOpen] = useState(false);
+      const homeRooms = getHomeRoomNames(template.zones || []);
+      const health = backupStatus(lastFullBackupExportedAt, backupDue);
+      const activePresetId = getAppearancePresetId(appAppearance);
+      const activePreset = appearancePresets.find((preset) => preset.id === activePresetId);
+      const starterRestoreLocked = Boolean(
+        activeSession?.templateId === template.id
+      );
+    
+      function handleImportFile(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const payload = JSON.parse(reader.result);
+            const result = onImportFullBackup(payload, { fileName: file.name });
+            setMessage(result.ok ? result.message || "Backup validated." : result.error);
+          } catch {
+            setMessage("Backup file is not valid JSON. Current data was not changed.");
+          } finally {
+            if (fileInputRef.current) fileInputRef.current.value = "";
+          }
+        };
+        reader.onerror = () => {
+          setMessage("Backup file could not be read. Current data was not changed.");
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        };
+        try {
+          reader.readAsText(file);
+        } catch {
+          setMessage("Backup file could not be read. Current data was not changed.");
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      }
+    
+      function handleExportFullBackup() {
+        const result = onExportFullBackup();
+        setMessage(
+          result?.ok === false
+            ? result.error
+            : result?.message || "Full backup download started."
+        );
+      }
+    
+      function applyPreset(preset) {
+        onUpdateAppAppearance("accentColor", preset.accentColor);
+        onUpdateAppAppearance("backgroundColor", preset.backgroundColor);
+      }
+    
+      if (!activePage) {
+        return (
+          <div className="screen-stack settings-screen">
+            <section className="panel settings-overview-panel">
+              <div className="settings-overview-heading">
+                <div>
+                  <p className="eyebrow">Clean30</p>
+                  <h2>Settings</h2>
+                  <p>Change how the app looks, protect your data, or open advanced controls.</p>
+                </div>
+              </div>
+    
+              <div className="settings-destination-list">
+                <SettingsDestination
+                  title="Appearance"
+                  description="Theme, text size, and layout spacing."
+                  meta={activePreset?.label || "Custom"}
+                  onClick={() => setActivePage("appearance")}
+                />
+                <SettingsDestination
+                  title="Rooms"
+                  description="Choose the rooms Clean30 uses for room-based suggestions."
+                  meta={`${homeRooms.length} ${homeRooms.length === 1 ? "room" : "rooms"}`}
+                  onClick={() => setActivePage("rooms")}
+                />
+                <SettingsDestination
+                  title="Data and backup"
+                  description="Export, restore, and protect local Clean30 data."
+                  meta={health.label}
+                  onClick={() => setActivePage("backup")}
+                />
+                <SettingsDestination
+                  title="Help"
+                  description="Quick guide, introduction, and installation help."
+                  onClick={() => setActivePage("help")}
+                />
+                <SettingsDestination
+                  title="About"
+                  description="Privacy, app version, and update controls."
+                  meta={`v${packageInfo.version}`}
+                  onClick={() => setActivePage("about")}
+                />
+                <SettingsDestination
+                  title="Advanced"
+                  description="Regular tasks, cleaning-plan settings, and reset tools."
+                  onClick={() => setActivePage("advanced")}
+                />
+              </div>
+            </section>
+          </div>
+        );
+      }
+    
+      if (activePage === "appearance") {
+        return (
+          <div className="screen-stack settings-screen">
+            <section className="panel settings-focus-panel">
+              <SettingsPageHeader
+                title="Appearance"
+                description="Choose a calm preset or customize the interface yourself."
+                onBack={() => setActivePage(null)}
+              />
+    
+              <div className="appearance-preset-grid" role="group" aria-label="Theme preset">
+                {appearancePresets.map((preset) => (
+                  <button
+                    aria-pressed={activePresetId === preset.id}
+                    className={
+                      activePresetId === preset.id
+                        ? "appearance-preset active"
+                        : "appearance-preset"
+                    }
+                    key={preset.id}
+                    onClick={() => applyPreset(preset)}
+                    type="button"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="appearance-preset-preview"
+                      data-preset={preset.id}
+                    />
+                    <strong>{preset.label}</strong>
+                    <small>{preset.description}</small>
+                  </button>
+                ))}
+              </div>
+    
+              <div className="settings-focus-section">
+                <ChoiceButtons
+                  label="Text size"
+                  value={appAppearance?.fontSize || "normal"}
+                  options={[
+                    { id: "small", label: "Small" },
+                    { id: "normal", label: "Normal" },
+                    { id: "large", label: "Large" }
+                  ]}
+                  onChange={(value) => onUpdateAppAppearance("fontSize", value)}
+                />
+                <ChoiceButtons
+                  label="Layout"
+                  value={appAppearance?.density || "comfortable"}
+                  options={[
+                    { id: "compact", label: "Compact" },
+                    { id: "comfortable", label: "Comfortable" }
+                  ]}
+                  onChange={(value) => onUpdateAppAppearance("density", value)}
+                />
+              </div>
+    
+              <details className="settings-subdetail">
+                <summary>
+                  <span>
+                    <strong>Custom colors</strong>
+                    <small>Choose any available accent and background.</small>
+                  </span>
+                  <span aria-hidden="true">›</span>
+                </summary>
+                <div className="settings-detail-content">
+                  <div className="appearance-setting-group">
+                    <p className="field-label">Accent color</p>
+                    <div className="appearance-choice-grid">
+                      {accentOptions.map((option) => (
+                        <button
+                          aria-pressed={appAppearance?.accentColor === option.id}
+                          className={
+                            appAppearance?.accentColor === option.id
+                              ? "appearance-choice active"
+                              : "appearance-choice"
+                          }
+                          data-accent-choice={option.id}
+                          key={option.id}
+                          onClick={() => onUpdateAppAppearance("accentColor", option.id)}
+                          type="button"
+                        >
+                          <span className="appearance-swatch" />
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="appearance-setting-group">
+                    <p className="field-label">Background color</p>
+                    <div className="appearance-choice-grid">
+                      {backgroundOptions.map((option) => (
+                        <button
+                          aria-pressed={appAppearance?.backgroundColor === option.id}
+                          className={
+                            appAppearance?.backgroundColor === option.id
+                              ? "appearance-choice active"
+                              : "appearance-choice"
+                          }
+                          data-background-choice={option.id}
+                          key={option.id}
+                          onClick={() => onUpdateAppAppearance("backgroundColor", option.id)}
+                          type="button"
+                        >
+                          <span className="appearance-swatch" />
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </section>
+          </div>
+        );
+      }
+    
+      if (activePage === "rooms") {
+        return (
+          <div className="screen-stack settings-screen">
+            <section className="panel settings-focus-panel">
+              <SettingsPageHeader
+                title="Rooms"
+                description="Rooms help Clean30 suggest relevant work. They are not another cleaning mode or schedule."
+                onBack={() => setActivePage(null)}
+              />
+    
+              {homeRooms.length ? (
+                <div className="settings-room-summary" aria-label="Rooms in Clean30">
+                  {homeRooms.map((room) => (
+                    <span className="settings-room-chip" key={room}>{room}</span>
+                  ))}
+                </div>
+              ) : (
+                <div className="settings-info-box">
+                  <strong>No rooms set up yet</strong>
+                  <p>Add only the rooms that exist in your home.</p>
+                </div>
+              )}
+    
+              <div className="settings-primary-actions">
+                <button className="button primary" onClick={() => setRoomsOpen(true)} type="button">
+                  Edit rooms
+                </button>
+              </div>
+            </section>
+            <HomeRoomsDialog
+              onClose={() => setRoomsOpen(false)}
+              onSave={(roomNames) => onSaveHomeRooms?.(roomNames)}
+              open={roomsOpen}
+              rooms={homeRooms}
+            />
+          </div>
+        );
+      }
+    
+      if (activePage === "backup") {
+        return (
+          <div className="screen-stack settings-screen">
+            <section className="panel settings-focus-panel">
+              <SettingsPageHeader
+                title="Data and backup"
+                description="Clean30 stores your data only in this browser or installed app."
+                onBack={() => setActivePage(null)}
+              />
+    
+              <div className={health.tone === "due" ? "backup-summary due" : "backup-summary"}>
+                <span className={health.tone === "due" ? "status-pill warning" : "status-pill"}>
+                  {health.label}
+                </span>
+                <p>{health.detail}</p>
+              </div>
+    
+              <div className="settings-primary-actions">
+                <button className="button primary" onClick={handleExportFullBackup} type="button">
+                  Export backup
+                </button>
+                <button
+                  className="button ghost"
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                >
+                  Import backup
+                </button>
+                <input
+                  accept="application/json,.json"
+                  className="hidden-input"
+                  onChange={handleImportFile}
+                  ref={fileInputRef}
+                  type="file"
+                />
+              </div>
+    
+              <label className="field-label settings-inline-field" htmlFor="backup-reminder-interval">
+                Backup reminder
+                <select
+                  id="backup-reminder-interval"
+                  onChange={(event) => onUpdateBackupReminderInterval(event.target.value)}
+                  value={backupReminderIntervalDays}
+                >
+                  <option value={0}>Off</option>
+                  <option value={14}>Every 14 days</option>
+                  <option value={30}>Every 30 days</option>
+                  <option value={60}>Every 60 days</option>
+                </select>
+              </label>
+    
+              <div className="settings-info-box">
+                <strong>Before importing</strong>
+                <p>
+                  Clean30 validates the file and shows a preview before your current local data is
+                  replaced.
+                </p>
+              </div>
+    
+              {message ? <p className="form-message" role="status">{message}</p> : null}
+            </section>
+          </div>
+        );
+      }
+    
+      if (activePage === "help") {
+        return (
+          <div className="screen-stack settings-screen">
+            <section className="panel settings-focus-panel">
+              <SettingsPageHeader
+                title="Help"
+                description="Clean30 is designed to work without a guide. These options are here when you need them."
+                onBack={() => setActivePage(null)}
+              />
+    
+              <div className="settings-action-list">
+                <button className="settings-action-row" onClick={onOpenHelp} type="button">
+                  <span>
+                    <strong>Quick guide</strong>
+                    <small>Clean, Routines, Progress, and local data in a few short notes.</small>
+                  </span>
+                  <span aria-hidden="true">›</span>
+                </button>
+                <button className="settings-action-row" onClick={onRestartOnboarding} type="button">
+                  <span>
+                    <strong>Restart introduction</strong>
+                    <small>See the three-step introduction again without deleting your data.</small>
+                  </span>
+                  <span aria-hidden="true">›</span>
+                </button>
+              </div>
+    
+              <div className="settings-info-box">
+                <strong>Install Clean30</strong>
+                <p>
+                  Open your browser menu and choose Install app or Add to Home Screen. Your data stays
+                  on this device.
+                </p>
+              </div>
+            </section>
+          </div>
+        );
+      }
+    
+      if (activePage === "about") {
+        return (
+          <div className="screen-stack settings-screen">
+            <section className="panel settings-focus-panel">
+              <SettingsPageHeader
+                title="About"
+                description="Clean30 is a local-first cleaning app designed to stay simple."
+                onBack={() => setActivePage(null)}
+              />
+    
+              <div className="about-app-block">
+                <strong>Clean30</strong>
+                <span>Version {packageInfo.version}</span>
+                {template.profile?.homeName ? <small>{template.profile.homeName}</small> : null}
+              </div>
+    
+              <div className="privacy-fact-grid">
+                <span>No account</span>
+                <span>No cloud sync</span>
+                <span>No analytics</span>
+                <span>No ads</span>
+              </div>
+    
+              <div className="settings-info-box">
+                <strong>Your data stays local</strong>
+                <p>
+                  Clearing browser or app storage can remove Clean30 data. Use Data and backup to keep
+                  a portable copy.
+                </p>
+              </div>
+    
+              <button className="button ghost" onClick={() => window.location.reload()} type="button">
+                Reload app
+              </button>
+            </section>
+          </div>
+        );
+      }
+    
+      return (
+        <div className="screen-stack settings-screen">
+          <section className="panel settings-focus-panel settings-advanced-panel">
+            <SettingsPageHeader
+              title="Advanced"
+              description="Detailed cleaning-plan controls that are not required for everyday use."
+              onBack={() => setActivePage(null)}
+            />
+    
+            <div className="settings-action-list">
+              <button
+                className="settings-action-row"
+                onClick={() => onManageCustomize("routines", "today")}
+                type="button"
+              >
+                <span>
+                  <strong>Manage regular tasks</strong>
+                  <small>Change the tasks used when Clean30 creates a new Today list.</small>
+                </span>
+                <span aria-hidden="true">›</span>
+              </button>
+              <button
+                className="settings-action-row"
+                onClick={() => onManageCustomize("routines")}
+                type="button"
+              >
+                <span>
+                  <strong>Manage routines</strong>
+                  <small>Edit reusable routines and their detailed structure.</small>
+                </span>
+                <span aria-hidden="true">›</span>
+              </button>
+              <button
+                className="settings-action-row"
+                onClick={() => onManageCustomize("profile")}
+                type="button"
+              >
+                <span>
+                  <strong>Cleaning plan details</strong>
+                  <small>Edit optional labels and advanced cleaning-plan details.</small>
+                </span>
+                <span aria-hidden="true">›</span>
+              </button>
+              <button
+                className="settings-action-row"
+                onClick={() => onManageCustomize("schedule")}
+                type="button"
+              >
+                <span>
+                  <strong>Schedule</strong>
+                  <small>Adjust reset timing and existing schedule thresholds.</small>
+                </span>
+                <span aria-hidden="true">›</span>
+              </button>
+              <button
+                className="settings-action-row"
+                onClick={() => onManageCustomize("import-export")}
+                type="button"
+              >
+                <span>
+                  <strong>Import and export</strong>
+                  <small>Share a cleaning plan or open the detailed backup tools.</small>
+                </span>
+                <span aria-hidden="true">›</span>
+              </button>
+            </div>
+    
+            <div className="settings-focus-section">
+              <label className="toggle-row">
+                <input
+                  checked={Boolean(appAppearance?.startTodayEmpty)}
+                  onChange={(event) => onUpdateStartTodayEmpty(event.target.checked)}
+                  type="checkbox"
+                />
+                <span>
+                  <strong>Start each day empty</strong>
+                  <small>New days begin without regular Today tasks.</small>
+                </span>
+              </label>
+            </div>
+    
+            <div className="settings-action-list">
+              <button
+                className="settings-action-row"
+                disabled={starterRestoreLocked}
+                onClick={onResetTemplate}
+                title={
+                  starterRestoreLocked
+                    ? "Finish or discard the current clean before restoring the starter plan."
+                    : undefined
+                }
+                type="button"
+              >
+                <span>
+                  <strong>Restore starter</strong>
+                  <small>
+                    {starterRestoreLocked
+                      ? "Unavailable while a clean from this plan is active."
+                      : "Replace the current cleaning plan with the Clean30 starter. Progress is kept."}
+                  </small>
+                </span>
+                <span aria-hidden="true">›</span>
+              </button>
+            </div>
+    
+            <details className="settings-subdetail danger-subdetail">
+              <summary>
+                <span>
+                  <strong>Reset data</strong>
+                  <small>Destructive actions stay out of the normal Settings flow.</small>
+                </span>
+                <span aria-hidden="true">›</span>
+              </summary>
+              <div className="settings-detail-content">
+                <p className="muted">These actions affect data stored on this device.</p>
+                <div className="settings-primary-actions">
+                  <button className="button danger-ghost" onClick={onResetHistory} type="button">
+                    Reset Progress
+                  </button>
+                  <button className="button danger" onClick={onResetAll} type="button">
+                    Reset all local data
+                  </button>
+                </div>
+              </div>
+            </details>
+          </section>
+        </div>
+      );
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/clean30/clean30/tests/universal-phase-5.test.js:75:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Phase 5 styles load after Phase 4 styles
+ok 187 - Phase 5 styles load after Phase 4 styles
+  ---
+  duration_ms: 0.202253
+  type: 'test'
+  ...
+# Subtest: Help remains intentionally short and action-oriented
+not ok 188 - Help remains intentionally short and action-oriented
+  ---
+  duration_ms: 0.500641
+  type: 'test'
+  location: '/home/runner/work/clean30/clean30/tests/universal-phase-5.test.js:93:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /title: "Today"/. Input:
+    
+    'import { useRef } from "react";\n' +
+      'import useDialogFocus from "../hooks/useDialogFocus.js";\n' +
+      '\n' +
+      'const guideSections = [\n' +
+      '  {\n' +
+      '    title: "Clean",\n' +
+      '    body: "This is where cleaning starts. Use Just start when you do not want to decide, choose how much time you have, pick a room, or work through today’s list. Every path leads into the same focused cleaning view."\n' +
+      '  },\n' +
+      '  {\n' +
+      '    title: "Routines",\n' +
+      '    body: "Routines are saved reusable cleans. Start one directly, or create a new routine from common cleaning tasks, a pasted checklist, a starter, or a blank list."\n' +
+      '  },\n' +
+      '  {\n' +
+      '    title: "Progress",\n' +
+      '    body: "Progress shows what you completed and a lightweight room snapshot. Room status is guidance from completed cleans, not a score, deadline, or requirement."\n' +
+      '  },\n' +
+      '  {\n' +
+      '    title: "Settings",\n' +
+      '    body: "Manage rooms, appearance, backups, and advanced cleaning-plan options. Clean30 stores data on this device."\n' +
+      '  }\n' +
+      '];\n' +
+      '\n' +
+      'export default function HelpGuide({ open, onClose }) {\n' +
+      '  const closeButtonRef = useRef(null);\n' +
+      '  const dialogRef = useDialogFocus({\n' +
+      '    open,\n' +
+      '    onClose,\n' +
+      '    initialFocusRef: closeButtonRef\n' +
+      '  });\n' +
+      '\n' +
+      '  if (!open) return null;\n' +
+      '\n' +
+      '  return (\n' +
+      '    <div className="dialog-backdrop" role="presentation">\n' +
+      '      <section\n' +
+      '        aria-labelledby="help-guide-title"\n' +
+      '        aria-modal="true"\n' +
+      '        className="dialog guide-dialog"\n' +
+      '        role="dialog"\n' +
+      '        ref={dialogRef}\n' +
+      '        tabIndex={-1}\n' +
+      '      >\n' +
+      '        <div className="dialog-header">\n' +
+      '          <div>\n' +
+      '            <p className="eyebrow">Quick guide</p>\n' +
+      '            <h2 id="help-guide-title">Using Clean30</h2>\n' +
+      '          </div>\n' +
+      '          <button\n' +
+      '            className="icon-button"\n' +
+      '            type="button"\n' +
+      '            onClick={onClose}\n' +
+      '            aria-label="Close guide"\n' +
+      '            ref={closeButtonRef}\n' +
+      '          >\n' +
+      '            X\n' +
+      '          </button>\n' +
+      '        </div>\n' +
+      '\n' +
+      '        <div className="guide-list compact">\n' +
+      '          {guideSections.map((section) => (\n' +
+      '            <article className="guide-item" key={section.title}>\n' +
+      '              <h3>{section.title}</h3>\n' +
+      '              <p>{section.body}</p>\n' +
+      '            </article>\n' +
+      '          ))}\n' +
+      '        </div>\n' +
+      '\n' +
+      '        <div className="dialog-actions">\n' +
+      '          <button className="button primary" type="button" onClick={onClose}>\n' +
+      '            Got it\n' +
+      '          </button>\n' +
+      '        </div>\n' +
+      '      </section>\n' +
+      '    </div>\n' +
+      '  );\n' +
+      '}\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    import { useRef } from "react";
+    import useDialogFocus from "../hooks/useDialogFocus.js";
+    
+    const guideSections = [
+      {
+        title: "Clean",
+        body: "This is where cleaning starts. Use Just start when you do not want to decide, choose how much time you have, pick a room, or work through today’s list. Every path leads into the same focused cleaning view."
+      },
+      {
+        title: "Routines",
+        body: "Routines are saved reusable cleans. Start one directly, or create a new routine from common cleaning tasks, a pasted checklist, a starter, or a blank list."
+      },
+      {
+        title: "Progress",
+        body: "Progress shows what you completed and a lightweight room snapshot. Room status is guidance from completed cleans, not a score, deadline, or requirement."
+      },
+      {
+        title: "Settings",
+        body: "Manage rooms, appearance, backups, and advanced cleaning-plan options. Clean30 stores data on this device."
+      }
+    ];
+    
+    export default function HelpGuide({ open, onClose }) {
+      const closeButtonRef = useRef(null);
+      const dialogRef = useDialogFocus({
+        open,
+        onClose,
+        initialFocusRef: closeButtonRef
+      });
+    
+      if (!open) return null;
+    
+      return (
+        <div className="dialog-backdrop" role="presentation">
+          <section
+            aria-labelledby="help-guide-title"
+            aria-modal="true"
+            className="dialog guide-dialog"
+            role="dialog"
+            ref={dialogRef}
+            tabIndex={-1}
+          >
+            <div className="dialog-header">
+              <div>
+                <p className="eyebrow">Quick guide</p>
+                <h2 id="help-guide-title">Using Clean30</h2>
+              </div>
+              <button
+                className="icon-button"
+                type="button"
+                onClick={onClose}
+                aria-label="Close guide"
+                ref={closeButtonRef}
+              >
+                X
+              </button>
+            </div>
+    
+            <div className="guide-list compact">
+              {guideSections.map((section) => (
+                <article className="guide-item" key={section.title}>
+                  <h3>{section.title}</h3>
+                  <p>{section.body}</p>
+                </article>
+              ))}
+            </div>
+    
+            <div className="dialog-actions">
+              <button className="button primary" type="button" onClick={onClose}>
+                Got it
+              </button>
+            </div>
+          </section>
+        </div>
+      );
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/clean30/clean30/tests/universal-phase-5.test.js:95:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Phase 6 styles load after Phase 5 styles
+ok 189 - Phase 6 styles load after Phase 5 styles
+  ---
+  duration_ms: 1.449071
+  type: 'test'
+  ...
+# Subtest: Advanced Settings calls the routed editor callback App actually provides
+ok 190 - Advanced Settings calls the routed editor callback App actually provides
+  ---
+  duration_ms: 2.103074
+  type: 'test'
+  ...
+# Subtest: Today keeps destructive task removal inside task details
+ok 191 - Today keeps destructive task removal inside task details
+  ---
+  duration_ms: 0.442258
+  type: 'test'
+  ...
+# Subtest: Clean exposes accessible progress for both the Today list and current routine clean
+ok 192 - Clean exposes accessible progress for both the Today list and current routine clean
+  ---
+  duration_ms: 0.427332
+  type: 'test'
+  ...
+# Subtest: full routine checklist stays hidden until the user requests details
+ok 193 - full routine checklist stays hidden until the user requests details
+  ---
+  duration_ms: 0.56899
+  type: 'test'
+  ...
+# Subtest: routine Cleaning mode uses clear stop-save terminology and accessible progress
+ok 194 - routine Cleaning mode uses clear stop-save terminology and accessible progress
+  ---
+  duration_ms: 0.26436
+  type: 'test'
+  ...
+# Subtest: focused task cleaning announces changes and focuses the primary action
+ok 195 - focused task cleaning announces changes and focuses the primary action
+  ---
+  duration_ms: 0.409789
+  type: 'test'
+  ...
+# Subtest: simple routine editor reports and focuses validation errors accessibly
+ok 196 - simple routine editor reports and focuses validation errors accessibly
+  ---
+  duration_ms: 0.369541
+  type: 'test'
+  ...
+# Subtest: Phase 6 CSS covers narrow phones, large text, touch targets, safe areas, and reduced motion
+ok 197 - Phase 6 CSS covers narrow phones, large text, touch targets, safe areas, and reduced motion
+  ---
+  duration_ms: 1.842815
+  type: 'test'
+  ...
+# Subtest: current-clean detail terminology no longer exposes partial-finish wording
+ok 198 - current-clean detail terminology no longer exposes partial-finish wording
+  ---
+  duration_ms: 0.658072
+  type: 'test'
+  ...
+# Subtest: Phase 7 preserves deployment and data-schema invariants
+ok 199 - Phase 7 preserves deployment and data-schema invariants
+  ---
+  duration_ms: 4.737528
+  type: 'test'
+  ...
+# Subtest: PWA manifest has stable Clean30 identity and universal copy
+ok 200 - PWA manifest has stable Clean30 identity and universal copy
+  ---
+  duration_ms: 0.469573
+  type: 'test'
+  ...
+# Subtest: service worker uses a versioned current release cache and always returns an offline navigation response
+ok 201 - service worker uses a versioned current release cache and always returns an offline navigation response
+  ---
+  duration_ms: 0.257612
+  type: 'test'
+  ...
+# Subtest: restarted onboarding detects existing users broadly and cannot import over their setup
+ok 202 - restarted onboarding detects existing users broadly and cannot import over their setup
+  ---
+  duration_ms: 0.164128
+  type: 'test'
+  ...
+# Subtest: routine action disclosure uses ordinary buttons instead of incomplete ARIA menu behavior
+ok 203 - routine action disclosure uses ordinary buttons instead of incomplete ARIA menu behavior
+  ---
+  duration_ms: 0.190049
+  type: 'test'
+  ...
+# Subtest: routine editor can recover focus even after every task row is removed
+ok 204 - routine editor can recover focus even after every task row is removed
+  ---
+  duration_ms: 0.228453
+  type: 'test'
+  ...
+# Subtest: release verification is wired into the package and CI after the production build
+ok 205 - release verification is wired into the package and CI after the production build
+  ---
+  duration_ms: 0.535864
+  type: 'test'
+  ...
+# Subtest: Phase 8 visual layer loads after the accessibility polish layer
+ok 206 - Phase 8 visual layer loads after the accessibility polish layer
+  ---
+  duration_ms: 1.281565
+  type: 'test'
+  ...
+# Subtest: primary navigation keeps visible labels and decorative icons
+ok 207 - primary navigation keeps visible labels and decorative icons
+  ---
+  duration_ms: 0.412266
+  type: 'test'
+  ...
+# Subtest: header has a branded mark without replacing the accessible app heading
+ok 208 - header has a branded mark without replacing the accessible app heading
+  ---
+  duration_ms: 0.21918
+  type: 'test'
+  ...
+# Subtest: visual polish keeps mobile navigation stable and safe-area aware
+ok 209 - visual polish keeps mobile navigation stable and safe-area aware
+  ---
+  duration_ms: 1.427388
+  type: 'test'
+  ...
+# Subtest: visual polish preserves reduced-motion support and large touch controls
+ok 210 - visual polish preserves reduced-motion support and large touch controls
+  ---
+  duration_ms: 0.224957
+  type: 'test'
+  ...
+# Subtest: continued visual polish layer loads after the first Phase 8 layer
+ok 211 - continued visual polish layer loads after the first Phase 8 layer
+  ---
+  duration_ms: 1.315486
+  type: 'test'
+  ...
+# Subtest: Today uses a semantic custom checkbox instead of replacing the input
+ok 212 - Today uses a semantic custom checkbox instead of replacing the input
+  ---
+  duration_ms: 0.393546
+  type: 'test'
+  ...
+# Subtest: continued polish strengthens Current clean and routine states
+ok 213 - continued polish strengthens Current clean and routine states
+  ---
+  duration_ms: 1.219839
+  type: 'test'
+  ...
+# Subtest: Settings destinations become card-like without changing Settings structure
+ok 214 - Settings destinations become card-like without changing Settings structure
+  ---
+  duration_ms: 0.292163
+  type: 'test'
+  ...
+# Subtest: continued polish refines Progress and focused cleaning
+ok 215 - continued polish refines Progress and focused cleaning
+  ---
+  duration_ms: 0.36168
+  type: 'test'
+  ...
+# Subtest: continued visual polish retains narrow-phone and reduced-motion safeguards
+ok 216 - continued visual polish retains narrow-phone and reduced-motion safeguards
+  ---
+  duration_ms: 0.254829
+  type: 'test'
+  ...
+# Subtest: bulk parser accepts headings, bullets, numbered lines, and Markdown checkboxes
+ok 217 - bulk parser accepts headings, bullets, numbered lines, and Markdown checkboxes
+  ---
+  duration_ms: 1.832988
+  type: 'test'
+  ...
+# Subtest: bulk append builds sections and skips duplicate task names
+ok 218 - bulk append builds sections and skips duplicate task names
+  ---
+  duration_ms: 0.684913
+  type: 'test'
+  ...
+# Subtest: task catalog is substantial and searchable by room or keyword
+ok 219 - task catalog is substantial and searchable by room or keyword
+  ---
+  duration_ms: 0.377571
+  type: 'test'
+  ...
+# Subtest: starter routine templates create independent editable drafts with automatic estimates
+ok 220 - starter routine templates create independent editable drafts with automatic estimates
+  ---
+  duration_ms: 1.030028
+  type: 'test'
+  ...
+# Subtest: routine duration can be derived from tasks instead of requiring manual entry
+ok 221 - routine duration can be derived from tasks instead of requiring manual entry
+  ---
+  duration_ms: 0.221257
+  type: 'test'
+  ...
+# Subtest: optimizer moves collection and decluttering before floors
+ok 222 - optimizer moves collection and decluttering before floors
+  ---
+  duration_ms: 0.351477
+  type: 'test'
+  ...
+# Subtest: routine editor exposes bulk paste, rapid Enter entry, suggestions, auto time, and drag reorder
+ok 223 - routine editor exposes bulk paste, rapid Enter entry, suggestions, auto time, and drag reorder
+  ---
+  duration_ms: 0.547503
+  type: 'test'
+  ...
+# Subtest: Routines identifies the original starter set and offers reversible archive cleanup
+ok 224 - Routines identifies the original starter set and offers reversible archive cleanup
+  ---
+  duration_ms: 0.233721
+  type: 'test'
+  ...
+# Subtest: Phase 9 styling loads after the visual-polish layers and supports a full-screen mobile editor
+ok 225 - Phase 9 styling loads after the visual-polish layers and supports a full-screen mobile editor
+  ---
+  duration_ms: 0.359297
+  type: 'test'
+  ...
+1..225
+# tests 225
+# suites 0
+# pass 221
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 784.089486
