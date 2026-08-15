@@ -1,7 +1,7 @@
 import AppIcon from "./AppIcon.jsx";
 
 const navItems = [
-  { id: "dashboard", label: "Today", icon: "today" },
+  { id: "dashboard", label: "Clean", icon: "today" },
   { id: "routines", label: "Routines", icon: "routines" },
   { id: "history", label: "Progress", icon: "progress" },
   { id: "settings", label: "Settings", icon: "settings" }
