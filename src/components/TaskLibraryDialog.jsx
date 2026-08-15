@@ -84,7 +84,7 @@ export default function TaskLibraryDialog({
   function addRecommended() {
     const ids = getRecommendedTaskIdsForRoom(room, homeRooms, routines);
     if (!ids.length) {
-      setMessage(`No built-in pack is available for ${room}. You can still search or add a custom task.`);
+      setMessage(`No recommended pack is available for ${room}. Search or add your own task.`);
       return;
     }
     setSelectedIds((current) => new Set([...current, ...ids]));
@@ -115,14 +115,14 @@ export default function TaskLibraryDialog({
     setMessage(`${item.title} selected.`);
   }
 
-  function addToToday() {
+  function startCleaning() {
     if (!selectedItems.length) return;
-    onAddToToday(selectedItems);
+    onAddToToday?.(selectedItems);
     onClose();
   }
 
   function buildRoutine() {
-    if (!selectedItems.length) return;
+    if (!selectedItems.length || !onBuildRoutine) return;
     onBuildRoutine(createRoutineDraftFromLibraryItems(selectedItems));
     onClose();
   }
@@ -141,16 +141,18 @@ export default function TaskLibraryDialog({
       >
         <div className="dialog-header task-library-header">
           <div>
-            <p className="eyebrow">Task library</p>
-            <h2 id="task-library-title">Choose what needs cleaning</h2>
-            <p>Pick tasks instead of writing a cleaning plan from scratch. Your own routine tasks appear here too.</p>
+            <p className="eyebrow">Choose tasks</p>
+            <h2 id="task-library-title">
+              {room !== "All" && room !== "Whole home" ? `Clean ${room}` : "What needs cleaning?"}
+            </h2>
+            <p>Pick the jobs you want. Clean30 will put them into one focused clean.</p>
           </div>
-          <button aria-label="Close task library" className="icon-button" onClick={onClose} type="button">×</button>
+          <button aria-label="Close task chooser" className="icon-button" onClick={onClose} type="button">×</button>
         </div>
 
         <div className="task-library-toolbar">
           <input
-            aria-label="Search task library"
+            aria-label="Search cleaning tasks"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search sink, laundry, desk, vacuum…"
             ref={searchInputRef}
@@ -179,7 +181,7 @@ export default function TaskLibraryDialog({
           <div className="task-library-quick-actions">
             {canRecommend ? (
               <button className="button primary small" onClick={addRecommended} type="button">
-                Select recommended {room}
+                Select recommended
               </button>
             ) : null}
             {visibleItems.length ? (
@@ -216,7 +218,7 @@ export default function TaskLibraryDialog({
                           ? "Suggested by Clean30"
                           : item.source === "routine"
                             ? `From ${item.sourceLabel}`
-                            : "Custom task"}
+                            : "Your task"}
                       </span>
                     </span>
                   </label>
@@ -226,14 +228,14 @@ export default function TaskLibraryDialog({
           ) : (
             <div className="task-library-empty">
               <strong>No matching tasks</strong>
-              <p>Try another search, switch rooms, or add a custom task below.</p>
+              <p>Try another search, switch rooms, or add your own task below.</p>
             </div>
           )}
 
           <section className="task-library-custom" aria-labelledby="task-library-custom-title">
             <div>
               <h3 id="task-library-custom-title">Missing something?</h3>
-              <p>Add a custom task here. It will be included in this selection immediately.</p>
+              <p>Add your own task and it will be selected immediately.</p>
             </div>
             <div className="task-library-custom-entry">
               <input
@@ -269,11 +271,13 @@ export default function TaskLibraryDialog({
           </div>
           <div className="task-library-footer-actions">
             <button className="button ghost" onClick={onClose} type="button">Cancel</button>
-            <button className="button ghost" disabled={!selectedItems.length} onClick={buildRoutine} type="button">
-              Build routine
-            </button>
-            <button className="button primary" disabled={!selectedItems.length} onClick={addToToday} type="button">
-              Add to Today
+            {onBuildRoutine ? (
+              <button className="button ghost" disabled={!selectedItems.length} onClick={buildRoutine} type="button">
+                Save as routine
+              </button>
+            ) : null}
+            <button className="button primary" disabled={!selectedItems.length} onClick={startCleaning} type="button">
+              Start cleaning
             </button>
           </div>
         </div>
