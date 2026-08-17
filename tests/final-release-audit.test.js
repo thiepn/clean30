@@ -244,7 +244,7 @@ test("final release deployment and runtime verification are hardened", () => {
 test("final audit remains schema-free and preserves deployment and persistence invariants", () => {
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
-  assert.equal(CURRENT_BACKUP_VERSION, 3);
+  assert.equal(CURRENT_BACKUP_VERSION, 4);
   assert.equal(createTemplateExport(createDefaultTemplate()).version, 2);
   assert.match(vite, /base:\s*["']\/clean30\/["']/);
   assert.match(

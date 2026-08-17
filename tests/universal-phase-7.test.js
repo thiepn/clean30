@@ -18,7 +18,7 @@ test("Phase 7 preserves deployment and data-schema invariants", () => {
   const app = textFile("../src/App.jsx");
 
   assert.match(vite, /base:\s*["']\/clean30\/["']/);
-  assert.equal(CURRENT_BACKUP_VERSION, 3);
+  assert.equal(CURRENT_BACKUP_VERSION, 4);
   assert.equal(createTemplateExport(createDefaultTemplate()).version, 2);
   assert.match(
     storage,

@@ -84,7 +84,7 @@ test("Phase 17 release hardening remains schema-free and preserves deployment an
   const app = textFile("../src/App.jsx");
   const vite = textFile("../vite.config.js");
 
-  assert.equal(CURRENT_BACKUP_VERSION, 3);
+  assert.equal(CURRENT_BACKUP_VERSION, 4);
   assert.equal(createTemplateExport(createDefaultTemplate()).version, 2);
   assert.match(vite, /base:\s*["']\/clean30\/["']/);
   assert.match(

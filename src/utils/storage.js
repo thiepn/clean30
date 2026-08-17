@@ -10,6 +10,14 @@ import {
   priorityOptions,
   routineColorOptions
 } from "./templateUtils.js";
+import {
+  MAINTENANCE_COMPLETION_SOURCES,
+  MAINTENANCE_EFFORTS,
+  MAINTENANCE_FREQUENCY_MODES,
+  deriveLegacyMaintenanceCompletions,
+  normalizeMaintenanceCompletions,
+  normalizeMaintenanceTaskList
+} from "./maintenanceTasks.js";
 
 export const STORAGE_KEYS = {
   appState: "clean30_appState",
@@ -19,7 +27,7 @@ export const STORAGE_KEYS = {
   history: "clean30_history"
 };
 
-export const CURRENT_BACKUP_VERSION = 3;
+export const CURRENT_BACKUP_VERSION = 4;
 
 const storageHealthListeners = new Set();
 let storageHealth = {
@@ -1001,8 +1009,32 @@ function normalizeTemplateList(savedTemplates, defaultTemplate) {
   });
 }
 
+function normalizeMaintenanceTasksByTemplate(value, templates) {
+  const saved = isPlainObject(value) ? value : {};
+  return Object.fromEntries(
+    templates.map((template) => {
+      const existing = Array.isArray(saved[template.id])
+        ? normalizeMaintenanceTaskList(saved[template.id], template.zones)
+        : [];
+      const defaults = normalizeMaintenanceTaskList(undefined, template.zones);
+      const existingIds = new Set(existing.map((task) => task.id));
+      return [
+        template.id,
+        [...existing, ...defaults.filter((task) => !existingIds.has(task.id))]
+      ];
+    })
+  );
+}
+
+function templatesWithMaintenanceTasks(templates, maintenanceTasksByTemplate) {
+  return templates.map((template) => ({
+    ...template,
+    maintenanceTasks: maintenanceTasksByTemplate[template.id] || []
+  }));
+}
+
 export function normalizeAppState(value) {
-  if (!isPlainObject(value)) return createLegacyState();
+  if (!isPlainObject(value)) return normalizeAppState(createLegacyState());
 
   const defaultTemplate = createDefaultTemplate();
   const savedTemplates = Array.isArray(value.templates) ? value.templates : [];
@@ -1026,6 +1058,28 @@ export function normalizeAppState(value) {
     value.dashboardTodos,
     appSettings
   );
+  const maintenanceTasksByTemplate = normalizeMaintenanceTasksByTemplate(
+    value.maintenanceTasksByTemplate,
+    templates
+  );
+  const maintenanceTemplates = templatesWithMaintenanceTasks(
+    templates,
+    maintenanceTasksByTemplate
+  );
+  const maintenanceCompletions = Object.prototype.hasOwnProperty.call(
+    value,
+    "maintenanceCompletions"
+  )
+    ? normalizeMaintenanceCompletions(
+        value.maintenanceCompletions,
+        maintenanceTemplates
+      )
+    : deriveLegacyMaintenanceCompletions({
+        templates: maintenanceTemplates,
+        activeTemplateId,
+        todayTasksByDate,
+        history
+      });
 
   return {
     templates,
@@ -1034,6 +1088,8 @@ export function normalizeAppState(value) {
     activeSession: normalizeActiveSession(value.activeSession, templates, activeTemplateId),
     dailyRuleCompletions,
     todayTasksByDate,
+    maintenanceTasksByTemplate,
+    maintenanceCompletions,
     dashboardTodos: normalizeDashboardTodos(value.dashboardTodos),
     dismissedRecommendations: normalizeDismissedRecommendations(value.dismissedRecommendations),
     appSettings,
@@ -1052,7 +1108,9 @@ export function normalizeAppState(value) {
 
 export function loadAppState() {
   const saved = readJson(STORAGE_KEYS.appState, null);
-  const state = saved ? normalizeAppState(saved) : createLegacyState();
+  const state = saved
+    ? normalizeAppState(saved)
+    : normalizeAppState(createLegacyState());
   if (canUseStorage() && !hasStoredValue(STORAGE_KEYS.appState)) {
     saveAppState(state);
   }
@@ -1573,6 +1631,102 @@ function isValidAppSettingsBackupShape(settings) {
   );
 }
 
+const CURRENT_MAINTENANCE_TASK_FIELDS = [
+  "id",
+  "catalogId",
+  "title",
+  "room",
+  "estimatedMinutes",
+  "stage",
+  "frequencyMode",
+  "intervalDays",
+  "weekdays",
+  "effort",
+  "enabled",
+  "source"
+];
+
+function isValidMaintenanceTaskBackupShape(task) {
+  return (
+    hasOwnFields(task, CURRENT_MAINTENANCE_TASK_FIELDS) &&
+    isNonEmptyString(task.id) &&
+    (task.catalogId === null || isNonEmptyString(task.catalogId)) &&
+    isNonEmptyString(task.title) &&
+    isNonEmptyString(task.room) &&
+    typeof task.estimatedMinutes === "number" &&
+    Number.isInteger(task.estimatedMinutes) &&
+    task.estimatedMinutes >= 1 &&
+    task.estimatedMinutes <= 240 &&
+    typeof task.stage === "number" &&
+    Number.isInteger(task.stage) &&
+    task.stage >= 0 &&
+    task.stage <= 100 &&
+    MAINTENANCE_FREQUENCY_MODES.includes(task.frequencyMode) &&
+    (task.frequencyMode === "on-demand"
+      ? task.intervalDays === null
+      : typeof task.intervalDays === "number" &&
+        Number.isInteger(task.intervalDays) &&
+        task.intervalDays >= 1 &&
+        task.intervalDays <= 3650) &&
+    Array.isArray(task.weekdays) &&
+    task.weekdays.every((day) => WEEKDAY_KEYS.includes(day)) &&
+    (task.frequencyMode !== "weekdays" || task.weekdays.length > 0) &&
+    MAINTENANCE_EFFORTS.includes(task.effort) &&
+    typeof task.enabled === "boolean" &&
+    ["catalog", "custom"].includes(task.source)
+  );
+}
+
+function isValidMaintenanceTasksByTemplate(value, templates) {
+  if (!isPlainObject(value)) return false;
+  const templateIds = templates.map((template) => template.id);
+  const keys = Object.keys(value);
+  if (
+    keys.length !== templateIds.length ||
+    !keys.every((key) => templateIds.includes(key))
+  ) {
+    return false;
+  }
+  return templateIds.every(
+    (templateId) =>
+      Array.isArray(value[templateId]) &&
+      value[templateId].every(isValidMaintenanceTaskBackupShape) &&
+      !containsDuplicateIds(value[templateId])
+  );
+}
+
+const CURRENT_MAINTENANCE_COMPLETION_FIELDS = [
+  "id",
+  "templateId",
+  "taskId",
+  "completedAt",
+  "source",
+  "sourceId"
+];
+
+function isValidMaintenanceCompletions(value, maintenanceTasksByTemplate) {
+  if (!Array.isArray(value) || containsDuplicateIds(value)) return false;
+  return value.every((entry) => {
+    if (
+      !hasOwnFields(entry, CURRENT_MAINTENANCE_COMPLETION_FIELDS) ||
+      !isNonEmptyString(entry.id) ||
+      !isNonEmptyString(entry.templateId) ||
+      !isNonEmptyString(entry.taskId) ||
+      !normalizeDateString(entry.completedAt) ||
+      new Date(entry.completedAt).getTime() > Date.now() + MAX_CLOCK_SKEW_MS ||
+      !MAINTENANCE_COMPLETION_SOURCES.includes(entry.source) ||
+      !(entry.sourceId === null || isNonEmptyString(entry.sourceId))
+    ) {
+      return false;
+    }
+    return Boolean(
+      maintenanceTasksByTemplate[entry.templateId]?.some(
+        (task) => task.id === entry.taskId
+      )
+    );
+  });
+}
+
 const CURRENT_STATE_FIELDS = [
   "templates",
   "activeTemplateId",
@@ -1580,6 +1734,8 @@ const CURRENT_STATE_FIELDS = [
   "activeSession",
   "dailyRuleCompletions",
   "todayTasksByDate",
+  "maintenanceTasksByTemplate",
+  "maintenanceCompletions",
   "dashboardTodos",
   "dismissedRecommendations",
   "appSettings",
@@ -1631,6 +1787,22 @@ function validateCurrentStateShape(data) {
   }
   if (!isValidTodayTasksByDate(data.todayTasksByDate)) {
     return "Current backup contains invalid or incomplete Today task data.";
+  }
+  if (
+    !isValidMaintenanceTasksByTemplate(
+      data.maintenanceTasksByTemplate,
+      data.templates
+    )
+  ) {
+    return "Current backup contains invalid or incomplete cleaning-task configuration.";
+  }
+  if (
+    !isValidMaintenanceCompletions(
+      data.maintenanceCompletions,
+      data.maintenanceTasksByTemplate
+    )
+  ) {
+    return "Current backup contains invalid cleaning-task completion history.";
   }
   if (
     !Array.isArray(data.dashboardTodos) ||
@@ -1964,6 +2136,13 @@ export function resetToFreshState() {
     activeSession: null,
     dailyRuleCompletions: {},
     todayTasksByDate: {},
+    maintenanceTasksByTemplate: {
+      [defaultTemplate.id]: normalizeMaintenanceTaskList(
+        undefined,
+        defaultTemplate.zones
+      )
+    },
+    maintenanceCompletions: [],
     dashboardTodos: [],
     dismissedRecommendations: {},
     appSettings: normalizeAppSettings(),

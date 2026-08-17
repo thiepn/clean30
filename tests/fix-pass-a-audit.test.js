@@ -204,6 +204,9 @@ test("current active session with a false template binding is dropped with a war
   const routine = routineById(otherTemplate);
   removeRoutine(originalTemplate);
   backup.data.templates.push(otherTemplate);
+  backup.data.maintenanceTasksByTemplate[otherTemplate.id] = clone(
+    backup.data.maintenanceTasksByTemplate[originalTemplate.id]
+  );
   backup.data.activeSession = {
     ...createSession(routine, otherTemplate),
     id: "false-template-binding",
