@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { routineStarterTemplates } from "../data/taskSuggestions.js";
 import useDialogFocus from "../hooks/useDialogFocus.js";
 
@@ -40,6 +40,10 @@ export default function RoutineCreationDialog({
     initialFocusRef: firstMethodRef
   });
   const [view, setView] = useState("methods");
+
+  useEffect(() => {
+    if (!open) setView("methods");
+  }, [open]);
 
   if (!open) return null;
 
