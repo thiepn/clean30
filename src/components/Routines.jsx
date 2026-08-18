@@ -5,9 +5,12 @@ import {
   getRoutineTotalTasks
 } from "../utils/calculations.js";
 import { getHomeRoomNames } from "../utils/homeLibrary.js";
+import { createRoutineDraftFromTemplate } from "../utils/routineLibrary.js";
 import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
+import RoutineCreationDialog from "./RoutineCreationDialog.jsx";
 import RoutineEditorDialog from "./RoutineEditorDialog.jsx";
+import TaskLibraryDialog from "./TaskLibraryDialog.jsx";
 
 const LEGACY_STARTER_IDS = new Set([
   "initial-reset",
@@ -32,8 +35,11 @@ export default function Routines({
 }) {
   const [showArchived, setShowArchived] = useState(false);
   const [selectedRoutineId, setSelectedRoutineId] = useState("");
+  const [creationOpen, setCreationOpen] = useState(false);
+  const [taskChooserOpen, setTaskChooserOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorRoutineId, setEditorRoutineId] = useState("");
+  const [editorSeedDraft, setEditorSeedDraft] = useState(null);
   const [openMenuId, setOpenMenuId] = useState("");
   const [legacyNoticeDismissed, setLegacyNoticeDismissed] = useState(false);
 
@@ -100,14 +106,36 @@ export default function Routines({
   }
 
   function openCreate() {
+    setCreationOpen(true);
+    setOpenMenuId("");
+  }
+
+  function openCreationEditor(seedDraft = null) {
+    setCreationOpen(false);
+    setTaskChooserOpen(false);
     setEditorRoutineId("");
+    setEditorSeedDraft(seedDraft);
     setEditorOpen(true);
     setOpenMenuId("");
+  }
+
+  function chooseTasksForRoutine() {
+    setCreationOpen(false);
+    setTaskChooserOpen(true);
+  }
+
+  function startFromStarter(templateId) {
+    openCreationEditor(createRoutineDraftFromTemplate(templateId));
+  }
+
+  function startFromChosenTasks(seedDraft) {
+    openCreationEditor(seedDraft);
   }
 
   function openEdit(routineId) {
     if (isCurrentRoutine(routineId)) return;
     setEditorRoutineId(routineId);
+    setEditorSeedDraft(null);
     setEditorOpen(true);
     setOpenMenuId("");
   }
@@ -166,7 +194,7 @@ export default function Routines({
         <div className="routine-builder-callout routine-builder-callout-compact routine-create-explainer">
           <div>
             <strong>One place to make a routine</strong>
-            <span>Choose common tasks, paste a checklist, use a starter, or type from scratch in the same editor.</span>
+            <span>Choose tasks, paste a checklist, use a starter, or start blank. Every option leads to the same routine editor.</span>
           </div>
           <button className="button ghost small" onClick={openCreate} type="button">
             Create routine
@@ -323,7 +351,7 @@ export default function Routines({
         ) : (
           <EmptyState
             title={showArchived ? "No routines" : "No active routines"}
-            message="Create a routine from common tasks, a pasted checklist, a starter, or a blank list."
+            message="Create a routine by choosing tasks, pasting a checklist, using a starter, or starting blank."
           />
         )}
       </section>
@@ -381,14 +409,36 @@ export default function Routines({
         </section>
       ) : null}
 
+      <RoutineCreationDialog
+        onChooseTasks={chooseTasksForRoutine}
+        onClose={() => setCreationOpen(false)}
+        onPasteChecklist={() => openCreationEditor(null)}
+        onStartBlank={() => openCreationEditor(null)}
+        onUseStarter={startFromStarter}
+        open={creationOpen}
+      />
+
+      <TaskLibraryDialog
+        homeRooms={homeRooms}
+        onBuildRoutine={startFromChosenTasks}
+        onClose={() => setTaskChooserOpen(false)}
+        open={taskChooserOpen}
+        purpose="routine"
+        routines={routines}
+      />
+
       <RoutineEditorDialog
         homeRooms={homeRooms}
         onAdvancedEdit={openAdvancedEdit}
-        onClose={() => setEditorOpen(false)}
+        onClose={() => {
+          setEditorOpen(false);
+          setEditorSeedDraft(null);
+        }}
         onSave={saveRoutine}
         open={editorOpen}
         routine={editorRoutine}
         routines={routines.filter((routine) => routine.id !== "daily-rules")}
+        seedDraft={editorSeedDraft}
       />
     </div>
   );
