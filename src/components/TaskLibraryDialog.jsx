@@ -14,6 +14,7 @@ export default function TaskLibraryDialog({
   routines = [],
   initialRoom = "All",
   preselectRecommended = false,
+  purpose = "clean",
   onAddToToday,
   onBuildRoutine,
   onClose
@@ -116,7 +117,7 @@ export default function TaskLibraryDialog({
   }
 
   function startCleaning() {
-    if (!selectedItems.length) return;
+    if (!selectedItems.length || purpose === "routine") return;
     onAddToToday?.(selectedItems);
     onClose();
   }
@@ -128,6 +129,7 @@ export default function TaskLibraryDialog({
   }
 
   const canRecommend = room !== "All" && room !== "Other";
+  const routinePurpose = purpose === "routine";
 
   return (
     <div className="dialog-backdrop task-library-backdrop" role="presentation">
@@ -143,9 +145,17 @@ export default function TaskLibraryDialog({
           <div>
             <p className="eyebrow">Choose tasks</p>
             <h2 id="task-library-title">
-              {room !== "All" && room !== "Whole home" ? `Clean ${room}` : "What needs cleaning?"}
+              {routinePurpose
+                ? "Choose tasks for your routine"
+                : room !== "All" && room !== "Whole home"
+                  ? `Clean ${room}`
+                  : "What needs cleaning?"}
             </h2>
-            <p>Pick the jobs you want. Clean30 will put them into one focused clean.</p>
+            <p>
+              {routinePurpose
+                ? "Pick the jobs you want, then continue to name and edit the reusable routine."
+                : "Pick the jobs you want. Clean30 will put them into one focused clean."}
+            </p>
           </div>
           <button aria-label="Close task chooser" className="icon-button" onClick={onClose} type="button">×</button>
         </div>
@@ -271,14 +281,22 @@ export default function TaskLibraryDialog({
           </div>
           <div className="task-library-footer-actions">
             <button className="button ghost" onClick={onClose} type="button">Cancel</button>
-            {onBuildRoutine ? (
-              <button className="button ghost" disabled={!selectedItems.length} onClick={buildRoutine} type="button">
-                Save as routine
+            {routinePurpose ? (
+              <button className="button primary" disabled={!selectedItems.length} onClick={buildRoutine} type="button">
+                Continue
               </button>
-            ) : null}
-            <button className="button primary" disabled={!selectedItems.length} onClick={startCleaning} type="button">
-              Start cleaning
-            </button>
+            ) : (
+              <>
+                {onBuildRoutine ? (
+                  <button className="button ghost" disabled={!selectedItems.length} onClick={buildRoutine} type="button">
+                    Save as routine
+                  </button>
+                ) : null}
+                <button className="button primary" disabled={!selectedItems.length} onClick={startCleaning} type="button">
+                  Start cleaning
+                </button>
+              </>
+            )}
           </div>
         </div>
       </section>
