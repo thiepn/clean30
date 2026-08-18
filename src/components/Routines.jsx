@@ -5,11 +5,16 @@ import {
   getRoutineTotalTasks
 } from "../utils/calculations.js";
 import { getHomeRoomNames } from "../utils/homeLibrary.js";
-import { createRoutineDraftFromTemplate } from "../utils/routineLibrary.js";
+import {
+  appendParsedTaskText,
+  createRoutineDraftFromTemplate,
+  createSimpleRoutineDraft
+} from "../utils/routineLibrary.js";
 import Checklist from "./Checklist.jsx";
 import EmptyState from "./EmptyState.jsx";
 import RoutineCreationDialog from "./RoutineCreationDialog.jsx";
 import RoutineEditorDialog from "./RoutineEditorDialog.jsx";
+import RoutinePasteDialog from "./RoutinePasteDialog.jsx";
 import TaskLibraryDialog from "./TaskLibraryDialog.jsx";
 
 const LEGACY_STARTER_IDS = new Set([
@@ -36,6 +41,7 @@ export default function Routines({
   const [showArchived, setShowArchived] = useState(false);
   const [selectedRoutineId, setSelectedRoutineId] = useState("");
   const [creationOpen, setCreationOpen] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(false);
   const [taskChooserOpen, setTaskChooserOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorRoutineId, setEditorRoutineId] = useState("");
@@ -110,11 +116,12 @@ export default function Routines({
     setOpenMenuId("");
   }
 
-  function openCreationEditor(seedDraft = null) {
+  function openCreationEditor(seedDraft) {
     setCreationOpen(false);
+    setPasteOpen(false);
     setTaskChooserOpen(false);
     setEditorRoutineId("");
-    setEditorSeedDraft(seedDraft);
+    setEditorSeedDraft(seedDraft || createSimpleRoutineDraft());
     setEditorOpen(true);
     setOpenMenuId("");
   }
@@ -124,12 +131,25 @@ export default function Routines({
     setTaskChooserOpen(true);
   }
 
+  function pasteChecklistForRoutine() {
+    setCreationOpen(false);
+    setPasteOpen(true);
+  }
+
+  function startFromPastedChecklist(text) {
+    openCreationEditor(appendParsedTaskText(createSimpleRoutineDraft(), text));
+  }
+
   function startFromStarter(templateId) {
     openCreationEditor(createRoutineDraftFromTemplate(templateId));
   }
 
   function startFromChosenTasks(seedDraft) {
     openCreationEditor(seedDraft);
+  }
+
+  function startBlankRoutine() {
+    openCreationEditor(createSimpleRoutineDraft());
   }
 
   function openEdit(routineId) {
@@ -412,10 +432,16 @@ export default function Routines({
       <RoutineCreationDialog
         onChooseTasks={chooseTasksForRoutine}
         onClose={() => setCreationOpen(false)}
-        onPasteChecklist={() => openCreationEditor(null)}
-        onStartBlank={() => openCreationEditor(null)}
+        onPasteChecklist={pasteChecklistForRoutine}
+        onStartBlank={startBlankRoutine}
         onUseStarter={startFromStarter}
         open={creationOpen}
+      />
+
+      <RoutinePasteDialog
+        onClose={() => setPasteOpen(false)}
+        onContinue={startFromPastedChecklist}
+        open={pasteOpen}
       />
 
       <TaskLibraryDialog
