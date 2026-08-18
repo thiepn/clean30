@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useDialogFocus from "../hooks/useDialogFocus.js";
 import { parseRoutineTaskText } from "../utils/routineLibrary.js";
 
@@ -11,6 +11,10 @@ export default function RoutinePasteDialog({ open, onContinue, onClose }) {
   });
   const [text, setText] = useState("");
   const preview = useMemo(() => parseRoutineTaskText(text), [text]);
+
+  useEffect(() => {
+    if (!open) setText("");
+  }, [open]);
 
   if (!open) return null;
 
