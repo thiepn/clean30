@@ -29,15 +29,13 @@ test("Clean exposes Just start, time, rooms, and the existing Today list without
   assert.doesNotMatch(startPanel, />Quick Clean</);
 });
 
-test("all ad-hoc cleaning paths make Start cleaning primary while preserving an add-only Today option", () => {
+test("ad-hoc task and time selection make Start cleaning the primary endpoint", () => {
   const chooser = read("src/components/TaskLibraryDialog.jsx");
   const planner = read("src/components/QuickCleanDialog.jsx");
-  const startPanel = read("src/components/CleanStartPanel.jsx");
   assert.match(chooser, />Start cleaning</);
-  assert.match(chooser, /Add to today&apos;s list/);
   assert.match(planner, />Start cleaning</);
-  assert.match(planner, /Add to today&apos;s list/);
-  assert.match(startPanel, /onAddOnlyToToday=\{onAddTasks\}/);
+  assert.match(chooser, /one focused clean/);
+  assert.match(planner, /one focused clean/);
 });
 
 test("Routines is only saved cleans plus one New routine entry", () => {
@@ -70,6 +68,7 @@ test("the shared task chooser changes its final action for routine creation inst
   assert.match(chooser, /purpose === "routine"/);
   assert.match(chooser, /Choose tasks for your routine/);
   assert.match(chooser, />Continue</);
+  assert.match(chooser, /purpose === "routine"\) return/);
 });
 
 test("rooms are configuration in Settings while room status remains contextual guidance", () => {
