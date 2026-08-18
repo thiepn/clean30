@@ -32,8 +32,8 @@ test("Clean exposes Just start, time, rooms, and the existing Today list without
 test("ad-hoc task and time selection make Start cleaning the primary endpoint", () => {
   const chooser = read("src/components/TaskLibraryDialog.jsx");
   const planner = read("src/components/QuickCleanDialog.jsx");
-  assert.match(chooser, />Start cleaning</);
-  assert.match(planner, />Start cleaning</);
+  assert.match(chooser, /Start cleaning/);
+  assert.match(planner, /Start cleaning/);
   assert.match(chooser, /one focused clean/);
   assert.match(planner, /one focused clean/);
 });
@@ -67,8 +67,18 @@ test("the shared task chooser changes its final action for routine creation inst
   assert.match(chooser, /purpose = "clean"/);
   assert.match(chooser, /purpose === "routine"/);
   assert.match(chooser, /Choose tasks for your routine/);
-  assert.match(chooser, />Continue</);
+  assert.match(chooser, /Continue/);
   assert.match(chooser, /purpose === "routine"\) return/);
+});
+
+test("paste checklist is a focused creation path before the common routine editor", () => {
+  const routines = read("src/components/Routines.jsx");
+  const paste = read("src/components/RoutinePasteDialog.jsx");
+  assert.match(routines, /<RoutinePasteDialog/);
+  assert.match(routines, /appendParsedTaskText\(createSimpleRoutineDraft\(\), text\)/);
+  assert.match(paste, /Paste one task per line/);
+  assert.match(paste, /Markdown checkboxes/);
+  assert.match(paste, /preview\.taskCount/);
 });
 
 test("rooms are configuration in Settings while room status remains contextual guidance", () => {
