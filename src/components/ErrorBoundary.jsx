@@ -7,6 +7,7 @@ function exportEmergencyBackup() {
       app: "Clean30",
       type: "emergency-localStorage-backup",
       exportedAt: new Date().toISOString(),
+      clean30_v2_state: storage.getItem("clean30_v2_state"),
       clean30_appState: storage.getItem("clean30_appState"),
       clean30_settings: storage.getItem("clean30_settings"),
       clean30_dailyRules: storage.getItem("clean30_dailyRules"),

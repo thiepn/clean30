@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -101,10 +101,25 @@ assert.match(
   /const BASE_PATH = "\/clean30\/";/,
   "Service worker base path must match the deployed app path."
 );
+
+const mainSource = read("src/main.jsx");
+assert.match(mainSource, /import App from ["']\.\/v2\/AppV2\.jsx["']/, "Production must mount the v2 app.");
+assert.doesNotMatch(
+  mainSource,
+  /^import ["']\.\/styles(?:\.css|\/universal-)/m,
+  "Legacy styles must not be imported into the production bundle."
+);
+const v2Source = read("src/v2/AppV2.jsx");
+assert.match(v2Source, /Discard clean/, "Active cleans must have a safe discard path.");
+assert.match(v2Source, /Review choices/, "Completed cleans must support correcting task choices.");
+assert.match(v2Source, /v2-storage-warning/, "Storage failures must remain visible.");
+const cssAsset = builtIndex.match(/\/clean30\/(assets\/[^"']+\.css)/)?.[1];
+assert.ok(cssAsset, "Built CSS asset must be discoverable.");
+assert.ok(statSync(resolve(distDir, cssAsset)).size < 45_000, "Production CSS must not include the legacy stylesheet stack.");
 assert.match(
   serviceWorker,
-  /app-shell-v20/,
-  "The autopilot upgrade must use the v20 app-shell cache boundary."
+  /app-shell-v22/,
+  "The release-ready redesign must use the v22 app-shell cache boundary."
 );
 assert.match(
   serviceWorker,
@@ -195,7 +210,9 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
-console.log("- autopilot v20 service-worker cache boundary verified");
+console.log("- release-ready v22 service-worker cache boundary verified");
+console.log("- v2 recovery, correction, and persistence safeguards verified");
+console.log("- legacy production styles excluded");
 console.log(`- dependency floor verified: Vite ${lockedVite}, React ${lockedReact}`);
 console.log(`- security floor verified: PostCSS ${lockedPostcss}, esbuild ${lockedEsbuild}`);
 console.log("- service worker offline fallback verified");

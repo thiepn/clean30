@@ -36,7 +36,7 @@ test("PWA manifest has stable Clean30 identity and universal copy", () => {
   assert.equal(manifest.start_url, "/clean30/");
   assert.equal(manifest.scope, "/clean30/");
   assert.equal(manifest.display, "standalone");
-  assert.match(manifest.description, /local-first cleaning assistant/i);
+  assert.match(manifest.description, /local-first cleaning planner/i);
   assert.doesNotMatch(manifest.description, /apartment cleaning routine system/i);
   assert.ok(manifest.icons.every((icon) => icon.src.startsWith("/clean30/")));
 });

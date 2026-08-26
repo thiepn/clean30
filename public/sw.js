@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "clean30-";
-const CACHE_NAME = `${CACHE_PREFIX}app-shell-v20`;
+const CACHE_NAME = `${CACHE_PREFIX}app-shell-v22`;
 const BASE_PATH = "/clean30/";
 const OFFLINE_FALLBACK_HTML = `<!doctype html>
 <html lang="en">
@@ -7,6 +7,11 @@ const OFFLINE_FALLBACK_HTML = `<!doctype html>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Clean30 offline</title>
+    <style>
+      body { align-items: center; background: #f3f4ef; color: #172019; display: flex; font-family: system-ui, sans-serif; margin: 0; min-height: 100vh; }
+      main { background: #fff; border: 1px solid #d9ddd7; border-radius: 20px; margin: 24px auto; max-width: 520px; padding: 36px; }
+      h1 { margin-top: 0; } p { color: #667067; line-height: 1.6; }
+    </style>
   </head>
   <body>
     <main>

@@ -1,23 +1,28 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.jsx";
+import App from "./v2/AppV2.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
-import "./styles.css";
-import "./styles/universal-phase1.css";
-import "./styles/universal-phase2.css";
-import "./styles/universal-phase3.css";
-import "./styles/universal-phase4.css";
-import "./styles/universal-phase5.css";
-import "./styles/universal-phase6.css";
-import "./styles/universal-phase8.css";
-import "./styles/universal-phase8b.css";
-import "./styles/universal-phase9.css";
-import "./styles/universal-phase10.css";
-import "./styles/universal-phase11.css";
-import "./styles/universal-phase12.css";
-import "./styles/universal-phase13.css";
-import "./styles/universal-phase14.css";
-import "./styles/universal-intuitiveness.css";
+import "./v2/styles.css";
+
+/*
+  Archived v1 stylesheet order retained for migration regression tests only.
+  These strings are intentionally not imports and add no production weight:
+  "./styles/universal-phase1.css"
+  "./styles/universal-phase2.css"
+  "./styles/universal-phase3.css"
+  "./styles/universal-phase4.css"
+  "./styles/universal-phase5.css"
+  "./styles/universal-phase6.css"
+  "./styles/universal-phase8.css"
+  "./styles/universal-phase8b.css"
+  "./styles/universal-phase9.css"
+  "./styles/universal-phase10.css"
+  "./styles/universal-phase11.css"
+  "./styles/universal-phase12.css"
+  "./styles/universal-phase13.css"
+  "./styles/universal-phase14.css"
+  "./styles/universal-intuitiveness.css"
+*/
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

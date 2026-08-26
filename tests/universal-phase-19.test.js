@@ -100,18 +100,18 @@ test("Phase 19 production runtime smoke verification is part of local and CI rel
   assert.match(runtimeVerifier, /\/clean30\//);
   assert.match(runtimeVerifier, /scoped HTML assets verified/);
   assert.match(runtimeVerifier, /manifest icons verified over HTTP/);
-  assert.match(runtimeVerifier, /app-shell-v20/);
+  assert.match(runtimeVerifier, /app-shell-v22/);
 });
 
 test("Phase 19 advances the final PWA cache while preserving old-cache cleanup", () => {
   const sw = textFile("../public/sw.js");
   const verifier = textFile("../scripts/verify-release.mjs");
 
-  assert.match(sw, /app-shell-v20/);
+  assert.match(sw, /app-shell-v22/);
   assert.doesNotMatch(sw, /app-shell-v18/);
   assert.match(sw, /key\.startsWith\(CACHE_PREFIX\) && key !== CACHE_NAME/);
-  assert.match(verifier, /app-shell-v20/);
-  assert.match(verifier, /autopilot v20 service-worker cache boundary verified/);
+  assert.match(verifier, /app-shell-v22/);
+  assert.match(verifier, /release-ready v22 service-worker cache boundary verified/);
 });
 
 test("Phase 19 remains schema-free and preserves deployment and persistence invariants", () => {
