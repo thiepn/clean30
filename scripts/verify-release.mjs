@@ -110,16 +110,31 @@ assert.doesNotMatch(
   "Legacy styles must not be imported into the production bundle."
 );
 const v2Source = read("src/v2/AppV2.jsx");
+const v2Styles = read("src/v2/styles.css");
 assert.match(v2Source, /Discard clean/, "Active cleans must have a safe discard path.");
 assert.match(v2Source, /Review choices/, "Completed cleans must support correcting task choices.");
 assert.match(v2Source, /v2-storage-warning/, "Storage failures must remain visible.");
+assert.match(v2Source, /<h1>Cleaning plan<\/h1>/, "The visual release must use direct page titles instead of slogan copy.");
+assert.doesNotMatch(v2Source, /Your cleaning, already decided|Clean without planning every clean/, "Marketing-style generated slogans must not return.");
+const minimalTheme = v2Styles.split("/* Clean30 minimal interface")[1] || "";
+assert.ok(minimalTheme, "The minimal interface must remain the final visual layer.");
+assert.doesNotMatch(minimalTheme, /gradient\(/, "The minimal interface must not use decorative gradients.");
+assert.doesNotMatch(minimalTheme, /backdrop-filter:\s*blur/, "The minimal interface must not use glass effects.");
+assert.doesNotMatch(minimalTheme, /transform:\s*translateY/, "The minimal interface must not use floating-card hover motion.");
+assert.doesNotMatch(minimalTheme, /border-radius:\s*(?:1[6-9]|[2-9]\d)px/, "The minimal interface must not restore oversized rounded cards.");
+assert.match(minimalTheme, /\.v2-app\s*\{\s*background:\s*var\(--v2-bg\)/, "The minimal interface must override the old decorative app background.");
+assert.match(minimalTheme, /backdrop-filter:\s*none/, "The minimal interface must override old translucent navigation and setup chrome.");
+const mobileContainment = v2Styles.split("/* Mobile containment")[1] || "";
+assert.ok(mobileContainment, "Narrow setup layouts must retain the mobile containment layer.");
+assert.match(mobileContainment, /\.v2-task-review\.custom[\s\S]*grid-template-columns:\s*36px minmax\(0, 1fr\)/, "Task rows must shrink to the mobile viewport.");
+assert.match(mobileContainment, /\.v2-setup-footer[\s\S]*max-width:\s*100vw/, "The setup footer must stay inside the mobile viewport.");
 const cssAsset = builtIndex.match(/\/clean30\/(assets\/[^"']+\.css)/)?.[1];
 assert.ok(cssAsset, "Built CSS asset must be discoverable.");
 assert.ok(statSync(resolve(distDir, cssAsset)).size < 45_000, "Production CSS must not include the legacy stylesheet stack.");
 assert.match(
   serviceWorker,
-  /app-shell-v23/,
-  "The flexible-setup release must use the v23 app-shell cache boundary."
+  /app-shell-v24/,
+  "The minimal-interface release must use the v24 app-shell cache boundary."
 );
 assert.match(
   serviceWorker,
@@ -210,7 +225,8 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
-console.log("- flexible-setup v23 service-worker cache boundary verified");
+console.log("- minimal-interface v24 service-worker cache boundary verified");
+console.log("- non-generated visual-system guardrails verified");
 console.log("- v2 recovery, correction, and persistence safeguards verified");
 console.log("- legacy production styles excluded");
 console.log(`- dependency floor verified: Vite ${lockedVite}, React ${lockedReact}`);

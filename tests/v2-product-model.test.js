@@ -291,3 +291,41 @@ test("the shipped interface is the home-plan redesign", async () => {
   assert.doesNotMatch(app, /5 minutes|10 minutes|15 minutes|Quick Start|Routines/);
   assert.doesNotMatch(main, /^import ["']\.\/styles(?:\.css|\/universal-)/m);
 });
+
+test("the minimal interface rejects generated-dashboard conventions", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("../src/v2/AppV2.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/v2/styles.css", import.meta.url), "utf8")
+  ]);
+  const theme = styles.split("/* Clean30 minimal interface")[1] || "";
+  assert.ok(theme);
+  assert.match(app, /<h1>Cleaning plan<\/h1>/);
+  assert.match(app, /<h1>Settings<\/h1>/);
+  assert.doesNotMatch(app, /Your cleaning, already decided|Clean without planning every clean/);
+  assert.doesNotMatch(theme, /gradient\(/);
+  assert.doesNotMatch(theme, /backdrop-filter:\s*blur/);
+  assert.doesNotMatch(theme, /transform:\s*translateY/);
+  assert.doesNotMatch(theme, /border-radius:\s*(?:1[6-9]|[2-9]\d)px/);
+  assert.match(theme, /font-family:\s*-apple-system/);
+  assert.match(theme, /\.v2-brand-mark,[\s\S]*display:\s*none/);
+  assert.match(theme, /\.v2-mode-grid[\s\S]*display:\s*block/);
+  assert.match(theme, /\.v2-app\s*\{\s*background:\s*var\(--v2-bg\)/);
+  assert.match(theme, /backdrop-filter:\s*none/);
+  assert.doesNotMatch(app, /className="v2-brand-mark"/);
+});
+
+test("setup grids remain contained on narrow mobile viewports", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("../src/v2/AppV2.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/v2/styles.css", import.meta.url), "utf8")
+  ]);
+  const mobile = styles.split("/* Mobile containment")[1] || "";
+  assert.ok(mobile);
+  assert.match(mobile, /\.v2-setup-shell[\s\S]*overflow-x:\s*clip/);
+  assert.match(mobile, /\.v2-task-review\.custom[\s\S]*grid-template-columns:\s*36px minmax\(0, 1fr\)/);
+  assert.match(mobile, /\.v2-task-review > \*[\s\S]*min-width:\s*0/);
+  assert.match(mobile, /\.v2-room-row\s*\{\s*grid-template-columns:\s*auto minmax\(0, 1fr\) auto/);
+  assert.match(mobile, /\.v2-setup-footer[\s\S]*max-width:\s*100vw/);
+  assert.match(mobile, /\.v2-setup-finish-actions[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(app, /<div className="v2-weekdays">[\s\S]*aria-label=\{label\}/);
+});

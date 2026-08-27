@@ -31,6 +31,10 @@ Frequent upkeep such as dishes can recur every day or every few days without bei
 
 Automatic plans are intentionally bounded: Today shows the eight oldest due tasks and the special-purpose modes show at most twelve. The remaining backlog is visible and becomes the next batch instead of turning one clean into an overwhelming list.
 
+## Visual identity
+
+Clean30 uses a deliberately quiet interface: system typography, neutral white and gray surfaces, compact lists, restrained corners, and one functional green accent. Branding is reduced to a plain wordmark and the layout avoids decorative illustrations, gradients, glass effects, floating cards, oversized rounded containers, slogan-driven headings, and animated hover lifts. Light and dark appearances preserve the same hierarchy.
+
 ## Privacy and resilience
 
 - No account, analytics, ads, or remote API.

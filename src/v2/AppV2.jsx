@@ -335,7 +335,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
   return (
     <div className="v2-setup-shell">
       <header className="v2-setup-header">
-        <div className="v2-brand"><span className="v2-brand-mark"><Icon name="check" size={19}/></span><span>Clean30</span></div>
+        <div className="v2-brand"><strong>Clean30</strong></div>
         {editing && onCancel ? <button className="v2-icon-button" aria-label="Close setup" onClick={onCancel} type="button"><Icon name="close"/></button> : null}
       </header>
 
@@ -346,22 +346,21 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
       <main className="v2-setup-main">
         {step === 0 ? (
           <section className="v2-setup-intro">
-            <span className="v2-intro-mark"><Icon name="home" size={34}/></span>
-            <p className="v2-kicker">Set up once</p>
-            <h1>Clean without planning every clean.</h1>
-            <p className="v2-lead">Tell Clean30 what is actually in your home. It will build a realistic weekly and monthly plan, decide what is due, and guide you through one task at a time.</p>
+            <span className="v2-intro-mark"><Icon name="home" size={30}/></span>
+            <h1>Set up your home.</h1>
+            <p className="v2-lead">Add your rooms, choose the work that belongs in each one, and set your cleaning days. Clean30 handles the schedule afterward.</p>
             <div className="v2-promise-grid">
-              <div><strong>Real tasks</strong><span>Only cleaning that matters in your rooms.</span></div>
-              <div><strong>One clear plan</strong><span>No routines to invent or timers to choose.</span></div>
-              <div><strong>Private by default</strong><span>Your home data stays on this device.</span></div>
+              <div><strong>Your rooms</strong><span>Use the rooms and items that are actually in your home.</span></div>
+              <div><strong>Your schedule</strong><span>Choose daily, weekly, monthly, or custom intervals.</span></div>
+              <div><strong>Your device</strong><span>Your home data stays in this browser.</span></div>
             </div>
           </section>
         ) : null}
 
         {step === 1 ? (
           <section>
-            <p className="v2-kicker">Your home</p>
-            <h1>Which rooms do you clean?</h1>
+            <p className="v2-kicker">Step 1</p>
+            <h1>Add your rooms.</h1>
             <p className="v2-lead compact">Add every separate room. You can rename duplicates such as Bedroom 1 and Bedroom 2.</p>
             <label className="v2-field-label" htmlFor="home-name">Home name</label>
             <input className="v2-text-input" id="home-name" maxLength="40" onChange={(event) => setHomeName(event.target.value)} value={homeName}/>
@@ -388,8 +387,8 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
 
         {step === 2 ? (
           <section>
-            <p className="v2-kicker">Home details</p>
-            <h1>What is actually in each room?</h1>
+            <p className="v2-kicker">Step 2</p>
+            <h1>Add room details.</h1>
             <p className="v2-lead compact">Common items are already selected. Remove anything you do not have; add what is missing.</p>
             <div className="v2-feature-rooms">
               {rooms.map((room) => {
@@ -412,8 +411,8 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
 
         {step === 3 ? (
           <section>
-            <p className="v2-kicker">Recommended plan</p>
-            <h1>Keep only the work your home needs.</h1>
+            <p className="v2-kicker">Step 3</p>
+            <h1>Choose your cleaning tasks.</h1>
             <p className="v2-lead compact">Clean30 selected practical recurring tasks from your rooms and home features. Remove anything irrelevant or add work unique to your home.</p>
             <div className="v2-room-tabs" role="tablist" aria-label="Rooms">
               {rooms.map((room) => <button aria-selected={room.id === taskRoomId} className={room.id === taskRoomId ? "active" : ""} key={room.id} onClick={() => setTaskRoomId(room.id)} role="tab" type="button">{room.name}</button>)}
@@ -451,8 +450,8 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
 
         {step === 4 ? (
           <section>
-            <p className="v2-kicker">Your schedule</p>
-            <h1>When should cleaning appear?</h1>
+            <p className="v2-kicker">Step 4</p>
+            <h1>Choose your cleaning days.</h1>
             <p className="v2-lead compact">Choose days when you realistically do larger cleaning. Daily and frequent tasks follow their own interval, while weekly and monthly work lands on these days.</p>
             <div className="v2-schedule-options">
               <button aria-pressed={scheduleStyle === "spread"} className={scheduleStyle === "spread" ? "selected" : ""} onClick={() => chooseScheduleStyle("spread")} type="button"><strong>Spread it through the week</strong><span>A few meaningful tasks on each cleaning day. Recommended.</span></button>
@@ -460,7 +459,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
             </div>
             <h2 className="v2-subheading">Cleaning days</h2>
             <div className="v2-weekdays">
-              {weekdayLabels.map((label, day) => <button aria-pressed={cleanDays.includes(day)} className={cleanDays.includes(day) ? "selected" : ""} key={label} onClick={() => toggleCleanDay(day)} type="button"><span>{label.slice(0, 1)}</span>{label}</button>)}
+              {weekdayLabels.map((label, day) => <button aria-label={label} aria-pressed={cleanDays.includes(day)} className={cleanDays.includes(day) ? "selected" : ""} key={label} onClick={() => toggleCleanDay(day)} type="button"><span aria-hidden="true">{label.slice(0, 1)}</span><small aria-hidden="true">{label}</small></button>)}
             </div>
             <div className="v2-ready-card"><span className="v2-ready-check"><Icon name="check"/></span><div><strong>Your plan is ready</strong><p>{enabledCount} tasks · {rooms.length} rooms · {cleanDays.length} cleaning {cleanDays.length === 1 ? "day" : "days"}</p></div></div>
           </section>
@@ -508,32 +507,31 @@ function HomeView({ state, onDiscardSession, onOpenRoomPicker, onStart, onViewPl
       <div className="v2-hero-copy">
         <p className="v2-kicker">{formatLongDate()}</p>
         {todayPlan.length ? <>
-          <h1>Your clean is ready.</h1>
-          <p>Clean30 selected what needs attention. You do not need to plan or choose tasks.</p>
+          <h1>Today’s clean</h1>
+          <p>The due work is ready. Start when you are ready.</p>
           <div className="v2-plan-stat"><strong>{todayPlan.length}</strong><span>tasks across {tasksGroupedByRoom(todayPlan).length} {tasksGroupedByRoom(todayPlan).length === 1 ? "room" : "rooms"}</span></div>
           {health.overdue + health.dueToday > todayPlan.length ? <p className="v2-plan-limit-note">Showing the next {todayPlan.length} of {health.overdue + health.dueToday} due tasks. The next batch will be ready after this clean.</p> : null}
           <TaskPreview items={todayPlan}/>
           <button className="v2-button primary hero" onClick={() => onStart({ title: "Today’s clean", mode: "today", items: todayPlan })} type="button">Start today’s clean<Icon name="arrow"/></button>
         </> : <>
-          <span className="v2-on-track-mark"><Icon name="check" size={28}/></span>
-          <h1>You’re on track.</h1>
-          <p>Nothing in your plan is due today. Clean a room if something needs attention, or leave it until the next scheduled day.</p>
+          <h1>Nothing due today</h1>
+          <p>Your scheduled work is clear. You can leave it there or start another clean.</p>
           <button className="v2-button secondary hero" onClick={onViewPlan} type="button">See upcoming plan<Icon name="arrow"/></button>
         </>}
       </div>
       <aside className="v2-home-status">
-        <span>Home status</span>
+        <span>Plan</span>
         <strong>{health.overdue ? `${health.overdue} overdue` : health.dueToday ? `${health.dueToday} due today` : "Plan clear"}</strong>
         <p>{health.enabled} recurring tasks managed automatically.</p>
       </aside>
     </section>
 
     <section className="v2-start-section">
-      <div className="v2-section-heading"><div><p className="v2-kicker">Other ways to clean</p><h2>Choose only when today’s plan is not what you need.</h2></div></div>
+      <div className="v2-section-heading"><h2>Start another clean</h2></div>
       <div className="v2-mode-grid">
-        <button className="v2-mode-card" disabled={!weeklyPlan.length} onClick={() => onStart({ title: "Weekly reset", mode: "weekly", items: weeklyPlan })} type="button"><span className="v2-mode-icon"><Icon name="weekly"/></span><div><strong>Weekly reset</strong><p>Complete the essential weekly work across your home.</p><small>{weeklyPlan.length ? `${weeklyPlan.length} tasks` : "No weekly tasks selected"}</small></div><Icon name="chevron" size={19}/></button>
-        <button className="v2-mode-card" onClick={onOpenRoomPicker} type="button"><span className="v2-mode-icon"><Icon name="room"/></span><div><strong>Clean a room</strong><p>Choose one room and complete its real cleaning checklist.</p><small>{state.rooms.length} rooms set up</small></div><Icon name="chevron" size={19}/></button>
-        <button className="v2-mode-card" disabled={!guestPlan.length} onClick={() => onStart({ title: "Guests are coming", mode: "guest", items: guestPlan })} type="button"><span className="v2-mode-icon"><Icon name="guest"/></span><div><strong>Guests are coming</strong><p>Prioritize the entrance, bathroom, shared rooms, and kitchen.</p><small>{guestPlan.length ? `${guestPlan.length} priority tasks` : "No guest tasks selected"}</small></div><Icon name="chevron" size={19}/></button>
+        <button className="v2-mode-card" disabled={!weeklyPlan.length} onClick={() => onStart({ title: "Weekly reset", mode: "weekly", items: weeklyPlan })} type="button"><div><strong>Weekly reset</strong><p>Essential weekly work across the home.</p><small>{weeklyPlan.length ? `${weeklyPlan.length} tasks` : "No weekly tasks selected"}</small></div><Icon name="chevron" size={19}/></button>
+        <button className="v2-mode-card" onClick={onOpenRoomPicker} type="button"><div><strong>Clean a room</strong><p>Choose a room and work through its checklist.</p><small>{state.rooms.length} rooms set up</small></div><Icon name="chevron" size={19}/></button>
+        <button className="v2-mode-card" disabled={!guestPlan.length} onClick={() => onStart({ title: "Guests are coming", mode: "guest", items: guestPlan })} type="button"><div><strong>Guests are coming</strong><p>Prioritize the spaces visitors will use.</p><small>{guestPlan.length ? `${guestPlan.length} priority tasks` : "No guest tasks selected"}</small></div><Icon name="chevron" size={19}/></button>
       </div>
     </section>
   </main>;
@@ -548,7 +546,7 @@ function PlanView({ state }) {
   const days = Array.from({ length: 7 }, (_, offset) => addDays(dateKey(), offset));
 
   return <main className="v2-main v2-plan-page">
-    <section className="v2-page-heading"><p className="v2-kicker">Automatic plan</p><h1>Your cleaning, already decided.</h1><p>Tasks return when they are due. Completing something reschedules it automatically.</p></section>
+    <section className="v2-page-heading"><h1>Cleaning plan</h1><p>Tasks return automatically after you complete them.</p></section>
     <section className="v2-week-strip">
       {days.map((day, index) => {
         const count = firstWeek.filter((item) => item.nextDue === day).length;
@@ -583,7 +581,7 @@ function PlanView({ state }) {
 function SettingsView({ state, onEditSetup, onImport, onReset, onToggleAppearance }) {
   const inputRef = useRef(null);
   return <main className="v2-main v2-settings-page">
-    <section className="v2-page-heading"><p className="v2-kicker">Settings</p><h1>Home and data.</h1><p>Change the setup that drives your plan or protect the local data on this device.</p></section>
+    <section className="v2-page-heading"><h1>Settings</h1><p>Manage your home, appearance, and local data.</p></section>
     <section className="v2-settings-group">
       <h2>Your home</h2>
       <button className="v2-settings-row" onClick={() => onEditSetup(1)} type="button"><span className="v2-settings-icon"><Icon name="home"/></span><div><strong>Rooms</strong><span>{state.homeName} · {state.rooms.length} rooms</span></div><Icon name="chevron"/></button>
@@ -714,7 +712,7 @@ function FocusedClean({ backgroundInert = false, session, onChange, onDiscard, o
 function AppShell({ backgroundInert = false, children, currentView, onNavigate, state }) {
   const navItems = [["home", "Home"], ["plan", "Plan"], ["settings", "Settings"]];
   return <div className="v2-app-shell" inert={backgroundInert ? true : undefined}>
-    <header className="v2-app-header"><div className="v2-brand"><span className="v2-brand-mark"><Icon name="check" size={19}/></span><div><strong>Clean30</strong><small>{state.homeName}</small></div></div><span className="v2-date">{formatLongDate()}</span></header>
+    <header className="v2-app-header"><div className="v2-brand"><div><strong>Clean30</strong><small>{state.homeName}</small></div></div><span className="v2-date">{formatLongDate()}</span></header>
     <nav aria-label="Primary navigation" className="v2-nav">{navItems.map(([id, label]) => <button aria-current={currentView === id ? "page" : undefined} className={currentView === id ? "active" : ""} key={id} onClick={() => onNavigate(id)} type="button"><Icon name={id}/><span>{label}</span></button>)}</nav>
     {children}
   </div>;
