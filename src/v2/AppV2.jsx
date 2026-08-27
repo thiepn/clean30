@@ -6,7 +6,10 @@ import {
   buildRoomPlan,
   buildTodayPlan,
   buildWeeklyReset,
+  cadenceLabel,
+  cadencePresets,
   completeSession,
+  createCustomRoomItem,
   createCustomTask,
   createFreshV2State,
   createRoom,
@@ -17,7 +20,9 @@ import {
   futureTasks,
   loadV2StateResult,
   normalizeV2State,
+  normalizeCadence,
   overdueTasks,
+  realignDueDate,
   roomTypeById,
   roomTypes,
   saveV2State,
@@ -27,14 +32,6 @@ import {
   validateV2Backup,
   weekdayLabels
 } from "./model.js";
-
-const cadenceLabels = {
-  7: "Weekly",
-  14: "Every 2 weeks",
-  30: "Monthly",
-  60: "Every 2 months",
-  90: "Seasonally"
-};
 
 const iconPaths = {
   home: <><path d="m4 11 8-7 8 7"/><path d="M6.5 10v10h11V10"/><path d="M10 20v-6h4v6"/></>,
@@ -64,6 +61,18 @@ function Icon({ name, size = 22 }) {
 
 function downloadJson(payload, fileName) {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadText(payload, fileName) {
+  const blob = new Blob([String(payload || "")], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -114,6 +123,28 @@ function seedRooms() {
   );
 }
 
+function FrequencyControl({ disabled = false, label, onChange, value }) {
+  const numericValue = normalizeCadence(value);
+  const [custom, setCustom] = useState(!cadencePresets.includes(numericValue));
+
+  function chooseFrequency(event) {
+    if (event.target.value === "custom") {
+      setCustom(true);
+      return;
+    }
+    setCustom(false);
+    onChange(normalizeCadence(event.target.value));
+  }
+
+  return <div className="v2-frequency-control">
+    <select aria-label={label} disabled={disabled} onChange={chooseFrequency} value={custom ? "custom" : numericValue}>
+      {cadencePresets.map((days) => <option key={days} value={days}>{cadenceLabel(days)}</option>)}
+      <option value="custom">Custom interval…</option>
+    </select>
+    {custom ? <label className="v2-custom-frequency"><span>Every</span><input aria-label={`${label} in days`} disabled={disabled} max="730" min="1" onChange={(event) => onChange(normalizeCadence(event.target.value))} type="number" value={numericValue}/><span>days</span></label> : null}
+  </div>;
+}
+
 function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
   const editing = Boolean(initialState?.onboardingComplete);
   const directEdit = editing && Number.isInteger(startStep);
@@ -131,6 +162,8 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
   const [customTaskTitle, setCustomTaskTitle] = useState("");
   const [customTaskCadence, setCustomTaskCadence] = useState(7);
   const [customTaskError, setCustomTaskError] = useState("");
+  const [customRoomName, setCustomRoomName] = useState("");
+  const [customItemDrafts, setCustomItemDrafts] = useState({});
   const totalSteps = 5;
 
   useEffect(() => {
@@ -150,6 +183,14 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
     setRooms((current) => [...current, createRoom(typeId, current)]);
   }
 
+  function addCustomRoom(event) {
+    event.preventDefault();
+    const name = customRoomName.trim();
+    if (!name) return;
+    setRooms((current) => [...current, createRoom("other", current, name)]);
+    setCustomRoomName("");
+  }
+
   function updateRoom(roomId, updates) {
     setRooms((current) => current.map((room) => room.id === roomId ? { ...room, ...updates } : room));
   }
@@ -166,6 +207,24 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
     }));
   }
 
+  function addCustomItem(event, roomId) {
+    event.preventDefault();
+    const name = String(customItemDrafts[roomId] || "").trim();
+    if (!name) return;
+    setRooms((current) => current.map((room) => {
+      if (room.id !== roomId) return room;
+      if ((room.customItems || []).some((item) => item.name.toLowerCase() === name.toLowerCase())) return room;
+      return { ...room, customItems: [...(room.customItems || []), createCustomRoomItem(name)] };
+    }));
+    setCustomItemDrafts((current) => ({ ...current, [roomId]: "" }));
+  }
+
+  function removeCustomItem(roomId, itemId) {
+    setRooms((current) => current.map((room) => room.id === roomId
+      ? { ...room, customItems: (room.customItems || []).filter((item) => item.id !== itemId) }
+      : room));
+  }
+
   function buildTasksFromHome() {
     const effectiveCleanDays = scheduleStyle === "one-day" ? [cleanDays[0]] : cleanDays;
     const generated = buildConfiguredTasks(rooms, effectiveCleanDays);
@@ -179,7 +238,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
         ...item,
         enabled: previous.enabled,
         cadence: previous.cadence,
-        nextDue: scheduleChanged ? item.nextDue : previous.nextDue,
+        nextDue: scheduleChanged ? realignDueDate(previous.nextDue, previous.cadence, effectiveCleanDays) : previous.nextDue,
         roomName: rooms.find((room) => room.id === item.roomId)?.name || item.roomName
       };
     });
@@ -189,9 +248,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
       .map((item) => ({
         ...item,
         roomName: rooms.find((room) => room.id === item.roomId)?.name || item.roomName,
-        nextDue: scheduleChanged
-          ? createCustomTask(rooms.find((room) => room.id === item.roomId), item.title, item.cadence, effectiveCleanDays).nextDue
-          : item.nextDue
+        nextDue: scheduleChanged ? realignDueDate(item.nextDue, item.cadence, effectiveCleanDays) : item.nextDue
       }));
     const merged = [...mergedRecommendations, ...customTasks];
     setTaskDraft(merged);
@@ -204,7 +261,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
     setStep((current) => Math.min(totalSteps - 1, current + 1));
   }
 
-  function finish() {
+  function finish(startFirstClean = false) {
     const invalidCustom = taskDraft.find((item) => item.custom && !item.title.trim());
     if (invalidCustom) {
       setCustomTaskError("Custom task names cannot be empty.");
@@ -214,7 +271,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
     }
     const rebuilt = buildTasksFromHome();
     const effectiveCleanDays = scheduleStyle === "one-day" ? [cleanDays[0]] : cleanDays;
-    onComplete({ homeName, rooms, tasks: rebuilt, cleanDays: effectiveCleanDays, scheduleStyle });
+    onComplete({ homeName, rooms, tasks: rebuilt, cleanDays: effectiveCleanDays, scheduleStyle }, { directEdit, startFirstClean });
   }
 
   function chooseScheduleStyle(style) {
@@ -309,8 +366,13 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
             <label className="v2-field-label" htmlFor="home-name">Home name</label>
             <input className="v2-text-input" id="home-name" maxLength="40" onChange={(event) => setHomeName(event.target.value)} value={homeName}/>
             <div className="v2-room-add-grid">
-              {roomTypes.map((type) => <button className="v2-room-add" key={type.id} onClick={() => addRoom(type.id)} type="button"><span>+</span>{type.label}</button>)}
+              {roomTypes.filter((type) => type.id !== "other").map((type) => <button className="v2-room-add" key={type.id} onClick={() => addRoom(type.id)} type="button"><span>+</span>{type.label}</button>)}
             </div>
+            <form className="v2-custom-room-form" onSubmit={addCustomRoom}>
+              <div><strong>Add any other room</strong><span>Hallway, children’s room, garage, storage, or anything unique to your home.</span></div>
+              <input aria-label="Custom room name" maxLength="40" onChange={(event) => setCustomRoomName(event.target.value)} placeholder="e.g. Hallway" value={customRoomName}/>
+              <button className="v2-button secondary" disabled={!customRoomName.trim()} type="submit">Add room</button>
+            </form>
             <div className="v2-room-list">
               {rooms.map((room) => (
                 <div className="v2-room-row" key={room.id}>
@@ -336,7 +398,12 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
                   <div><h2>{room.name}</h2><span>{type.label}</span></div>
                   <div className="v2-chip-grid">
                     {type.features.map(([id, label]) => <button aria-pressed={room.features.includes(id)} className={room.features.includes(id) ? "v2-choice-chip selected" : "v2-choice-chip"} key={id} onClick={() => toggleFeature(room.id, id)} type="button"><span className="v2-chip-check">{room.features.includes(id) ? "✓" : "+"}</span>{label}</button>)}
+                    {(room.customItems || []).map((item) => <span className="v2-custom-item-chip" key={item.id}>{item.name}<button aria-label={`Remove ${item.name} from ${room.name}`} onClick={() => removeCustomItem(room.id, item.id)} type="button"><Icon name="close" size={14}/></button></span>)}
                   </div>
+                  <form className="v2-custom-item-form" onSubmit={(event) => addCustomItem(event, room.id)}>
+                    <input aria-label={`Add an item or surface to ${room.name}`} maxLength="60" onChange={(event) => setCustomItemDrafts((current) => ({ ...current, [room.id]: event.target.value }))} placeholder="Add any item or surface…" value={customItemDrafts[room.id] || ""}/>
+                    <button className="v2-button secondary" disabled={!String(customItemDrafts[room.id] || "").trim()} type="submit">Add</button>
+                  </form>
                 </article>;
               })}
             </div>
@@ -352,24 +419,29 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
               {rooms.map((room) => <button aria-selected={room.id === taskRoomId} className={room.id === taskRoomId ? "active" : ""} key={room.id} onClick={() => setTaskRoomId(room.id)} role="tab" type="button">{room.name}</button>)}
             </div>
             <div className="v2-task-review-list">
-              {activeRoomTasks.map((item) => (
+              {activeRoomTasks.filter((item) => item.enabled).map((item) => (
                 <div className={`v2-task-review${item.enabled ? " enabled" : ""}${item.custom ? " custom" : ""}`} key={item.id}>
                   <button aria-label={`${item.enabled ? "Remove" : "Add"} ${item.title}`} aria-pressed={item.enabled} className="v2-task-toggle" onClick={() => setTaskDraft((current) => current.map((task) => task.id === item.id ? { ...task, enabled: !task.enabled } : task))} type="button">{item.enabled ? "✓" : "+"}</button>
-                  <div>{item.custom ? <input aria-label={`Name for ${item.title}`} className="v2-task-title-input" maxLength="90" onChange={(event) => updateCustomTask(item.id, { title: event.target.value })} value={item.title}/> : <strong>{item.title}</strong>}<span>{item.custom ? "Your task" : item.feature ? "Matched to your home" : "Recommended for this room"}</span></div>
+                  <div>{item.custom ? <input aria-label={`Name for ${item.title}`} className="v2-task-title-input" maxLength="90" onChange={(event) => updateCustomTask(item.id, { title: event.target.value })} value={item.title}/> : <strong>{item.title}</strong>}<span>{item.custom ? "Your task" : item.generatedFromItem ? "Suggested from your room items" : item.feature ? "Matched to your home" : "Recommended for this room"}</span></div>
                   {item.custom ? <select aria-label={`Room for ${item.title}`} disabled={!item.enabled} onChange={(event) => updateCustomTask(item.id, { roomId: event.target.value })} value={item.roomId}>{rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}</select> : null}
-                  <select aria-label={`Frequency for ${item.title}`} disabled={!item.enabled} onChange={(event) => setTaskDraft((current) => current.map((task) => task.id === item.id ? { ...task, cadence: Number(event.target.value) } : task))} value={item.cadence}>
-                    {[7, 14, 30, 60, 90].map((days) => <option key={days} value={days}>{cadenceLabels[days]}</option>)}
-                  </select>
+                  <FrequencyControl disabled={!item.enabled} label={`Frequency for ${item.title}`} onChange={(cadence) => setTaskDraft((current) => current.map((task) => task.id === item.id ? { ...task, cadence } : task))} value={item.cadence}/>
                   {item.custom ? <button aria-label={`Delete ${item.title}`} className="v2-icon-button subtle" onClick={() => removeCustomTask(item.id)} type="button"><Icon name="trash" size={18}/></button> : null}
                 </div>
               ))}
             </div>
+            {activeRoomTasks.some((item) => !item.enabled) ? <details className="v2-optional-tasks">
+              <summary>Add optional tasks <span>{activeRoomTasks.filter((item) => !item.enabled).length}</span></summary>
+              <div className="v2-task-review-list">
+                {activeRoomTasks.filter((item) => !item.enabled).map((item) => <div className="v2-task-review" key={item.id}>
+                  <button aria-label={`Add ${item.title}`} aria-pressed="false" className="v2-task-toggle" onClick={() => setTaskDraft((current) => current.map((task) => task.id === item.id ? { ...task, enabled: true } : task))} type="button">+</button>
+                  <div><strong>{item.title}</strong><span>{item.generatedFromItem ? "Suggested from your room items" : item.feature ? "Matched to your home" : "Optional for this room"}</span></div>
+                </div>)}
+              </div>
+            </details> : null}
             <form className="v2-custom-task-form" onSubmit={addCustomTask}>
               <div><strong>Add your own task</strong><span>For {rooms.find((room) => room.id === taskRoomId)?.name || "this room"}</span></div>
               <input aria-label="Custom cleaning task" maxLength="90" onChange={(event) => setCustomTaskTitle(event.target.value)} placeholder="e.g. Clean the coffee machine" value={customTaskTitle}/>
-              <select aria-label="Custom task frequency" onChange={(event) => setCustomTaskCadence(Number(event.target.value))} value={customTaskCadence}>
-                {[7, 14, 30, 60, 90].map((days) => <option key={days} value={days}>{cadenceLabels[days]}</option>)}
-              </select>
+              <FrequencyControl label="Custom task frequency" onChange={setCustomTaskCadence} value={customTaskCadence}/>
               <button className="v2-button secondary" disabled={!customTaskTitle.trim()} type="submit">Add task</button>
             </form>
             {customTaskError ? <p className="v2-inline-error" role="alert">{customTaskError}</p> : null}
@@ -381,7 +453,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
           <section>
             <p className="v2-kicker">Your schedule</p>
             <h1>When should cleaning appear?</h1>
-            <p className="v2-lead compact">Choose days when you realistically clean. Clean30 will place weekly and monthly work on those days.</p>
+            <p className="v2-lead compact">Choose days when you realistically do larger cleaning. Daily and frequent tasks follow their own interval, while weekly and monthly work lands on these days.</p>
             <div className="v2-schedule-options">
               <button aria-pressed={scheduleStyle === "spread"} className={scheduleStyle === "spread" ? "selected" : ""} onClick={() => chooseScheduleStyle("spread")} type="button"><strong>Spread it through the week</strong><span>A few meaningful tasks on each cleaning day. Recommended.</span></button>
               <button aria-pressed={scheduleStyle === "one-day"} className={scheduleStyle === "one-day" ? "selected" : ""} onClick={() => chooseScheduleStyle("one-day")} type="button"><strong>One main cleaning day</strong><span>Keep weekly work together on one chosen day.</span></button>
@@ -397,7 +469,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
 
       <footer className="v2-setup-footer">
         {directEdit ? <button className="v2-button secondary" onClick={onCancel} type="button">Cancel</button> : step > (editing ? 1 : 0) ? <button className="v2-button secondary" onClick={() => setStep((current) => Math.max(editing ? 1 : 0, current - 1))} type="button"><Icon name="back" size={18}/>Back</button> : <span/>}
-        {directEdit ? <button className="v2-button primary" disabled={step === 1 && !rooms.length} onClick={finish} type="button">Save changes<Icon name="check" size={18}/></button> : step < totalSteps - 1 ? <button className="v2-button primary" disabled={step === 1 && !rooms.length} onClick={goNext} type="button">{step === 0 ? "Set up my home" : "Continue"}<Icon name="arrow" size={18}/></button> : <button className="v2-button primary" onClick={finish} type="button">{editing ? "Save changes" : "Create my plan"}<Icon name="check" size={18}/></button>}
+        {directEdit ? <button className="v2-button primary" disabled={step === 1 && !rooms.length} onClick={() => finish(false)} type="button">Save changes<Icon name="check" size={18}/></button> : step < totalSteps - 1 ? <button className="v2-button primary" disabled={step === 1 && !rooms.length} onClick={goNext} type="button">{step === 0 ? "Set up my home" : "Continue"}<Icon name="arrow" size={18}/></button> : editing ? <button className="v2-button primary" onClick={() => finish(false)} type="button">Save changes<Icon name="check" size={18}/></button> : <div className="v2-setup-finish-actions"><button className="v2-button secondary" onClick={() => finish(false)} type="button">Create for later</button><button className="v2-button primary" onClick={() => finish(true)} type="button">Create and start<Icon name="arrow" size={18}/></button></div>}
       </footer>
     </div>
   );
@@ -583,6 +655,18 @@ function ConfirmModal({ confirmLabel = "Confirm", message, onCancel, onConfirm, 
   return <div className="v2-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel(); }} role="presentation"><section aria-labelledby="confirm-title" aria-modal="true" className="v2-confirm" ref={dialogRef} role="alertdialog"><h2 id="confirm-title">{title}</h2><p>{message}</p><div><button autoFocus className="v2-button secondary" onClick={onCancel} type="button">Cancel</button><button className="v2-button danger" onClick={onConfirm} type="button">{confirmLabel}</button></div></section></div>;
 }
 
+function RecoveryScreen({ onDownload, onStartFresh }) {
+  return <main className="v2-recovery-screen">
+    <section>
+      <span className="v2-intro-mark"><Icon name="download" size={30}/></span>
+      <p className="v2-kicker">Recovery needed</p>
+      <h1>Your saved Clean30 data could not be read.</h1>
+      <p>Clean30 has not overwritten it. Download the original data before starting fresh so it may still be recoverable later.</p>
+      <div><button className="v2-button primary" onClick={onDownload} type="button"><Icon name="download"/>Download recovery data</button><button className="v2-button secondary" onClick={onStartFresh} type="button">Start with a fresh setup</button></div>
+    </section>
+  </main>;
+}
+
 function FocusedClean({ backgroundInert = false, session, onChange, onDiscard, onFinish, onPause }) {
   const [reviewing, setReviewing] = useState(false);
   const handled = session.items.filter((item) => item.done || item.skipped).length;
@@ -640,6 +724,7 @@ export default function AppV2() {
   const initialLoadRef = useRef(null);
   if (!initialLoadRef.current) initialLoadRef.current = loadV2StateResult();
   const [state, setState] = useState(initialLoadRef.current.state);
+  const [recoveryPayload, setRecoveryPayload] = useState(initialLoadRef.current.recoveryPayload || null);
   const [view, setView] = useState("home");
   const [setupOpen, setSetupOpen] = useState(false);
   const [setupStep, setSetupStep] = useState(null);
@@ -648,12 +733,21 @@ export default function AppV2() {
   const [confirmation, setConfirmation] = useState(null);
   const [notice, setNotice] = useState(initialLoadRef.current.error || "");
   const [storageError, setStorageError] = useState("");
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const persistenceReadyRef = useRef(!initialLoadRef.current.recoveryPayload);
 
   useEffect(() => {
+    if (!persistenceReadyRef.current) return;
     const result = saveV2State(state);
     setStorageError(result.ok ? "" : result.error);
     document.documentElement.dataset.clean30Theme = state.appearance;
   }, [state]);
+
+  useEffect(() => {
+    const handleUpdate = () => setUpdateAvailable(true);
+    window.addEventListener("clean30:updateAvailable", handleUpdate);
+    return () => window.removeEventListener("clean30:updateAvailable", handleUpdate);
+  }, []);
 
   useEffect(() => {
     if (!state.onboardingComplete) return;
@@ -676,17 +770,26 @@ export default function AppV2() {
     return () => window.removeEventListener("beforeunload", protectUnsavedChanges);
   }, [storageError]);
 
-  function completeSetup(config) {
-    setState((current) => normalizeV2State({
-      ...current,
-      ...config,
-      setupDate: current.setupDate || dateKey(),
-      onboardingComplete: true,
-      activeSession: null
-    }));
+  function completeSetup(config, { directEdit = false, startFirstClean = false } = {}) {
+    setState((current) => {
+      const configured = normalizeV2State({
+        ...current,
+        ...config,
+        setupDate: current.setupDate || dateKey(),
+        onboardingComplete: true,
+        activeSession: null
+      });
+      if (!startFirstClean) return configured;
+      const firstItems = buildTodayPlan(configured);
+      const fallbackItems = firstItems.length ? firstItems : buildWeeklyReset(configured);
+      return fallbackItems.length
+        ? { ...configured, activeSession: createSession("First clean", "today", fallbackItems) }
+        : configured;
+    });
     setSetupOpen(false);
     setSetupStep(null);
-    setView("home");
+    setView(directEdit ? "settings" : "home");
+    if (startFirstClean) setFocusOpen(true);
   }
 
   function startClean(plan, resume = false) {
@@ -774,11 +877,20 @@ export default function AppV2() {
     });
   }
 
+  function startFreshAfterRecovery() {
+    persistenceReadyRef.current = true;
+    setRecoveryPayload(null);
+    setState(createFreshV2State());
+    setNotice("Fresh setup opened. Your recovery download remains separate.");
+  }
+
+  if (recoveryPayload) return <div className="v2-app" data-theme={state.appearance}><RecoveryScreen onDownload={() => downloadText(recoveryPayload, `clean30-recovery-${dateKey()}.txt`)} onStartFresh={startFreshAfterRecovery}/></div>;
+
   if (!state.onboardingComplete) return <div className="v2-app" data-theme={state.appearance}>{storageError ? <div className="v2-storage-warning" role="alert">{storageError}</div> : null}<SetupFlow initialState={state} onComplete={completeSetup}/>{notice ? <div aria-live="polite" className="v2-toast" role="status">{notice}</div> : null}</div>;
 
   return <div className="v2-app" data-theme={state.appearance}>
     {storageError ? <div className="v2-storage-warning" role="alert">{storageError}</div> : null}
-    {focusOpen && state.activeSession ? <FocusedClean backgroundInert={Boolean(confirmation)} session={state.activeSession} onChange={(activeSession) => setState((current) => ({ ...current, activeSession }))} onDiscard={requestDiscardSession} onFinish={finishClean} onPause={() => setFocusOpen(false)}/> : <AppShell backgroundInert={roomPickerOpen || Boolean(confirmation)} currentView={view} onNavigate={setView} state={state}>
+    {focusOpen && state.activeSession ? <FocusedClean backgroundInert={Boolean(confirmation)} session={state.activeSession} onChange={(activeSession) => setState((current) => ({ ...current, activeSession }))} onDiscard={requestDiscardSession} onFinish={finishClean} onPause={() => setFocusOpen(false)}/> : <AppShell backgroundInert={setupOpen || roomPickerOpen || Boolean(confirmation)} currentView={view} onNavigate={setView} state={state}>
       {view === "home" ? <HomeView state={state} onDiscardSession={requestDiscardSession} onOpenRoomPicker={() => setRoomPickerOpen(true)} onStart={startClean} onViewPlan={() => setView("plan")}/> : null}
       {view === "plan" ? <PlanView state={state}/> : null}
       {view === "settings" ? <SettingsView state={state} onEditSetup={requestEditSetup} onImport={importBackup} onReset={requestReset} onToggleAppearance={() => setState((current) => ({ ...current, appearance: current.appearance === "dark" ? "light" : "dark" }))}/> : null}
@@ -788,5 +900,6 @@ export default function AppV2() {
     {roomPickerOpen ? <RoomPicker rooms={state.rooms} state={state} onClose={() => setRoomPickerOpen(false)} onSelect={(room) => { setRoomPickerOpen(false); startClean({ title: room.name, mode: "room", items: buildRoomPlan(state, room.id) }); }}/> : null}
     {confirmation ? <ConfirmModal confirmLabel={confirmation.confirmLabel} message={confirmation.message} onCancel={() => setConfirmation(null)} onConfirm={() => { confirmation.onConfirm?.(); setConfirmation(null); }} title={confirmation.title}/> : null}
     {notice ? <div aria-live="polite" className="v2-toast" role="status">{notice}</div> : null}
+    {updateAvailable ? <div className="v2-update-toast" role="status"><div><strong>Clean30 update ready</strong><span>Reload to use the newest version.</span></div><button className="v2-button primary" onClick={() => window.dispatchEvent(new CustomEvent("clean30:applyUpdate"))} type="button">Update now</button><button aria-label="Dismiss update" className="v2-icon-button" onClick={() => setUpdateAvailable(false)} type="button"><Icon name="close" size={18}/></button></div> : null}
   </div>;
 }

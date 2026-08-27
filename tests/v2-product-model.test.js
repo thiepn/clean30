@@ -7,7 +7,9 @@ import {
   buildRoomPlan,
   buildTodayPlan,
   buildWeeklyReset,
+  cadenceLabel,
   completeSession,
+  createCustomRoomItem,
   createFreshV2State,
   createCustomTask,
   createRoom,
@@ -16,7 +18,9 @@ import {
   futureTasks,
   loadV2StateResult,
   normalizeV2State,
+  nextTaskDue,
   overdueTasks,
+  realignDueDate,
   saveV2State,
   taskCatalog,
   tasksForRoom,
@@ -52,12 +56,31 @@ function configuredState() {
 
 test("the catalog contains substantive recurring cleaning rather than time-filler prompts", () => {
   assert.ok(taskCatalog.length >= 50);
-  assert.ok(taskCatalog.every((item) => item.cadence >= 7));
+  assert.ok(taskCatalog.every((item) => item.cadence >= 1));
+  assert.equal(taskCatalog.find((item) => item.key === "kitchen-dishes").cadence, 1);
   const titles = taskCatalog.map((item) => item.title.toLowerCase()).join(" ");
   assert.doesNotMatch(titles, /open (a |the )?window|five minutes|5 minutes/);
   assert.match(titles, /toilet/);
   assert.match(titles, /oven/);
   assert.match(titles, /refrigerator/);
+});
+
+test("setup supports arbitrary rooms and room-specific items", () => {
+  const hallway = createRoom("other", [], "Upstairs hallway");
+  hallway.customItems.push(createCustomRoomItem("display cabinet"));
+  const tasks = tasksForRoom(hallway);
+  assert.equal(hallway.name, "Upstairs hallway");
+  assert.ok(tasks.some((item) => item.title === "Clean display cabinet"));
+  assert.ok(tasks.some((item) => item.key === "other-floor"));
+  const restored = normalizeV2State({ ...configuredState(), rooms: [hallway], tasks });
+  assert.equal(restored.rooms[0].customItems[0].name, "display cabinet");
+});
+
+test("task intervals support daily work and arbitrary custom day counts", () => {
+  assert.equal(cadenceLabel(1), "Daily");
+  assert.equal(cadenceLabel(11), "Every 11 days");
+  assert.equal(nextTaskDue(today, 1, [3]), "2026-08-27");
+  assert.equal(nextTaskDue(today, 11, [3]), "2026-09-09");
 });
 
 test("room features control which real tasks are created", () => {
@@ -122,6 +145,18 @@ test("purposeful modes are derived from the configured home", () => {
   assert.ok(buildGuestPlan(state).length > 0);
   assert.ok(buildGuestPlan(state).every((item) => item.guest));
   assert.ok(buildRoomPlan(state, kitchen.id).every((item) => item.roomId === kitchen.id));
+});
+
+test("weekly reset respects due dates and excludes frequent upkeep", () => {
+  const state = configuredState();
+  state.tasks = state.tasks.map((item) => ({ ...item, enabled: true, essential: true, nextDue: "2026-09-30" }));
+  const daily = state.tasks.find((item) => item.cadence < 7);
+  const weekly = state.tasks.find((item) => item.cadence === 7);
+  daily.nextDue = today;
+  weekly.nextDue = "2026-08-27";
+  const reset = buildWeeklyReset(state, today);
+  assert.ok(!reset.some((item) => item.id === daily.id));
+  assert.ok(reset.some((item) => item.id === weekly.id));
 });
 
 test("finishing a clean reschedules completed work and leaves skipped work due", () => {
@@ -194,15 +229,37 @@ test("storage failures recover safely and report that data was not persisted", (
   }
 });
 
+test("unreadable saved JSON is preserved for recovery instead of overwritten", () => {
+  const previousWindow = globalThis.window;
+  try {
+    globalThis.window = { localStorage: {
+      getItem() { return "{broken-json"; },
+      setItem() { throw new Error("recovery data must not be overwritten during load"); }
+    } };
+    const loaded = loadV2StateResult();
+    assert.equal(loaded.recoveryPayload, "{broken-json");
+    assert.match(loaded.error, /protected/i);
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
 test("completed work returns on a configured cleaning day", () => {
   const state = configuredState();
-  const selected = [{ ...state.tasks[0], nextDue: "2026-08-27" }];
+  const weeklyTask = state.tasks.find((item) => item.cadence >= 7);
+  const selected = [{ ...weeklyTask, nextDue: "2026-08-27" }];
   state.tasks = state.tasks.map((item) => item.id === selected[0].id ? selected[0] : item);
   const session = createSession("Kitchen", "room", selected);
   session.items[0].done = true;
   const result = completeSession(state, session, "2026-08-27T12:00:00.000Z");
   const rescheduled = result.tasks.find((item) => item.id === selected[0].id);
   assert.equal(new Date(`${rescheduled.nextDue}T12:00:00`).getDay(), 3);
+});
+
+test("changing cleaning days realigns existing work without pulling it earlier", () => {
+  assert.equal(realignDueDate("2026-09-02", 7, [5], today), "2026-09-04");
+  assert.equal(realignDueDate("2026-09-02", 1, [5], today), "2026-09-02");
 });
 
 test("v2 backup data validates and normalizes", () => {
@@ -226,6 +283,10 @@ test("the shipped interface is the home-plan redesign", async () => {
   assert.match(app, /Review choices/);
   assert.match(app, /onEditSetup\(1\).*onEditSetup\(3\).*onEditSetup\(4\)/s);
   assert.match(app, /function useModalFocus/);
+  assert.match(app, /Add any other room/);
+  assert.match(app, /Custom interval/);
+  assert.match(app, /Create and start/);
+  assert.match(app, /Recovery needed/);
   assert.match(app, /inert=\{backgroundInert \? true : undefined\}/);
   assert.doesNotMatch(app, /5 minutes|10 minutes|15 minutes|Quick Start|Routines/);
   assert.doesNotMatch(main, /^import ["']\.\/styles(?:\.css|\/universal-)/m);

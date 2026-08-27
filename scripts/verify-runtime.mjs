@@ -122,7 +122,7 @@ try {
   const swResult = await fetchRequired(`${basePath}sw.js`, "Service worker");
   const serviceWorker = Buffer.from(swResult.body).toString("utf8");
   assert.match(serviceWorker, /const BASE_PATH = "\/clean30\/";/, "Served service worker must retain the deployment base.");
-  assert.match(serviceWorker, /app-shell-v22/, "Served service worker must use the release-ready v22 cache boundary.");
+  assert.match(serviceWorker, /app-shell-v23/, "Served service worker must use the flexible-setup v23 cache boundary.");
   assert.match(serviceWorker, /getNavigationFallback/, "Served service worker must retain the offline navigation fallback.");
 
   const startUrlResponse = await fetch(`${baseUrl}${manifest.start_url}`, { redirect: "follow" });

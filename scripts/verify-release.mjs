@@ -118,8 +118,8 @@ assert.ok(cssAsset, "Built CSS asset must be discoverable.");
 assert.ok(statSync(resolve(distDir, cssAsset)).size < 45_000, "Production CSS must not include the legacy stylesheet stack.");
 assert.match(
   serviceWorker,
-  /app-shell-v22/,
-  "The release-ready redesign must use the v22 app-shell cache boundary."
+  /app-shell-v23/,
+  "The flexible-setup release must use the v23 app-shell cache boundary."
 );
 assert.match(
   serviceWorker,
@@ -210,7 +210,7 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
-console.log("- release-ready v22 service-worker cache boundary verified");
+console.log("- flexible-setup v23 service-worker cache boundary verified");
 console.log("- v2 recovery, correction, and persistence safeguards verified");
 console.log("- legacy production styles excluded");
 console.log(`- dependency floor verified: Vite ${lockedVite}, React ${lockedReact}`);

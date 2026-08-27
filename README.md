@@ -6,9 +6,9 @@ The app is built around a simple contract: describe the home once, then open Cle
 
 ## Product model
 
-1. Add the rooms in the home.
-2. Select what is actually in each room.
-3. Review the resulting weekly, monthly, and seasonal cleaning tasks.
+1. Add preset or arbitrarily named rooms.
+2. Select built-in items and add any custom item or surface in each room.
+3. Review the resulting tasks and choose intervals from daily to yearly, or enter any custom number of days.
 4. Choose realistic cleaning days.
 5. Follow the automatically generated plan.
 
@@ -27,6 +27,8 @@ Four cleaning modes cover the real reasons someone opens the app:
 
 The focused cleaning view presents one task at a time. Completing a task schedules its next due date; skipping it keeps it due. An unfinished clean can be paused, resumed, or discarded without changing the schedule. Before saving, every choice can be reviewed and corrected.
 
+Frequent upkeep such as dishes can recur every day or every few days without being restricted to the larger cleaning days. Weekly, monthly, and deep-care tasks align to the user’s chosen cleaning days. Presets accelerate setup but never prevent a custom room, item, task, or interval.
+
 Automatic plans are intentionally bounded: Today shows the eight oldest due tasks and the special-purpose modes show at most twelve. The remaining backlog is visible and becomes the next batch instead of turning one clean into an overwhelming list.
 
 ## Privacy and resilience
@@ -35,6 +37,7 @@ Automatic plans are intentionally bounded: Today shows the eight oldest due task
 - State is stored in the browser under `clean30_v2_state`.
 - JSON backup export and restore are available in Settings.
 - Invalid saved sessions and malformed backup state are normalized before use.
+- Unreadable local data is protected from automatic overwrite and can be downloaded for recovery.
 - Storage failures stay visible so the user is never told unsaved changes are safe.
 - The PWA app shell works offline after the first successful load.
 - The crash screen can export both v2 data and legacy Clean30 storage.
