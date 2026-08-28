@@ -329,3 +329,17 @@ test("setup grids remain contained on narrow mobile viewports", async () => {
   assert.match(mobile, /\.v2-setup-finish-actions[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(app, /<div className="v2-weekdays">[\s\S]*aria-label=\{label\}/);
 });
+
+test("room setup shows current rooms before add controls and mobile intro rows stay flat", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("../src/v2/AppV2.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/v2/styles.css", import.meta.url), "utf8")
+  ]);
+  assert.match(
+    app,
+    /v2-room-list-heading[\s\S]*className="v2-room-list"[\s\S]*v2-add-room-heading[\s\S]*className="v2-room-add-grid"[\s\S]*v2-custom-room-form/
+  );
+  const theme = styles.split("/* Clean30 minimal interface")[1] || "";
+  assert.match(theme, /\.v2-promise-grid > div,[\s\S]*background:\s*transparent[\s\S]*border-radius:\s*0/);
+  assert.match(theme, /@media \(max-width:\s*680px\)[\s\S]*\.v2-setup-intro\s*\{\s*padding-top:\s*0/);
+});

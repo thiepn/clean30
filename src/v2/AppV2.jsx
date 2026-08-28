@@ -364,14 +364,7 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
             <p className="v2-lead compact">Add every separate room. You can rename duplicates such as Bedroom 1 and Bedroom 2.</p>
             <label className="v2-field-label" htmlFor="home-name">Home name</label>
             <input className="v2-text-input" id="home-name" maxLength="40" onChange={(event) => setHomeName(event.target.value)} value={homeName}/>
-            <div className="v2-room-add-grid">
-              {roomTypes.filter((type) => type.id !== "other").map((type) => <button className="v2-room-add" key={type.id} onClick={() => addRoom(type.id)} type="button"><span>+</span>{type.label}</button>)}
-            </div>
-            <form className="v2-custom-room-form" onSubmit={addCustomRoom}>
-              <div><strong>Add any other room</strong><span>Hallway, children’s room, garage, storage, or anything unique to your home.</span></div>
-              <input aria-label="Custom room name" maxLength="40" onChange={(event) => setCustomRoomName(event.target.value)} placeholder="e.g. Hallway" value={customRoomName}/>
-              <button className="v2-button secondary" disabled={!customRoomName.trim()} type="submit">Add room</button>
-            </form>
+            <div className="v2-room-list-heading"><strong>Your rooms</strong><span aria-live="polite">{rooms.length} {rooms.length === 1 ? "room" : "rooms"}</span></div>
             <div className="v2-room-list">
               {rooms.map((room) => (
                 <div className="v2-room-row" key={room.id}>
@@ -382,6 +375,15 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
               ))}
               {!rooms.length ? <div className="v2-empty-inline">Add at least one room to continue.</div> : null}
             </div>
+            <h2 className="v2-subheading v2-add-room-heading">Add a room</h2>
+            <div className="v2-room-add-grid">
+              {roomTypes.filter((type) => type.id !== "other").map((type) => <button className="v2-room-add" key={type.id} onClick={() => addRoom(type.id)} type="button"><span>+</span>{type.label}</button>)}
+            </div>
+            <form className="v2-custom-room-form" onSubmit={addCustomRoom}>
+              <div><strong>Add any other room</strong><span>Hallway, children’s room, garage, storage, or anything unique to your home.</span></div>
+              <input aria-label="Custom room name" maxLength="40" onChange={(event) => setCustomRoomName(event.target.value)} placeholder="e.g. Hallway" value={customRoomName}/>
+              <button className="v2-button secondary" disabled={!customRoomName.trim()} type="submit">Add room</button>
+            </form>
           </section>
         ) : null}
 

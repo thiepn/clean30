@@ -2145,7 +2145,10 @@ body,
 
 .v2-promise-grid > div,
 .v2-promise-grid > div + div {
+  background: transparent;
   border: 0;
+  border-radius: 0;
+  box-shadow: none;
   min-height: 0;
   padding: 0;
 }
@@ -2181,6 +2184,31 @@ body,
 .v2-room-row {
   grid-template-columns: 1fr auto;
   padding-left: 10px;
+}
+
+.v2-room-list-heading {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  margin: 30px 0 10px;
+  max-width: 650px;
+}
+
+.v2-room-list-heading strong {
+  font-size: .9rem;
+}
+
+.v2-room-list-heading span {
+  color: var(--v2-muted);
+  font-size: .76rem;
+}
+
+.v2-add-room-heading {
+  margin-bottom: 10px;
+}
+
+.v2-add-room-heading + .v2-room-add-grid {
+  margin-top: 0;
 }
 
 .v2-feature-card,
@@ -2457,11 +2485,17 @@ body,
     padding-top: 34px;
   }
 
+  .v2-setup-intro {
+    padding-top: 0;
+  }
+
   .v2-promise-grid {
     gap: 0;
   }
 
   .v2-promise-grid > div {
+    background: transparent;
+    border-radius: 0;
     border-top: 1px solid var(--v2-line);
     padding: 14px 0;
   }

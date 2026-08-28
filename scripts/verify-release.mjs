@@ -133,8 +133,8 @@ assert.ok(cssAsset, "Built CSS asset must be discoverable.");
 assert.ok(statSync(resolve(distDir, cssAsset)).size < 45_000, "Production CSS must not include the legacy stylesheet stack.");
 assert.match(
   serviceWorker,
-  /app-shell-v24/,
-  "The minimal-interface release must use the v24 app-shell cache boundary."
+  /app-shell-v25/,
+  "The mobile setup repair must use the v25 app-shell cache boundary."
 );
 assert.match(
   serviceWorker,
@@ -225,7 +225,7 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
-console.log("- minimal-interface v24 service-worker cache boundary verified");
+console.log("- mobile-setup v25 service-worker cache boundary verified");
 console.log("- non-generated visual-system guardrails verified");
 console.log("- v2 recovery, correction, and persistence safeguards verified");
 console.log("- legacy production styles excluded");
