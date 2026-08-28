@@ -163,7 +163,7 @@ async function completeFreshSetup(page, viewport, { addCustomData = false, fontS
     await page.getByLabel("Custom task frequency").selectOption("custom");
     await page.getByLabel("Custom task frequency in days").fill("2");
     await page.getByRole("button", { name: "Add task", exact: true }).click();
-    const customTaskTitle = page.locator(".v2-task-review.custom input[type='text']").last();
+    const customTaskTitle = page.getByLabel("Custom task title").last();
     await customTaskTitle.waitFor();
     assert.equal(await customTaskTitle.inputValue(), "Clean test surface");
   }
@@ -267,7 +267,7 @@ async function certifyFunctionalFlow(browser) {
 
   await page.getByRole("button", { name: "Home", exact: true }).click();
   await page.getByRole("button", { name: /Clean a room/ }).click();
-  await page.getByRole("dialog", { name: "What needs cleaning?" }).getByRole("button", { name: /^Kitchen\b/ }).click();
+  await page.getByRole("dialog", { name: "What needs cleaning?" }).getByRole("button", { name: /^Kitchen\b/ }).first().click();
   await page.getByRole("button", { name: "Pause", exact: true }).waitFor();
   await assertTouchTargets(page, ".v2-focus-actions button", "Focused-clean primary actions");
   await page.getByRole("button", { name: "Done", exact: true }).click();
@@ -305,7 +305,7 @@ async function certifyFunctionalFlow(browser) {
 
   await page.getByRole("button", { name: "Home", exact: true }).click();
   await page.getByRole("button", { name: /Clean a room/ }).click();
-  await page.getByRole("dialog", { name: "What needs cleaning?" }).getByRole("button", { name: /^Kitchen\b/ }).click();
+  await page.getByRole("dialog", { name: "What needs cleaning?" }).getByRole("button", { name: /^Kitchen\b/ }).first().click();
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await page.getByRole("button", { name: "Discard clean", exact: true }).click();
   const discardDialog = page.getByRole("alertdialog", { name: "Discard this clean?" });
