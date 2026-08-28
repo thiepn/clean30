@@ -2450,6 +2450,7 @@ body,
 
 @media (max-width: 900px) {
   .v2-app-shell {
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 60px 1fr auto;
   }
 
@@ -2680,5 +2681,35 @@ body,
 
   .v2-weekdays button {
     min-width: 0;
+  }
+}
+
+/* RC1 mobile touch-target certification */
+.v2-setup-shell input,
+.v2-setup-shell select,
+.v2-room-add,
+.v2-choice-chip,
+.v2-room-tabs button {
+  min-height: 44px;
+}
+
+.v2-custom-item-chip {
+  min-height: 44px;
+  padding-right: 0;
+}
+
+.v2-custom-item-chip button,
+.v2-task-toggle,
+.v2-task-review .v2-icon-button {
+  height: 44px;
+  min-height: 44px;
+  min-width: 44px;
+  width: 44px;
+}
+
+@media (max-width: 680px) {
+  .v2-task-review,
+  .v2-task-review.custom {
+    grid-template-columns: 44px minmax(0, 1fr);
   }
 }

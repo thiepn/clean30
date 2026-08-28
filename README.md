@@ -46,6 +46,10 @@ Clean30 uses a deliberately quiet interface: system typography, neutral white an
 - The PWA app shell works offline after the first successful load.
 - The crash screen can export both v2 data and legacy Clean30 storage.
 
+## Release status
+
+RC1 browser/device-emulation certification is documented in [RC1_CERTIFICATION.md](RC1_CERTIFICATION.md). A physical-device pass is still required before the stable `v2.0.0` tag.
+
 ## Development
 
 ```bash
@@ -63,4 +67,4 @@ The production app is built from `src/v2/AppV2.jsx`, `src/v2/model.js`, and `src
 
 ## Deployment
 
-The Vite base path is `/clean30/`, matching the GitHub Pages deployment at [thiepn.github.io/clean30](https://thiepn.github.io/clean30/).
+The Vite base path remains `/clean30/`. GitHub Pages serves the production deployment through the custom domain at [thiepn.dev/clean30](https://thiepn.dev/clean30/).

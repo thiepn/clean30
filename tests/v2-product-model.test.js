@@ -343,3 +343,30 @@ test("room setup shows current rooms before add controls and mobile intro rows s
   assert.match(theme, /\.v2-promise-grid > div,[\s\S]*background:\s*transparent[\s\S]*border-radius:\s*0/);
   assert.match(theme, /@media \(max-width:\s*680px\)[\s\S]*\.v2-setup-intro\s*\{\s*padding-top:\s*0/);
 });
+
+test("RC1 keeps the application full-width on phones and restores overlay focus", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("../src/v2/AppV2.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/v2/styles.css", import.meta.url), "utf8")
+  ]);
+  const theme = styles.split("/* Clean30 minimal interface")[1] || "";
+  assert.match(
+    theme,
+    /@media \(max-width:\s*900px\)\s*\{[\s\S]*?\.v2-app-shell\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/
+  );
+  assert.match(app, /const setupRef = useRef\(null\);/);
+  assert.match(app, /useModalFocus\(setupRef,\s*onCancel,\s*editing && Boolean\(onCancel\)\)/);
+  assert.match(app, /role=\{editing \? "dialog" : undefined\}/);
+  assert.match(
+    app,
+    /function useModalFocus\([\s\S]*previousFocusRef[\s\S]*onCloseRef[\s\S]*requestAnimationFrame[\s\S]*isConnected[\s\S]*focus\(\)/
+  );
+  assert.match(
+    theme,
+    /RC1 mobile touch-target certification[\s\S]*?\.v2-custom-item-chip button,[\s\S]*?min-height:\s*44px/
+  );
+  assert.match(
+    theme,
+    /@media \(max-width:\s*680px\)[\s\S]*?grid-template-columns:\s*44px minmax\(0,\s*1fr\)/
+  );
+});

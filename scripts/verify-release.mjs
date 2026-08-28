@@ -128,13 +128,38 @@ const mobileContainment = v2Styles.split("/* Mobile containment")[1] || "";
 assert.ok(mobileContainment, "Narrow setup layouts must retain the mobile containment layer.");
 assert.match(mobileContainment, /\.v2-task-review\.custom[\s\S]*grid-template-columns:\s*36px minmax\(0, 1fr\)/, "Task rows must shrink to the mobile viewport.");
 assert.match(mobileContainment, /\.v2-setup-footer[\s\S]*max-width:\s*100vw/, "The setup footer must stay inside the mobile viewport.");
+assert.match(
+  minimalTheme,
+  /@media \(max-width:\s*900px\)\s*\{[\s\S]*?\.v2-app-shell\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+  "The post-setup shell must collapse to one column on phone and tablet widths."
+);
+assert.match(
+  v2Source,
+  /function useModalFocus\([\s\S]*previousFocusRef[\s\S]*requestAnimationFrame[\s\S]*isConnected[\s\S]*focus\(\)/,
+  "Focus-managed overlays must restore focus after closing."
+);
+assert.match(
+  v2Source,
+  /useModalFocus\(setupRef,\s*onCancel,\s*editing && Boolean\(onCancel\)\)/,
+  "Editing setup must use the shared focus-managed overlay behavior."
+);
+assert.match(
+  minimalTheme,
+  /RC1 mobile touch-target certification[\s\S]*?\.v2-custom-item-chip button,[\s\S]*?min-height:\s*44px/,
+  "Critical setup icon controls must retain a 44px interaction floor."
+);
+assert.match(
+  minimalTheme,
+  /@media \(max-width:\s*680px\)[\s\S]*?grid-template-columns:\s*44px minmax\(0,\s*1fr\)/,
+  "Mobile task rows must reserve the certified 44px toggle column."
+);
 const cssAsset = builtIndex.match(/\/clean30\/(assets\/[^"']+\.css)/)?.[1];
 assert.ok(cssAsset, "Built CSS asset must be discoverable.");
 assert.ok(statSync(resolve(distDir, cssAsset)).size < 45_000, "Production CSS must not include the legacy stylesheet stack.");
 assert.match(
   serviceWorker,
-  /app-shell-v25/,
-  "The mobile setup repair must use the v25 app-shell cache boundary."
+  /app-shell-v26/,
+  "The RC1 release must use the v26 app-shell cache boundary."
 );
 assert.match(
   serviceWorker,
@@ -225,7 +250,7 @@ console.log(`- deployment base: ${expectedBase}`);
 console.log(`- backup schema: v${CURRENT_BACKUP_VERSION}`);
 console.log("- template export schema: v2");
 console.log(`- manifest icons verified: ${manifest.icons.length}`);
-console.log("- mobile-setup v25 service-worker cache boundary verified");
+console.log("- rc1 v26 service-worker cache boundary verified");
 console.log("- non-generated visual-system guardrails verified");
 console.log("- v2 recovery, correction, and persistence safeguards verified");
 console.log("- legacy production styles excluded");
