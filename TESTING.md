@@ -67,7 +67,7 @@ Use this matrix before a stable release or after changes to scheduling, persiste
 - [ ] Room details, cleaning tasks, and cleaning schedule open their intended steps.
 - [ ] Cancel, Save changes, and Escape behave correctly in direct editing.
 - [ ] Light/dark appearance persists after reload.
-- [ ] Export backup downloads a valid version-2 Clean30 backup.
+- [ ] Export backup downloads a valid current Clean30 v2 backup.
 - [ ] Restore rejects malformed or incomplete data.
 - [ ] Restore requires confirmation and replaces the current v2 state only after confirmation.
 - [ ] Start over requires confirmation and returns to fresh setup.
