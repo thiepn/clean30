@@ -76,9 +76,9 @@ Use this matrix before a stable release or after changes to scheduling, persiste
 ## Persistence and recovery
 
 - [ ] Normal changes persist under `clean30_v2_state`.
-- [ ] Version-3 backups migrate to the version-4 internal state without normal data loss.
+- [ ] Current backups round-trip the normalized v2 state without losing rooms, tasks, schedule, history, appearance, or a valid active clean.
 - [ ] Valid active sessions survive normalization and reload.
-- [ ] Impossible or malformed active sessions are dropped with a visible warning.
+- [ ] Impossible or malformed active sessions are discarded during normalization without corrupting the remaining state.
 - [ ] Unreadable saved JSON opens the recovery screen and is not overwritten automatically.
 - [ ] Recovery download contains the original unreadable payload.
 - [ ] Simulated localStorage write failure produces a persistent warning and unload protection.
