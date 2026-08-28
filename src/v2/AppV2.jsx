@@ -148,6 +148,7 @@ function FrequencyControl({ disabled = false, label, onChange, value }) {
 function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
   const editing = Boolean(initialState?.onboardingComplete);
   const directEdit = editing && Number.isInteger(startStep);
+  const setupRef = useRef(null);
   const initialRoomsRef = useRef(initialState?.rooms?.length ? initialState.rooms : seedRooms());
   const [step, setStep] = useState(directEdit ? startStep : editing ? 1 : 0);
   const [homeName, setHomeName] = useState(initialState?.homeName || "My home");
@@ -166,18 +167,11 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
   const [customItemDrafts, setCustomItemDrafts] = useState({});
   const totalSteps = 5;
 
+  useModalFocus(setupRef, onCancel, editing && Boolean(onCancel));
+
   useEffect(() => {
     if (!rooms.some((room) => room.id === taskRoomId)) setTaskRoomId(rooms[0]?.id || "");
   }, [rooms, taskRoomId]);
-
-  useEffect(() => {
-    if (!editing || !onCancel) return undefined;
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") onCancel();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editing, onCancel]);
 
   function addRoom(typeId) {
     setRooms((current) => [...current, createRoom(typeId, current)]);
@@ -333,10 +327,16 @@ function SetupFlow({ initialState, onCancel, onComplete, startStep = null }) {
   const enabledCount = taskDraft.filter((item) => item.enabled).length;
 
   return (
-    <div className="v2-setup-shell">
+    <div
+      aria-label={editing ? "Edit Clean30 setup" : undefined}
+      aria-modal={editing ? "true" : undefined}
+      className="v2-setup-shell"
+      ref={setupRef}
+      role={editing ? "dialog" : undefined}
+    >
       <header className="v2-setup-header">
         <div className="v2-brand"><strong>Clean30</strong></div>
-        {editing && onCancel ? <button className="v2-icon-button" aria-label="Close setup" onClick={onCancel} type="button"><Icon name="close"/></button> : null}
+        {editing && onCancel ? <button aria-label="Close setup" autoFocus className="v2-icon-button" onClick={onCancel} type="button"><Icon name="close"/></button> : null}
       </header>
 
       {!directEdit ? <div className="v2-setup-progress" aria-label={`Setup step ${step + 1} of ${totalSteps}`} role="progressbar" aria-valuemin="1" aria-valuemax={totalSteps} aria-valuenow={step + 1}>
@@ -609,9 +609,13 @@ function SettingsView({ state, onEditSetup, onImport, onReset, onToggleAppearanc
   </main>;
 }
 
-function useModalFocus(containerRef, onClose) {
+function useModalFocus(containerRef, onClose, active = true) {
+  const previousFocusRef = useRef(typeof document === "undefined" ? null : document.activeElement);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
-    const previous = document.activeElement;
+    if (!active) return undefined;
     const container = containerRef.current;
     const focusableSelector = "button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])";
     const initial = container?.querySelector("[autofocus]") || container?.querySelector(focusableSelector);
@@ -619,7 +623,7 @@ function useModalFocus(containerRef, onClose) {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        onCloseRef.current?.();
         return;
       }
       if (event.key !== "Tab" || !container) return;
@@ -638,9 +642,12 @@ function useModalFocus(containerRef, onClose) {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      previous?.focus?.();
+      window.requestAnimationFrame(() => {
+        const previous = previousFocusRef.current;
+        if (previous?.isConnected) previous.focus();
+      });
     };
-  }, [containerRef, onClose]);
+  }, [active, containerRef]);
 }
 
 function RoomPicker({ rooms, onClose, onSelect, state }) {
