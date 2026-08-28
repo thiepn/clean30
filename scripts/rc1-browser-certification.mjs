@@ -134,9 +134,13 @@ async function completeFreshSetup(page, viewport, { addCustomData = false, fontS
   await assertNoHorizontalOverflow(page, `${viewport.width}px room setup`);
 
   if (addCustomData) {
+    await page.locator(".v2-room-add").filter({ hasText: "Kitchen" }).click();
+    assert.equal(await page.locator(".v2-room-list-heading span").innerText(), "5 rooms");
+    await page.getByDisplayValue("Kitchen 2").waitFor();
+
     await page.getByLabel("Custom room name").fill("Hallway");
     await page.getByRole("button", { name: "Add room", exact: true }).click();
-    assert.equal(await page.locator(".v2-room-list-heading span").innerText(), "5 rooms");
+    assert.equal(await page.locator(".v2-room-list-heading span").innerText(), "6 rooms");
     await page.getByDisplayValue("Hallway").waitFor();
   }
 
@@ -164,8 +168,8 @@ async function completeFreshSetup(page, viewport, { addCustomData = false, fontS
 
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("heading", { name: "Choose your cleaning days." }).waitFor();
-  await page.getByRole("button", { name: "Sunday" }).click();
-  assert.equal(await page.getByRole("button", { name: "Sunday" }).getAttribute("aria-pressed"), "true");
+  await page.getByRole("button", { name: "Sun" }).click();
+  assert.equal(await page.getByRole("button", { name: "Sun" }).getAttribute("aria-pressed"), "true");
   await assertNoHorizontalOverflow(page, `${viewport.width}px schedule setup`);
 
   await page.getByRole("button", { name: "Create for later" }).click();
@@ -250,6 +254,7 @@ async function certifyFunctionalFlow(browser) {
   assert.equal(backup.version, 1);
   assert.equal(backup.data.onboardingComplete, true);
   assert.ok(backup.data.rooms.some((room) => room.name === "Hallway"));
+  assert.equal(backup.data.rooms.filter((room) => room.type === "kitchen").length, 2);
   assert.ok(backup.data.tasks.some((task) => task.title === "Clean test surface" && task.cadence === 2));
 
   await page.locator("input[type='file']").setInputFiles(backupPath);
