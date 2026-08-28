@@ -1,17 +1,29 @@
 # Clean30 Privacy Note
 
-Clean30 does not require an account.
+Clean30 does not require an account and does not use cloud sync, analytics, advertising, tracking pixels, or a remote application database.
 
-Clean30 does not use cloud sync.
+The app is distributed as static files. Normal hosting infrastructure may process standard request metadata, but Clean30 itself does not send room, task, schedule, cleaning-history, or backup content to an application server.
 
-Clean30 does not use analytics, ads, or tracking.
+## Data stored on the device
 
-Clean30 is hosted on GitHub Pages as static files. The app does not use a server database.
+Clean30 stores its current state in the browser or installed-PWA storage under `clean30_v2_state`. That state may include:
 
-Cleaning routines, templates, sessions, history, settings, and backup state are stored locally in the user's browser or installed PWA storage.
+- Home name and rooms
+- Room features and custom items
+- Recurring cleaning tasks and frequencies
+- Cleaning days and schedule style
+- Active-clean progress
+- Completion history
+- Appearance settings
 
-Exported backup files are controlled by the user. If a user shares a full backup file, that file may contain their cleaning routines, history, settings, templates, daily rule completions, and active session data.
+Legacy Clean30 storage may remain on a device for migration or recovery until the user clears it.
 
-If the user clears browser/app data, Clean30 data may be lost unless they exported a backup first.
+## Backups and recovery files
 
-Template export files are smaller than full backups and are intended for sharing cleaning systems. Full backup files are personal and should be treated as private.
+A full JSON backup contains the local Clean30 state and should be treated as personal data. It leaves the device only when the user explicitly downloads, copies, uploads, or shares it.
+
+Recovery downloads may contain unreadable or legacy local-storage payloads. They can be useful for data recovery but may also contain personal cleaning information.
+
+## Data deletion
+
+Using **Start over**, clearing browser site data, uninstalling the PWA with data removal, or clearing application storage may permanently delete Clean30 data. Export a backup first when the data should be retained.
