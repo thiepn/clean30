@@ -20,7 +20,7 @@ The `RC1 browser certification` GitHub Actions workflow runs against the product
 - Room-dialog focus trap and Escape dismissal
 - Direct setup editing and Escape cancellation
 - Light/dark persistence
-- Version-2 backup export and restore
+- Current Clean30 v2 backup export and restore
 - Focused-clean progress, pause, reload persistence, review, finish, history, and discard
 - Service-worker activation at `/clean30/`
 - Controlled offline application reload
