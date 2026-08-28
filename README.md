@@ -66,7 +66,7 @@ npm run verify:release-candidate
 Run the RC1 browser/device-class certification after installing Playwright locally:
 
 ```bash
-npm install --no-save --no-package-lock playwright@1.55.0
+npm install --no-save --no-package-lock --ignore-scripts playwright@1.62.1
 npx playwright install chromium
 npm run build
 npm run certify:rc1
