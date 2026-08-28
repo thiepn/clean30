@@ -1,0 +1,54 @@
+name: RC1 browser certification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rc1-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Verify release candidate
+        run: npm run verify:release-candidate
+
+      - name: Install browser certification dependency
+        run: npm install --no-save --no-package-lock playwright@1.55.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run RC1 browser certification
+        run: npm run certify:rc1
+
+      - name: Upload RC1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc1-browser-certification-${{ github.sha }}
+          path: artifacts/rc1
+          if-no-files-found: warn
+          retention-days: 14
