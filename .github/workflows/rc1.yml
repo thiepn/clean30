@@ -36,7 +36,7 @@ jobs:
         run: npm run verify:release-candidate
 
       - name: Install browser certification dependency
-        run: npm install --no-save --no-package-lock playwright@1.55.0
+        run: npm install --no-save --no-package-lock --ignore-scripts playwright@1.62.1
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
