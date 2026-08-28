@@ -136,12 +136,12 @@ async function completeFreshSetup(page, viewport, { addCustomData = false, fontS
   if (addCustomData) {
     await page.locator(".v2-room-add").filter({ hasText: "Kitchen" }).click();
     assert.equal(await page.locator(".v2-room-list-heading span").innerText(), "5 rooms");
-    await page.getByDisplayValue("Kitchen 2").waitFor();
+    assert.equal(await page.getByLabel("Room name 5").inputValue(), "Kitchen 2");
 
     await page.getByLabel("Custom room name").fill("Hallway");
     await page.getByRole("button", { name: "Add room", exact: true }).click();
     assert.equal(await page.locator(".v2-room-list-heading span").innerText(), "6 rooms");
-    await page.getByDisplayValue("Hallway").waitFor();
+    assert.equal(await page.getByLabel("Room name 6").inputValue(), "Hallway");
   }
 
   await page.getByRole("button", { name: "Continue" }).click();
@@ -163,7 +163,9 @@ async function completeFreshSetup(page, viewport, { addCustomData = false, fontS
     await page.getByLabel("Custom task frequency").selectOption("custom");
     await page.getByLabel("Custom task frequency in days").fill("2");
     await page.getByRole("button", { name: "Add task", exact: true }).click();
-    await page.getByDisplayValue("Clean test surface").waitFor();
+    const customTaskTitle = page.locator(".v2-task-review.custom input[type='text']").last();
+    await customTaskTitle.waitFor();
+    assert.equal(await customTaskTitle.inputValue(), "Clean test surface");
   }
 
   await page.getByRole("button", { name: "Continue" }).click();
