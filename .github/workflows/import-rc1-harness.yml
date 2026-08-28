@@ -1,0 +1,100 @@
+name: Import verified RC1 browser harness
+
+on:
+  push:
+    branches:
+      - rc1/reproducible-certification
+
+permissions:
+  contents: write
+
+jobs:
+  import-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout reconciliation branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Fetch alternate RC1 branch
+        run: git fetch origin release/rc1-certification:refs/remotes/origin/release/rc1-certification
+
+      - name: Import current documentation and reproducible browser harness
+        shell: bash
+        run: |
+          mkdir -p scripts .github/workflows
+          git show origin/release/rc1-certification:scripts/rc1-browser-certification.mjs > scripts/rc1-browser-certification.mjs
+          git show origin/release/rc1-certification:.github/workflows/rc1.yml > .github/workflows/rc1.yml
+          git show origin/release/rc1-certification:TESTER_GUIDE.md > TESTER_GUIDE.md
+          git show origin/release/rc1-certification:TESTING.md > TESTING.md
+          git show origin/release/rc1-certification:PRIVACY.md > PRIVACY.md
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          package_path = Path('package.json')
+          package = json.loads(package_path.read_text())
+          package['scripts']['certify:rc1'] = 'node scripts/rc1-browser-certification.mjs'
+          package_path.write_text(json.dumps(package, indent=2) + '\n')
+
+          ignore_path = Path('.gitignore')
+          ignore = ignore_path.read_text()
+          if 'artifacts/rc1/' not in ignore.splitlines():
+              ignore += 'artifacts/rc1/\n'
+          ignore_path.write_text(ignore)
+
+          testing_path = Path('TESTING.md')
+          testing = testing_path.read_text()
+          testing = testing.replace('clean30-app-shell-v25', 'clean30-app-shell-v26')
+          testing = testing.replace(
+              'Touch actions used in primary flows are at least 40×40 CSS pixels.',
+              'Critical setup controls are at least 44×44 CSS pixels; other primary mobile controls retain the existing tested minimum.'
+          )
+          testing_path.write_text(testing)
+
+          script_path = Path('scripts/rc1-browser-certification.mjs')
+          script = script_path.read_text()
+          script = script.replace('app-shell-v25', 'app-shell-v26')
+          script = script.replace('clean30-app-shell-v25', 'clean30-app-shell-v26')
+          script = script.replace(
+              'await assertTouchTargets(page, ".v2-setup-footer button", `${viewport.width}px setup footer`);',
+              'await assertTouchTargets(page, ".v2-setup-footer button", `${viewport.width}px setup footer`, 44);'
+          )
+          script_path.write_text(script)
+          PY
+          rm .github/workflows/import-rc1-harness.yml
+          git diff --check
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Verify source release candidate
+        run: npm run verify:release-candidate
+
+      - name: Install browser certification dependency
+        run: npm install --no-save --no-package-lock --ignore-scripts playwright@1.62.1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run imported browser certification
+        run: npm run certify:rc1
+
+      - name: Commit reconciled RC1 infrastructure
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "RC1: preserve reproducible browser certification"
+          git push origin HEAD:${{ github.ref_name }}
