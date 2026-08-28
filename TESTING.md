@@ -1,161 +1,137 @@
-# Clean30 Manual QA Checklist
+# Clean30 Manual QA Matrix
 
-Use this checklist before sharing a tester build or deploying a release.
+Use this matrix before a stable release or after changes to scheduling, persistence, setup, focused cleaning, backups, service-worker behavior, or mobile layout.
 
-## First Launch / Onboarding
+## Automated prerequisites
 
-- [ ] Fresh browser profile shows the tutorial onboarding.
-- [ ] Next and Back work.
-- [ ] Skip opens Dashboard.
-- [ ] Starter setup creates Today tasks.
-- [ ] Empty Today setup starts with no default Today tasks.
-- [ ] Restart onboarding from Settings works.
+- [ ] `npm run verify:release-candidate` passes.
+- [ ] RC1 browser certification passes at 320×568, 360×800, and 390×844.
+- [ ] Dependency audit reports zero vulnerabilities at the configured release threshold.
+- [ ] Production runtime smoke verifies `/clean30/`, hashed assets, manifest icons, and `/clean30/sw.js`.
+- [ ] GitHub Pages build and deployment complete successfully.
 
-## Navigation
+## Fresh setup
 
-- [ ] Desktop nav shows only Dashboard, Routines, History, Settings.
-- [ ] Mobile bottom nav shows only Dashboard, Routines, History, Settings.
-- [ ] Mobile bottom nav is flush with the bottom and safe-area padding works.
-- [ ] Old internal view references do not blank the app.
+- [ ] Fresh storage opens **Set up your home**.
+- [ ] Setup progress, Back, Continue, and finish actions report the correct state.
+- [ ] Current rooms appear before room-add controls.
+- [ ] Preset rooms may be added repeatedly and renamed independently.
+- [ ] Arbitrarily named rooms can be added.
+- [ ] Removing every room blocks continuation until at least one room exists.
+- [ ] Room details allow built-in features and custom items/surfaces.
+- [ ] Generated tasks reflect the configured room features.
+- [ ] Optional tasks can be enabled.
+- [ ] Custom tasks can be created, renamed, moved to another room, and deleted.
+- [ ] Duplicate custom-task names within one room are rejected.
+- [ ] Frequencies include daily through yearly and arbitrary custom-day intervals.
+- [ ] Spread-through-week and one-main-day schedules both work.
+- [ ] Frequent upkeep remains independent from larger cleaning days.
+- [ ] **Create for later** and **Create and start** both produce a valid plan.
 
-## Dashboard
+## Home and cleaning modes
 
-- [ ] Today appears as one unified section.
-- [ ] Today has starter tasks on a fresh starter setup.
-- [ ] Today can start empty when chosen during onboarding.
-- [ ] User can add a task for today.
-- [ ] User can check and uncheck tasks.
-- [ ] User can remove custom Today tasks.
-- [ ] Today tasks persist after refresh.
-- [ ] Today initializes fresh by date.
-- [ ] Completing Today tasks creates one derived Today activity display without persisting a routine session.
-- [ ] Routine-imported Today tasks remain Today activity.
-- [ ] Resetting or unchecking dated Today tasks predictably updates derived Today activity.
-- [ ] Add-from-routine Cancel, Close, successful Add, and Escape clear transient selections.
-- [ ] Edit defaults opens the internal editor focused on Today defaults.
-- [ ] Routine picker and selected routine summary appear in Dashboard.
-- [ ] Starting a routine keeps the user on Dashboard.
-- [ ] Starting a different routine with an active session asks before replacing it.
-- [ ] Starting the same routine ID in a different template asks before replacing the original session.
-- [ ] Dashboard shows a compact resume card when a session is active.
-- [ ] Active session checklist works and persists after refresh.
-- [ ] Clean Mode appears only for an active routine session, from both the resume card and active-session area.
-- [ ] Clean Mode opens on the first incomplete task and Previous/Next navigation preserves phase context.
-- [ ] Mark done and Undo done stay synchronized with the normal active-session checklist.
-- [ ] Exiting Clean Mode preserves progress and does not create History.
-- [ ] Clean Mode pause/resume and timer stay synchronized with the normal session view.
-- [ ] Clean Mode full and partial finish use the existing summary and create one History entry.
-- [ ] Rapid or repeated Finish actions across normal and Clean Mode create only one History entry.
-- [ ] Clean Mode safely handles an empty routine, an all-complete routine, and a missing routine reference.
-- [ ] Clean Mode remains usable at 360px with long text, Large font, and Comfortable density.
-- [ ] Active session timer persists after refresh without constant storage writes.
-- [ ] Pause and resume keep elapsed time reasonable.
-- [ ] Completed active-session phases collapse and remain expandable.
-- [ ] Finish, partial finish, reset, and discard still work.
-- [ ] Finishing a routine shows a compact completion summary with View History and Close.
-- [ ] Calendar renders.
-- [ ] Calendar marks days with session or Today activity.
-- [ ] Selecting a calendar day opens a closeable detail sheet.
-- [ ] Calendar buttons announce the full date and activity counts to a screen reader.
-- [ ] Day details clearly separate Today tasks, routine sessions, measured routine time, and estimated Today time.
-- [ ] Calendar weekly summary updates from real activity.
+- [ ] Home shows either **Today’s clean** or **Nothing due today** with accurate plan status.
+- [ ] Today is capped at the eight oldest due tasks and reports remaining backlog.
+- [ ] Weekly reset contains only eligible weekly work.
+- [ ] Clean a room lists configured rooms and disables rooms without selected work.
+- [ ] Guests are coming contains only eligible priority work.
+- [ ] Special-purpose modes remain bounded to twelve tasks.
 
-## Routines
+## Focused cleaning
 
-- [ ] Routines tab is second.
-- [ ] Edit/Add button opens the internal editor.
-- [ ] Add routine opens the editor in routine-add mode.
-- [ ] Selecting a routine shows summary and checklist reference.
-- [ ] Routine cards show duration, last-done state, and subtle color labels.
-- [ ] Show archived reveals archived routines.
-- [ ] Checklist phases are collapsed by default.
-- [ ] No copy or preparation UI appears.
+- [ ] One current task is presented at a time.
+- [ ] Done and Skip advance to another unfinished task.
+- [ ] Previous and Next wrap safely.
+- [ ] Progress and handled counts remain accurate.
+- [ ] Pause returns to Home without losing progress.
+- [ ] Reloading or reopening resumes the same active session.
+- [ ] Escape pauses rather than discarding.
+- [ ] Discard requires confirmation and preserves original due dates.
+- [ ] Completing all tasks opens the summary.
+- [ ] Review choices permits correction before saving.
+- [ ] Save and finish creates one history entry and reschedules only completed tasks.
+- [ ] An all-skipped clean creates no misleading completion history.
+- [ ] Setup editing is blocked while a clean remains active.
 
-## Editor
+## Plan
 
-- [ ] One editor only.
-- [ ] No mode toggle appears.
-- [ ] No duplicate-before-edit requirement appears.
-- [ ] Today defaults live inside the Routines editor area.
-- [ ] Each weekday clearly shows Using General, Custom, or Empty.
-- [ ] Use General, Copy General, and Start empty preserve the intended weekday behavior.
-- [ ] Clearing the last custom weekday task leaves an explicit empty weekday.
-- [ ] Routines can be added and edited.
-- [ ] Routine duration validates as 1-600 minutes.
-- [ ] Routines can be duplicated with independent IDs.
-- [ ] Routines can be archived and unarchived.
-- [ ] Active-session routine cannot be archived or deleted.
-- [ ] Optional routine color labels persist.
-- [ ] Schedule can be edited.
-- [ ] App details can be edited.
-- [ ] Appearance is not duplicated inside the editor.
-- [ ] Back returns to Dashboard, Routines, or Settings based on where the editor opened.
-
-## History
-
-- [ ] History tab is third.
-- [ ] Empty History shows a light starter state.
-- [ ] Derived Today activity appears as Today activity and has no Delete action.
-- [ ] Legacy Today History remains as a non-deletable fallback when dated Today data is absent.
-- [ ] Routine/session entries render correctly.
-- [ ] Stats are not distorted by one-off Today tasks.
-- [ ] Current/best streak and weekly consistency use completed activity only.
-- [ ] Entry cards show tasks and elapsed time when available.
-- [ ] Older elapsed-only entries show their measured duration.
-- [ ] Last 7/30 day insights exclude future entries and use exact inclusive-today boundaries.
-- [ ] Filters work.
-- [ ] Entry detail panel opens.
-- [ ] Delete entry requires confirmation.
-- [ ] Deleting a routine session leaves same-day Today activity intact.
+- [ ] Overdue, next-seven-day, next-thirty-day, and later groups do not overlap.
+- [ ] Relative due labels are correct.
+- [ ] The seven-day strip reflects near-term work.
+- [ ] Recently finished cleans show the correct title and completed-task count.
+- [ ] Completing, skipping, correcting, and discarding work updates Plan predictably.
 
 ## Settings
 
-- [ ] Settings tab is fourth.
-- [ ] Appearance shows 12 accent colors and 12 background colors.
-- [ ] Changing accent/background persists after refresh.
-- [ ] Backup export downloads a JSON file.
-- [ ] Backup health updates after export.
-- [ ] Backup import previews file name and data counts before confirmation.
-- [ ] Complete current backups import; incomplete typed current backups are rejected without a preview.
-- [ ] Imported backup timestamps do not count as a local export; backup health recommends a new export.
-- [ ] Canceling import leaves current data unchanged.
-- [ ] A forced localStorage write failure shows a persistent warning with Export and Retry actions.
-- [ ] Today-only use (custom, completed, routine-added, noted, or tagged tasks) becomes backup-reminder eligible.
-- [ ] Backup reminder interval can be changed.
-- [ ] Font size Small/Normal/Large persists after refresh.
-- [ ] Compact/Comfortable density persists after refresh.
-- [ ] Version number appears in About.
-- [ ] Privacy/local-only section is clear.
-- [ ] Help guide opens.
-- [ ] Restart onboarding works.
-- [ ] Confirmations, Help, onboarding, Add-from-routine, Calendar detail, and Clean Mode trap focus and restore it after closing.
-- [ ] Escape dismisses allowed dialogs without confirming destructive actions.
-- [ ] Danger Zone is collapsed by default.
-- [ ] Reset history and reset all still require confirmation.
+- [ ] Rooms opens setup directly at room editing.
+- [ ] Room details, cleaning tasks, and cleaning schedule open their intended steps.
+- [ ] Cancel, Save changes, and Escape behave correctly in direct editing.
+- [ ] Light/dark appearance persists after reload.
+- [ ] Export backup downloads a valid current Clean30 v2 backup.
+- [ ] Restore rejects malformed or incomplete data.
+- [ ] Restore requires confirmation and replaces the current v2 state only after confirmation.
+- [ ] Start over requires confirmation and returns to fresh setup.
+- [ ] Privacy copy accurately describes local-only storage.
 
-## PWA Install
+## Persistence and recovery
 
-- [ ] Live URL opens at https://thiepn.github.io/clean30/.
-- [ ] Vite base remains `/clean30/`.
-- [ ] Manifest is detected by the browser.
-- [ ] Android Add to Home Screen / Install app is available.
-- [ ] Installed app uses Clean30 icons.
-- [ ] Service worker syntax passes.
+- [ ] Normal changes persist under `clean30_v2_state`.
+- [ ] Current backups round-trip the normalized v2 state without losing rooms, tasks, schedule, history, appearance, or a valid active clean.
+- [ ] Valid active sessions survive normalization and reload.
+- [ ] Impossible or malformed active sessions are discarded during normalization without corrupting the remaining state.
+- [ ] Unreadable saved JSON opens the recovery screen and is not overwritten automatically.
+- [ ] Recovery download contains the original unreadable payload.
+- [ ] Simulated localStorage write failure produces a persistent warning and unload protection.
+- [ ] A later successful save clears the storage warning.
 
-## Compatibility
+## PWA, update, and offline
 
-- [ ] Old localStorage loads.
-- [ ] Old full backups import safely.
-- [ ] Existing active session loads.
-- [ ] Ambiguous or malformed imported active sessions warn and are safely discarded.
-- [ ] Existing appearance settings load or safely map to the new palette.
-- [ ] New full backups include Today data.
-- [ ] Version 2 backups migrate empty weekday arrays to General fallback.
-- [ ] Version 3 backup round-trips preserve explicit empty weekdays.
+- [ ] Manifest identity, icons, start URL, scope, and display mode are correct.
+- [ ] Service worker installs at `/clean30/sw.js` with `/clean30/` scope.
+- [ ] Current cache is `clean30-app-shell-v26` and older Clean30 caches are removed.
+- [ ] Built CSS and JavaScript assets are cached after one online load.
+- [ ] A controlled reload works with the network disabled.
+- [ ] Offline navigation returns the cached application shell.
+- [ ] An update waits for explicit user action rather than replacing a live session silently.
+- [ ] **Update now** activates the waiting worker and reloads under the new controller.
+- [ ] Installed Android safe areas do not cover the bottom navigation or actions.
 
-## Mobile Accessibility
+## Mobile layout
 
-- [ ] Today checkboxes announce their task text.
-- [ ] Bottom navigation, Today row actions, weekday selectors, and modal close controls have usable touch targets.
-- [ ] 320px and 360px widths have no horizontal overflow.
-- [ ] Large font with Comfortable density remains usable.
+- [ ] 320, 360, and 390-pixel widths have no document-level horizontal overflow.
+- [ ] Setup header, progress, content, and footer remain within the viewport.
+- [ ] Current rooms remain above add-room controls.
+- [ ] Task rows collapse to one readable mobile column.
+- [ ] Custom-frequency controls remain usable.
+- [ ] Weekday buttons remain selectable at narrow widths.
+- [ ] Finish actions stack at 390 pixels and below when required.
+- [ ] Room picker and confirmation sheets remain usable on short screens.
+- [ ] Focused-clean actions remain reachable without accidental overlap.
+- [ ] Bottom navigation remains fixed and safe-area aware.
+
+## Accessibility
+
+- [ ] Primary navigation exposes visible labels and `aria-current`.
+- [ ] Setup progress exposes current, minimum, and maximum values.
+- [ ] Room names, removal buttons, task toggles, frequencies, weekdays, and close buttons have accessible names.
+- [ ] Dialogs and alert dialogs expose a name, modal state, and initial focus.
+- [ ] Tab and Shift+Tab remain trapped inside open dialogs.
+- [ ] Escape closes non-destructive overlays without confirming an action.
+- [ ] Focus returns to the previous control after a dialog closes.
+- [ ] Live regions announce room counts, focused-task changes, notices, and update availability.
+- [ ] Critical setup controls are at least 44×44 CSS pixels; other primary mobile controls retain the existing tested minimum.
+- [ ] At 125% text size, wrapping does not hide controls or create horizontal overflow.
+- [ ] Reduced-motion preference reduces transition duration and disables smooth scrolling.
+
+## Release record
+
+Record the following with the release decision:
+
+- Commit SHA
+- GitHub Actions run IDs
+- RC1 artifact/report name
+- Physical phone model
+- Android and Chrome versions
+- Browser-tab and installed-PWA results
+- Online/offline results
+- Known non-blocking defects

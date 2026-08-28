@@ -1,49 +1,65 @@
-# Clean30 Tester Guide
+# Clean30 Physical-Device Release Check
 
-Thanks for testing Clean30.
+Use this checklist on an actual Android phone before declaring a release fully certified.
 
-Clean30 is a local-first apartment cleaning app. It helps with Today tasks, reusable cleaning routines, session history, backups, and simple appearance settings.
+**Canonical app:** https://thiepn.dev/clean30/
 
-Live app: https://thiepn.github.io/clean30/
+## Test conditions
 
-Recommended device: phone. Desktop testing is also useful.
+- Chrome or the installed Clean30 PWA
+- Portrait orientation
+- Normal text size, then approximately 125% system text size
+- Network available for the first load
+- A fresh browser profile or cleared Clean30 site data for onboarding
 
-## What To Test
+## Five-minute critical path
 
-- First launch and onboarding.
-- Dashboard: Today tasks, Add-from-routine reset behavior, routine starting, active-session resume card, optional focused Clean Mode, timer, pause/resume, and Calendar day details.
-- Routines: can you inspect routine checklists, understand last-done badges, and find edit/add controls without friction?
-- History: is it clear that Today activity follows dated Today tasks while routine sessions are stored and deletable?
-- Settings: do font size, density, backup health/preview, privacy, help, install, onboarding, and reset tools make sense?
-- Recovery: does an incomplete backup stay rejected, and does a simulated storage failure clearly explain the reload risk?
-- PWA install: can you add it to your phone home screen?
+### 1. Fresh setup
 
-## Feedback Questions
+- [ ] The first screen fits without horizontal movement.
+- [ ] Tap **Set up my home**.
+- [ ] **Your rooms** and the current room count appear before **Add a room**.
+- [ ] At least the beginning of the current room list is visible immediately without scrolling.
+- [ ] Rename a room, add a duplicate room, and add a custom room.
+- [ ] Continue through room details, task selection, and cleaning days.
+- [ ] Add a custom task with a two-day interval.
+- [ ] No control extends beyond the screen at any setup step.
+- [ ] Create the plan.
 
-- Was onboarding clear?
-- Could you tell what to do from Dashboard?
-- Did Today tasks make sense?
-- Was starting, pausing, finishing, or discarding a session clear?
-- Did Clean Mode make the active routine easier to follow without replacing the normal checklist?
-- Did the completion summary and View History action make sense after finishing?
-- Did duplicate/archive/color labels make routines easier to manage without feeling busy?
-- Was the Calendar useful without being distracting?
-- Did Calendar clearly separate measured routine time from estimated Today-task time?
-- Could you set a weekday to use General, custom tasks, or explicitly start empty?
-- Did Canceling Add-from-routine clear the previous selections?
-- Could you use Tab, Shift+Tab, and Escape in dialogs without focus moving behind them?
-- Was the editor easy enough to find and use?
-- Did backup/privacy make sense?
-- Did the backup preview make restoring data feel safer?
-- What confused you?
-- Would you use this weekly?
-- What felt unnecessary?
+### 2. Cleaning persistence
 
-## Local-Only Data Note
+- [ ] Open **Clean a room** and choose a room.
+- [ ] Mark one task done, then pause.
+- [ ] Background or close the app, reopen it, and continue the same clean.
+- [ ] Finish the remaining tasks.
+- [ ] Review choices, return to the summary, and save.
+- [ ] The completed clean appears under **Plan → Cleaning history**.
+- [ ] Start another clean, pause, discard it, and confirm no task was rescheduled.
 
-Clean30 has no account, no cloud sync, no analytics, and no ads. Your data stays in your browser or installed PWA storage.
+### 3. Installed PWA and offline behavior
 
-If you care about the test data you create, export a full backup from Settings. Clearing browser/app data may delete Clean30 data.
+- [ ] Install Clean30 from Chrome.
+- [ ] The installed app opens without browser chrome and uses the Clean30 icon.
+- [ ] The bottom navigation clears the gesture/navigation area.
+- [ ] Open the installed app once while online, then enable airplane mode.
+- [ ] Fully close and reopen Clean30.
+- [ ] The real app loads offline rather than an empty or generic error screen.
+- [ ] Existing rooms, tasks, and active-clean state remain available.
 
-After importing a backup, Clean30 recommends a new local export. The imported file's historical
-export time does not count as a backup made by this browser installation.
+### 4. Data safety
+
+- [ ] Export a backup from Settings.
+- [ ] Restore that backup and confirm rooms, custom tasks, and history remain intact.
+- [ ] A destructive reset still requires explicit confirmation.
+
+### 5. Accessibility and display
+
+- [ ] Increase system text size to approximately 125% and repeat the setup-room screen.
+- [ ] Text may wrap, but buttons, inputs, and the footer remain usable.
+- [ ] Touch targets are comfortable and not crowded.
+- [ ] Android back/Escape-equivalent dismissal does not accidentally confirm destructive dialogs.
+- [ ] Reduced-motion system settings do not produce unnecessary movement.
+
+## Pass rule
+
+The physical gate passes only when every critical-path item above succeeds without data loss, horizontal overflow, unreachable controls, or a blocked cleaning flow. Record the phone model, Android version, Chrome version, install mode, and date in the release notes.
