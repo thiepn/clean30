@@ -1,33 +1,31 @@
-# Clean30 RC1 — Release Certification and Repository Cleanup
+# Clean30 RC1 — Final Certification Record
 
-**Assessment date:** 2026-08-28
-**Repository:** `thiepn/clean30`
-**Deployed base commit inspected:** `d16bb3ec2a00594849dcd87f7ad9de54a6d80057`
-**Browser used for certification:** Chromium 144.0.7559.96, Playwright mobile emulation
-**Widths exercised:** 320 px, 360 px, 390 px
+**Assessment date:** 2026-08-28  
+**Repository:** `thiepn/clean30`  
+**Certified runtime commit:** `cea8ab03748e5192fee215b6557d5e7fde47c7d3`  
+**Final RC1 repository commit before this record update:** `5aa1d182c6d93434644e80653815b12276dc1eef`  
+**Service-worker boundary:** `clean30-app-shell-v26`
 
 ## Release decision
 
 | Gate | Result |
 |---|---|
-| Current deployed build | **FAIL** |
-| Patched RC1 candidate under browser/device emulation | **PASS** |
-| Physical Android browser/PWA certification | **PENDING** |
-| Stable `v2.0.0` release | **HOLD** |
+| Production runtime repair | **PASS — merged and deployed** |
+| Source, build, security, and runtime verification | **PASS** |
+| Automated mobile/device-class browser certification | **PASS** |
+| Repository and branch cleanup | **PASS** |
+| Physical Android Chrome and installed-PWA sign-off | **PENDING** |
+| Stable `v2.0.0` tag | **HOLD** |
 
-The deployed build cannot be tagged stable because its final visual override preserves the desktop sidebar column below 900 px. This compresses Home, Plan, Settings, and focused-cleaning entry surfaces into a narrow left column on phones. The RC1 patch resets the shell to one column and includes regression protection.
+RC1 is complete at the automated and device-class level. The repaired v26 application is deployed, the reproducible browser-certification workflow is retained on `main`, and the repository contains only the `main` branch. Clean30 must not yet be described as physically device-certified or tagged as stable until the final Android browser and installed-PWA checklist is recorded.
 
-The patched candidate passed the browser/device-emulation matrix below. This is not a substitute for one final run on a physical Android device.
+## Defects found and repaired
 
-## Findings and repairs
+### P0 — Post-setup mobile shell remained two-column
 
-### P0 — Post-setup mobile shell remains two-column
+The deployed v25 build retained the desktop `176px` sidebar column below 900 px, compressing Home, Plan, Settings, and cleaning entry surfaces into the left portion of phone screens.
 
-**Observed:** At a 390 px viewport, `.v2-app-shell` retained `176px minmax(0, 1fr)`. The main content area was approximately 176 px wide, with most of the viewport unused.
-
-**Root cause:** The final minimal-interface `@media (max-width: 900px)` rule changed the rows but failed to override `grid-template-columns`.
-
-**Repair:**
+The v26 repair explicitly collapses the app shell to one column below 900 px:
 
 ```css
 @media (max-width: 900px) {
@@ -38,129 +36,95 @@ The patched candidate passed the browser/device-emulation matrix below. This is 
 }
 ```
 
-### P1 — Dialogs lose keyboard focus when closed
+### P1 — Modal focus was not restored
 
-**Observed:** Escape correctly closed the room picker and confirmation dialog, but focus returned to `BODY` rather than the control that opened the dialog.
+Room pickers and confirmation dialogs closed correctly, but keyboard focus returned to `BODY`. The modal implementation now captures the invoking control, traps forward and backward Tab navigation, and restores focus after the overlay closes.
 
-**Root cause:** The previous active element was captured inside the effect after commit/autofocus, and the effect reran whenever an inline `onClose` callback changed identity.
+### P1 — Settings → Rooms setup editing was outside the focus model
 
-**Repair:** Capture the previous element during render, hold the current close callback in a ref, mount the focus trap once, and restore focus on the next animation frame after inert state has been removed.
+Direct setup editing now behaves as a labelled modal dialog, receives initial focus, supports Escape, traps focus, and returns focus to the exact Settings trigger.
 
-### P1 — Setup editing opens outside the focus model
+### P2 — Critical mobile setup controls were undersized
 
-**Observed:** Settings → Rooms opened the full-screen editor with focus on `BODY`; Escape closed it without returning focus to the Settings row.
+Critical setup controls and interactive fields now retain a 44 px interaction floor without reintroducing oversized visual components.
 
-**Repair:** Treat editing SetupFlow as a labelled modal dialog, use the shared focus trap, autofocus the Close control, and restore focus to the exact Settings trigger.
+### PWA update boundary
 
-### P2 — Compact setup controls are too small for reliable touch use
+The service-worker cache advanced from v25 to v26 so existing installations receive the mobile-shell and focus repairs instead of continuing to serve the faulty artifact.
 
-**Observed:** Several mobile setup controls were visually usable but unnecessarily small: custom-item removal was 28 px, task toggles were 36 px, and multiple chips/selects were 39–42 px high.
+## Automated verification
 
-**Repair:** Raise the mobile setup interaction floor to 44 px for inputs, selects, room/item chips, task toggles, and destructive icon controls without changing the compact visual hierarchy.
+The production release path passed:
 
-### Release boundary
-
-The service-worker cache advances from `app-shell-v25` to `app-shell-v26` so installed PWAs receive the RC1 repair rather than continuing to serve the faulty shell.
-
-## Browser/device-emulation certification matrix
-
-The patched production artifact was exercised at all three widths. `documentElement.scrollWidth` equalled the viewport width, and no visible element exceeded the viewport.
-
-| Surface | 320 px | 360 px | 390 px |
-|---|---:|---:|---:|
-| Initial setup introduction | Pass | Pass | Pass |
-| Setup — Rooms | Pass | Pass | Pass |
-| Setup — Room details | Pass | Pass | Pass |
-| Setup — Cleaning tasks | Pass | Pass | Pass |
-| Setup — Schedule | Pass | Pass | Pass |
-| Home | Pass | Pass | Pass |
-| Plan | Pass | Pass | Pass |
-| Settings | Pass | Pass | Pass |
-| Room picker | Pass | Pass | Pass |
-| Weekly focused clean | Pass | Pass | Pass |
-| Discard confirmation | Pass | Pass | Pass |
-
-## Functional certification
-
-| Area | Result | Evidence checked |
-|---|---|---|
-| Fresh setup | Pass | Four default rooms, room list before add controls, task generation, schedule completion |
-| Today’s clean | Pass | Start, Done, completion summary, review choices, save |
-| Weekly reset | Pass | 11-task focused clean generated from configured state |
-| Clean a room | Pass | Accessible room dialog, per-room task counts, disabled empty-room handling |
-| Guests are coming | Pass | 10 priority tasks generated |
-| Pause/resume | Pass | Active session returned to Home and survived reload |
-| Discard | Pass | Confirmation shown; no schedule mutation before confirmation |
-| Backup export/restore | Pass | JSON downloaded, edited state restored to exported home state |
-| Appearance | Pass | Light/dark switch persisted |
-| Large text | Pass | 200% root font size at 320 px; no horizontal overflow or clipped buttons |
-| Mobile touch targets | Pass after patch | Critical setup controls and interactive fields retain a 44 px interaction floor |
-| Keyboard focus trap | Pass after patch | Forward/backward Tab cycling remained inside dialogs |
-| Keyboard focus return | Pass after patch | Room picker, confirmation, and SetupFlow returned focus to their triggers |
-| Offline app shell | Pass | Active service worker and cached shell loaded while network was disabled |
-| PWA update handoff | Pass | Update toast appeared; activation advanced cache and reloaded successfully |
-
-## Existing automated baseline
-
-The latest successful deployment workflow for the inspected base reported:
-
-- 255 tests passed; 0 failed, skipped, or cancelled
+- 255 tests; 255 passed, 0 failed, 0 skipped
 - dependency audit: 0 vulnerabilities
-- production build passed
-- release verification passed
-- runtime HTTP smoke verification passed
-- service-worker syntax and offline fallback passed
-- GitHub Pages build and deployment passed
+- production build
+- release-artifact verification
+- runtime HTTP smoke verification
+- manifest and icon verification
+- service-worker syntax and offline-fallback checks
+- GitHub Pages build and deployment
 
-RC1 adds source-level regression guards for the one-column mobile shell, focus-managed overlays, and the v26 cache boundary.
+The final reusable Playwright certification passed on `main` in workflow run `33191464646` and produced artifact `rc1-browser-certification-5aa1d182c6d93434644e80653815b12276dc1eef`.
 
-## Repository cleanup audit
+## Browser/device-class certification
 
-### Open work
+Chromium mobile/touch emulation exercised:
 
-- Open issues: none
-- Draft PR `#6` is based on the obsolete `phase20/intuitiveness-consolidation` architecture and is divergent from current `main`. It must be closed, not merged.
+| Configuration | Result |
+|---|---|
+| 320 × 568, normal text | Pass |
+| 360 × 800, normal text | Pass |
+| 390 × 844, normal text | Pass |
+| 320 × 568, 125% text, reduced motion | Pass |
 
-### Branches safe to remove
+Certified flows and properties:
 
-The following branches are fully contained in `main` and have no commits missing from it:
+- fresh setup through every stage
+- current-room hierarchy before add-room controls
+- duplicate and custom rooms
+- custom tasks and custom-day frequencies
+- Home, Plan, Settings, and all cleaning modes
+- focused cleaning, pause, reload persistence, review, completion, history, and discard
+- backup export and restore
+- horizontal-overflow containment
+- critical mobile touch targets
+- keyboard focus containment, Escape dismissal, and focus restoration
+- service-worker activation and controlled offline reload
+- reduced-motion and mobile safe-area behavior
+- browser console and uncaught-error cleanliness
 
-- `dashboard-routines-overhaul`
-- `redesign/autopilot-core`
-- `redesign/friction-elimination`
-- `redesign/intuitiveness-consolidation`
-- `redesign/universal-clean30`
-- `redesign/visual-polish`
+## Deployment verification
 
-The following branch is divergent but superseded by the current v2 implementation and its obsolete draft PR:
+The runtime repair merged through PR #8 and deployed successfully. The reusable certification and current release documentation merged through PR #9. The final `main` deployment and the RC1 browser-certification workflow both completed successfully on commit `5aa1d182c6d93434644e80653815b12276dc1eef`.
 
-- `phase20/intuitiveness-consolidation`
+## Repository cleanup
 
-After the RC1 fix is merged, retain `main` as the only long-lived branch.
+Completed:
 
-## Required remote actions
+- PR #8 merged: runtime and accessibility repairs
+- PR #9 merged: reproducible browser certification and current release documentation
+- obsolete PR #6 closed as superseded
+- obsolete PR #7 closed after its useful work was reconciled
+- no open pull requests remain
+- all obsolete development and release branches deleted
+- `main` is the only remaining branch
+- canonical deployment documentation points to `https://thiepn.dev/clean30/`
 
-1. Apply the RC1 patch to `main` or a short-lived `rc1/release-certification` branch.
-2. Run `npm ci` and `npm run verify:release-candidate`.
-3. Merge only after all checks pass.
-4. Confirm the Pages deployment serves `app-shell-v26`.
-5. Close PR `#6` as superseded.
-6. Delete the seven obsolete branches listed above.
-7. Run the physical-device checklist below.
-8. Tag `v2.0.0-rc.1`. Promote to stable `v2.0.0` only after physical-device sign-off.
+## Remaining physical-device gate
 
-## Final physical-device checklist
+Run the following on an actual Android phone in both Chrome-tab and installed-PWA modes:
 
-Run on an actual Android phone in both browser and installed-PWA modes:
-
-- Fresh setup at normal text size and maximum practical system font size
+- fresh setup at normal and enlarged system text size
 - Home, Plan, Settings, and all four cleaning modes
-- Tap targets near screen edges and bottom safe area
-- Pause, background the app, resume, and reload during an active clean
-- Export and restore a backup
-- Launch offline after one successful online load
-- Install/update from v25 to v26 and verify the update prompt
-- Rotate portrait → landscape → portrait
-- Confirm no horizontal scrolling, clipped controls, accidental double taps, or scroll jumps
+- touch controls near screen edges and the bottom safe area
+- pause, background, reopen, resume, and reload during an active clean
+- backup export and restore
+- offline launch after one successful online load
+- installed-app update behavior on v26
+- portrait → landscape → portrait rotation
+- check for horizontal scrolling, clipped controls, scroll jumps, accidental double taps, or state loss
 
-**Stable-release criterion:** every item passes without a P0/P1 defect.
+Record the phone model, Android version, Chrome version, test date, browser-tab result, installed-PWA result, and online/offline result.
+
+**Stable-release criterion:** every physical-device item passes without a P0 or P1 defect. Only then should `v2.0.0` be tagged stable.
