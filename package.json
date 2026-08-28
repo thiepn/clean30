@@ -12,7 +12,8 @@
     "verify:release": "node scripts/verify-release.mjs",
     "verify:runtime": "node scripts/verify-runtime.mjs",
     "audit:release": "npm audit --audit-level=low",
-    "verify:release-candidate": "npm run audit:release && npm test && npm run build && npm run verify:release && npm run verify:runtime && node --check public/sw.js"
+    "verify:release-candidate": "npm run audit:release && npm test && npm run build && npm run verify:release && npm run verify:runtime && node --check public/sw.js",
+    "certify:rc1": "node scripts/rc1-browser-certification.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.2.0",
