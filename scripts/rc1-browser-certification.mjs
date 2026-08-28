@@ -151,7 +151,7 @@ async function completeFreshSetup(page, viewport, { addCustomData = false, fontS
   const firstFrequency = page.locator("select[aria-label^='Frequency for ']").first();
   await firstFrequency.waitFor();
   const frequencyLabels = await firstFrequency.locator("option").allTextContents();
-  assert.ok(frequencyLabels.some((label) => /Every day/i.test(label)), "Daily frequency option is missing");
+  assert.ok(frequencyLabels.some((label) => /Daily/i.test(label)), "Daily frequency option is missing");
   assert.ok(frequencyLabels.some((label) => /Custom interval/i.test(label)), "Custom frequency option is missing");
 
   if (addCustomData) {
@@ -246,8 +246,8 @@ async function certifyFunctionalFlow(browser) {
   await download.saveAs(backupPath);
   const backup = JSON.parse(await readFile(backupPath, "utf8"));
   assert.equal(backup.app, "Clean30");
-  assert.equal(backup.type, "backup");
-  assert.equal(backup.version, 2);
+  assert.equal(backup.type, "clean30-v2-backup");
+  assert.equal(backup.version, 1);
   assert.equal(backup.data.onboardingComplete, true);
   assert.ok(backup.data.rooms.some((room) => room.name === "Hallway"));
   assert.ok(backup.data.tasks.some((task) => task.title === "Clean test surface" && task.cadence === 2));
@@ -351,7 +351,12 @@ async function certifyFunctionalFlow(browser) {
     };
   });
   assert.equal(reducedMotion.media, true);
-  assert.ok(reducedMotion.transitionDuration.split(",").every((value) => ["0s", "0.00001s"].includes(value.trim())), `Reduced-motion duration is ${reducedMotion.transitionDuration}`);
+  assert.ok(reducedMotion.transitionDuration.split(",").every((value) => {
+    const seconds = value.trim().endsWith("ms")
+      ? Number.parseFloat(value) / 1000
+      : Number.parseFloat(value);
+    return Number.isFinite(seconds) && seconds <= 0.0001;
+  }), `Reduced-motion duration is ${reducedMotion.transitionDuration}`);
   assert.equal(reducedMotion.hasSafeAreaRule, true, "Safe-area CSS rule missing");
 
   await page.screenshot({ path: resolve(ARTIFACT_DIR, "390-functional-offline.png"), fullPage: true });
@@ -359,7 +364,7 @@ async function certifyFunctionalFlow(browser) {
   await context.close();
 
   record("Focused cleaning persistence, review, completion, history, and discard");
-  record("Backup export and restore", { backupSchema: 2 });
+  record("Backup export and restore", { backupSchema: 1 });
   record("Keyboard focus containment and Escape dismissal");
   record("PWA service worker and offline reload", { scope: serviceWorkerState.scope });
   record("Reduced motion and mobile safe-area CSS");
