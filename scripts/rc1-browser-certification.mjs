@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
@@ -9,12 +10,40 @@ const HOST = "127.0.0.1";
 const PORT = 4173;
 const BASE_URL = `http://${HOST}:${PORT}/clean30/`;
 const ARTIFACT_DIR = resolve("artifacts/rc1");
+const DEFAULT_TIMEOUT_MS = 10_000;
 const report = {
   phase: "RC1",
   sha: process.env.GITHUB_SHA || null,
   startedAt: new Date().toISOString(),
   gates: [],
 };
+
+function configurePage(page) {
+  page.setDefaultTimeout(DEFAULT_TIMEOUT_MS);
+  page.setDefaultNavigationTimeout(20_000);
+}
+
+async function stopPreview(child) {
+  if (!child || child.exitCode !== null) return;
+  try {
+    if (process.platform !== "win32" && child.pid) process.kill(-child.pid, "SIGTERM");
+    else child.kill("SIGTERM");
+  } catch {
+    child.kill("SIGTERM");
+  }
+  await Promise.race([
+    once(child, "exit").catch(() => {}),
+    new Promise((resolveDelay) => setTimeout(resolveDelay, 2_000)),
+  ]);
+  if (child.exitCode === null) {
+    try {
+      if (process.platform !== "win32" && child.pid) process.kill(-child.pid, "SIGKILL");
+      else child.kill("SIGKILL");
+    } catch {
+      child.kill("SIGKILL");
+    }
+  }
+}
 
 function record(name, details = {}) {
   report.gates.push({ name, status: "passed", ...details });
@@ -192,6 +221,7 @@ async function certifyViewport(browser, viewport, options = {}) {
     serviceWorkers: "allow",
   });
   const page = await context.newPage();
+  configurePage(page);
   const diagnostics = [];
   attachDiagnostics(page, diagnostics);
   await completeFreshSetup(page, viewport, options);
@@ -216,6 +246,7 @@ async function certifyFunctionalFlow(browser) {
     serviceWorkers: "allow",
   });
   const page = await context.newPage();
+  configurePage(page);
   const diagnostics = [];
   const diagnosticControl = attachDiagnostics(page, diagnostics);
   await completeFreshSetup(page, viewport, { addCustomData: true, reducedMotion: true });
@@ -271,29 +302,24 @@ async function certifyFunctionalFlow(browser) {
   await page.getByRole("button", { name: "Pause", exact: true }).waitFor();
   await assertTouchTargets(page, ".v2-focus-actions button", "Focused-clean primary actions");
   await page.getByRole("button", { name: "Done", exact: true }).click();
-  await page.waitForFunction(() => {
-    const raw = localStorage.getItem("clean30_v2_state");
-    if (!raw) return false;
-    const state = JSON.parse(raw);
-    return state.activeSession?.items?.some((item) => item.done);
-  });
+  const progressAfterFirstTask = page.getByText(/^1\/\d+$/);
+  await progressAfterFirstTask.waitFor();
+  const [, totalText] = (await progressAfterFirstTask.innerText()).split("/");
+  const totalTasks = Number.parseInt(totalText, 10);
+  assert.ok(Number.isInteger(totalTasks) && totalTasks > 1, `Unexpected focused-clean total: ${totalText}`);
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await page.getByRole("button", { name: "Continue cleaning" }).waitFor();
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: "Pause", exact: true }).waitFor();
+  await page.getByText(`1/${totalTasks}`, { exact: true }).waitFor();
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await page.getByRole("button", { name: "Continue cleaning" }).click();
 
-  let complete = false;
-  for (let index = 0; index < 30; index += 1) {
-    if (await page.getByText("Clean complete", { exact: true }).count()) {
-      complete = true;
-      break;
-    }
+  for (let handled = 1; handled < totalTasks; handled += 1) {
     await page.getByRole("button", { name: "Done", exact: true }).click();
   }
-  assert.equal(complete, true, "Focused clean did not reach its completion summary");
+  await page.getByText("Clean complete", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Review choices" }).click();
   await page.getByRole("button", { name: "Return to summary" }).click();
   await page.getByRole("button", { name: "Save and finish" }).click();
@@ -389,6 +415,7 @@ const preview = spawn(process.platform === "win32" ? "npm.cmd" : "npm", [
   "--strictPort",
 ], {
   stdio: ["ignore", "pipe", "pipe"],
+  detached: process.platform !== "win32",
 });
 
 let previewLog = "";
@@ -419,5 +446,5 @@ try {
   report.previewLog = previewLog;
   await writeFile(resolve(ARTIFACT_DIR, "report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
   await browser?.close();
-  preview.kill("SIGTERM");
+  await stopPreview(preview);
 }
