@@ -4,6 +4,7 @@ import App from "./v2/AppV2.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import "./v2/styles.css";
 import "./v2/ui-refresh.css";
+import "./v2/ui-polish.css";
 
 /*
   Archived v1 stylesheet order retained for migration regression tests only.
