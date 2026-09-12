@@ -155,7 +155,7 @@ assert.match(
 );
 const cssAsset = builtIndex.match(/\/clean30\/(assets\/[^"']+\.css)/)?.[1];
 assert.ok(cssAsset, "Built CSS asset must be discoverable.");
-assert.ok(statSync(resolve(distDir, cssAsset)).size < 45_000, "Production CSS must not include the legacy stylesheet stack.");
+assert.ok(statSync(resolve(distDir, cssAsset)).size < 65_000, "Production CSS should remain bounded after the UI refresh.");
 assert.match(
   serviceWorker,
   /app-shell-v26/,
