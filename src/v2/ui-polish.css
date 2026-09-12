@@ -1,0 +1,328 @@
+/* Clean30 second-pass polish
+   Goal: calmer hierarchy, stronger scanability, and more native mobile feel
+   without adding product complexity. */
+
+.v2-hero-copy .v2-kicker {
+  font-size: .79rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.v2-hero-copy,
+.v2-active-clean-card,
+.v2-settings-group,
+.v2-panel {
+  box-shadow: 0 1px 2px rgba(18, 38, 26, .035), 0 8px 24px rgba(18, 38, 26, .04);
+}
+
+:root[data-clean30-theme="dark"] .v2-hero-copy,
+:root[data-clean30-theme="dark"] .v2-active-clean-card,
+:root[data-clean30-theme="dark"] .v2-settings-group,
+:root[data-clean30-theme="dark"] .v2-panel {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18), 0 10px 28px rgba(0, 0, 0, .13);
+}
+
+.v2-plan-stat strong {
+  font-feature-settings: "tnum" 1;
+}
+
+.v2-task-preview > div {
+  overflow: hidden;
+  padding-left: 15px;
+  position: relative;
+}
+
+.v2-task-preview > div::before {
+  background: var(--c30-accent);
+  border-radius: 999px;
+  content: "";
+  height: 24px;
+  left: 0;
+  opacity: .72;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+}
+
+.v2-home-status {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
+}
+
+:root[data-clean30-theme="dark"] .v2-home-status {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 7%, transparent);
+}
+
+.v2-mode-card {
+  overflow: hidden;
+  padding-right: 14px;
+  position: relative;
+}
+
+.v2-mode-card::before {
+  background: var(--c30-accent);
+  border-radius: 999px;
+  content: "";
+  height: 30px;
+  left: -1px;
+  opacity: .58;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+}
+
+.v2-mode-card > .v2-icon {
+  background: var(--c30-surface-2);
+  border: 1px solid var(--c30-line);
+  border-radius: 999px;
+  box-sizing: content-box;
+  color: var(--c30-muted);
+  height: 17px;
+  padding: 6px;
+  width: 17px;
+}
+
+.v2-mode-card:hover:not(:disabled) > .v2-icon {
+  background: var(--c30-accent-soft);
+  border-color: color-mix(in srgb, var(--c30-accent) 25%, var(--c30-line));
+  color: var(--c30-accent-strong);
+}
+
+.v2-button:active:not(:disabled),
+.v2-mode-card:active:not(:disabled),
+.v2-nav button:active:not(:disabled),
+.v2-settings-row:active:not(:disabled),
+.v2-picker-list button:active:not(:disabled) {
+  transform: scale(.985);
+}
+
+.v2-nav button,
+.v2-mode-card,
+.v2-settings-row,
+.v2-picker-list button,
+.v2-button {
+  touch-action: manipulation;
+}
+
+.v2-week-strip {
+  scrollbar-width: none;
+}
+
+.v2-week-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.v2-week-strip > div {
+  overflow: hidden;
+  position: relative;
+}
+
+.v2-week-strip > div.today::after {
+  background: var(--c30-accent);
+  border-radius: 999px 999px 0 0;
+  bottom: 0;
+  content: "";
+  height: 3px;
+  left: 16px;
+  position: absolute;
+  right: 16px;
+}
+
+.v2-due-list > div,
+.v2-history-list > div {
+  transition: background .12s ease;
+}
+
+.v2-settings-group > h2 {
+  background: color-mix(in srgb, var(--c30-surface-2) 68%, var(--c30-surface));
+  color: var(--c30-muted);
+  font-size: .78rem;
+  font-weight: 720;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.v2-settings-row > .v2-icon:last-child {
+  transition: transform .14s ease, color .14s ease;
+}
+
+.v2-settings-row:hover > .v2-icon:last-child {
+  color: var(--c30-accent-strong);
+  transform: translateX(2px);
+}
+
+.v2-focus-task {
+  overflow: hidden;
+  position: relative;
+}
+
+.v2-focus-task::before {
+  background: var(--c30-accent);
+  content: "";
+  height: 4px;
+  left: 28%;
+  opacity: .7;
+  position: absolute;
+  right: 28%;
+  top: 0;
+}
+
+.v2-focus-position {
+  color: var(--c30-muted);
+  font-size: .8rem;
+}
+
+.v2-focus-position strong {
+  color: var(--c30-ink);
+  font-weight: 650;
+}
+
+.v2-picker-list button > .v2-icon:last-child {
+  color: var(--c30-faint);
+}
+
+@media (hover: hover) {
+  .v2-due-list > div:hover,
+  .v2-history-list > div:hover {
+    background: var(--c30-surface-2);
+  }
+}
+
+@media (max-width: 980px) {
+  .v2-main {
+    padding-bottom: 136px;
+  }
+
+  .v2-nav {
+    left: 50%;
+    max-width: 520px;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100vw - 24px);
+  }
+
+  .v2-nav button.active {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c30-accent) 10%, transparent);
+  }
+}
+
+@media (max-width: 520px) {
+  .v2-app-header {
+    min-height: 56px;
+  }
+
+  .v2-brand small {
+    font-size: .69rem;
+  }
+
+  .v2-main {
+    padding-top: 20px;
+  }
+
+  .v2-hero-copy {
+    box-shadow: 0 1px 2px rgba(18, 38, 26, .03), 0 6px 18px rgba(18, 38, 26, .035);
+  }
+
+  .v2-hero-copy .v2-kicker {
+    color: var(--c30-faint);
+    font-size: .75rem;
+    margin-bottom: 9px;
+  }
+
+  .v2-plan-stat span {
+    font-size: .88rem;
+  }
+
+  .v2-task-preview > div {
+    border-radius: 11px;
+  }
+
+  .v2-home-status {
+    background: color-mix(in srgb, var(--c30-accent-soft) 72%, var(--c30-surface));
+  }
+
+  .v2-section-heading h2 {
+    font-size: 1.08rem;
+  }
+
+  .v2-mode-grid {
+    gap: 8px;
+  }
+
+  .v2-mode-card {
+    min-height: 82px;
+  }
+
+  .v2-mode-card strong {
+    font-size: .96rem;
+  }
+
+  .v2-mode-card p {
+    font-size: .81rem;
+  }
+
+  .v2-mode-card small {
+    font-size: .72rem;
+  }
+
+  .v2-nav {
+    border-radius: 20px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: calc(100vw - 20px);
+  }
+
+  .v2-nav button {
+    min-height: 56px;
+  }
+
+  .v2-settings-group > h2 {
+    padding-block: 13px 11px;
+  }
+
+  .v2-focus-main {
+    padding-bottom: 28px;
+  }
+
+  .v2-focus-actions {
+    backdrop-filter: blur(14px);
+    background: color-mix(in srgb, var(--c30-bg) 88%, transparent);
+    border: 1px solid var(--c30-line);
+    border-radius: 18px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    box-shadow: 0 12px 32px rgba(18, 38, 26, .12);
+    margin: 18px -4px 0;
+    padding: 8px;
+    position: sticky;
+    z-index: 12;
+  }
+
+  :root[data-clean30-theme="dark"] .v2-focus-actions {
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .28);
+  }
+
+  .v2-sheet::before {
+    background: var(--c30-line-strong);
+    border-radius: 999px;
+    content: "";
+    display: block;
+    height: 4px;
+    margin: 8px auto 0;
+    width: 38px;
+  }
+
+  .v2-sheet > header {
+    padding-top: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-button:active:not(:disabled),
+  .v2-mode-card:active:not(:disabled),
+  .v2-nav button:active:not(:disabled),
+  .v2-settings-row:active:not(:disabled),
+  .v2-picker-list button:active:not(:disabled) {
+    transform: none;
+  }
+}
