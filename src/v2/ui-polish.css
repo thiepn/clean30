@@ -317,6 +317,159 @@
   }
 }
 
+/* Third-pass mobile refinement
+   Keep the primary action visible sooner and reduce chrome that competes with it. */
+@media (max-width: 520px) {
+  .v2-app-header {
+    min-height: 52px;
+  }
+
+  .v2-brand small {
+    display: none;
+  }
+
+  .v2-brand::before {
+    height: 22px;
+  }
+
+  .v2-main {
+    padding-bottom: 108px;
+    padding-top: 16px;
+  }
+
+  .v2-hero-copy {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 18px 18px;
+  }
+
+  .v2-hero-copy h1 {
+    font-size: clamp(2.05rem, 11.5vw, 2.55rem);
+    line-height: 1.03;
+  }
+
+  .v2-hero-copy > p:not(.v2-kicker) {
+    font-size: .94rem;
+    line-height: 1.48;
+    margin-top: 10px;
+  }
+
+  .v2-plan-stat {
+    margin-top: 22px;
+  }
+
+  .v2-plan-stat strong {
+    font-size: 2.75rem;
+  }
+
+  .v2-plan-stat span {
+    font-size: .84rem;
+  }
+
+  .v2-plan-limit-note {
+    order: 4;
+  }
+
+  .v2-hero-copy > .v2-button.hero {
+    margin-top: 20px;
+    order: 5;
+  }
+
+  .v2-task-preview {
+    gap: 6px;
+    margin: 12px 0 0;
+    order: 6;
+  }
+
+  .v2-task-preview > div {
+    min-height: 54px;
+    padding: 9px 10px 9px 14px;
+  }
+
+  .v2-task-preview > div::before {
+    height: 20px;
+  }
+
+  .v2-home-status {
+    border-radius: 15px;
+    gap: 2px 10px;
+    padding: 13px 15px;
+  }
+
+  .v2-home-status strong {
+    font-size: 1rem;
+  }
+
+  .v2-home-status p {
+    font-size: .75rem;
+    line-height: 1.35;
+    margin-top: 2px;
+  }
+
+  .v2-start-section {
+    margin-top: 28px;
+  }
+
+  .v2-mode-card {
+    min-height: 74px;
+    padding: 14px 12px 14px 15px;
+  }
+
+  .v2-mode-card p {
+    line-height: 1.35;
+  }
+
+  .v2-mode-card > .v2-icon {
+    height: 16px;
+    padding: 5px;
+    width: 16px;
+  }
+
+  .v2-nav {
+    border-radius: 18px;
+    bottom: max(6px, env(safe-area-inset-bottom));
+    padding: 4px;
+    width: calc(100vw - 16px);
+  }
+
+  .v2-nav button {
+    gap: 2px;
+    min-height: 50px;
+    padding: 3px 6px;
+  }
+
+  .v2-nav button span {
+    font-size: .66rem;
+  }
+
+  .v2-nav .v2-icon {
+    height: 19px;
+    width: 19px;
+  }
+}
+
+@media (max-width: 360px) {
+  .v2-hero-copy h1 {
+    font-size: 2.12rem;
+  }
+
+  .v2-hero-copy > p:not(.v2-kicker) {
+    font-size: .9rem;
+  }
+
+  .v2-plan-stat strong {
+    font-size: 2.55rem;
+  }
+
+  .v2-task-preview > div span {
+    font-size: .69rem;
+  }
+
+  .v2-task-preview > div strong {
+    font-size: .8rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .v2-button:active:not(:disabled),
   .v2-mode-card:active:not(:disabled),
